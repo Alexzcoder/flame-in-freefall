@@ -49,6 +49,26 @@ def build_documents():
     return docs
 
 
+# Domain synonyms: user words -> the terms NASA documents actually use. Expanded at query time (ORed in).
+SYNONYMS = {
+    "cotton": ["sibal"], "fabric": ["sibal", "nomex", "textile"], "cloth": ["sibal", "nomex", "fabric"],
+    "acrylic": ["pmma"], "plexiglass": ["pmma"], "plastic": ["pmma", "polymer"], "polymethylmethacrylate": ["pmma"],
+    "spread": ["propagation"], "propagation": ["spread"], "extinguish": ["extinction", "quench"],
+    "suppress": ["suppression", "extinguish", "inert"], "suppressant": ["suppression", "diluent", "inert"],
+    "smoke": ["aerosol", "particulate", "soot"], "detector": ["detection", "sensor"], "alarm": ["detector", "detection"],
+    "moon": ["lunar"], "lunar": ["moon"], "mars": ["martian"], "habitat": ["spacecraft", "cabin"],
+    "oxygen": ["o2"], "o2": ["oxygen"], "fire": ["flame", "combustion"], "droplet": ["drop"],
+    "airflow": ["flow", "velocity"], "ventilation": ["flow", "velocity"], "gravity": ["microgravity"],
+}
+
+
+def expand(words):
+    out = list(words)
+    for w in words:
+        out += [x for x in SYNONYMS.get(w, []) if x not in out]
+    return out
+
+
 class Index:
     def __init__(self, path=DOCS):
         self.docs = [json.loads(l) for l in open(path)]
@@ -59,7 +79,7 @@ class Index:
 
     def search(self, query, k=10, investigation=None, kind=None):
         """BM25-ranked hits. query: plain words (ORed); investigation: 'PSI-25'; kind: objective|abstract|title|report."""
-        words = re.findall(r"\w+", query.lower())
+        words = expand(re.findall(r"\w+", query.lower()))
         if not words:
             return []
         rows = self.db.execute("select rowid, bm25(d, 2.0, 1.0) as s from d where d match ? order by s limit ?",
@@ -90,4 +110,5 @@ if __name__ == "__main__":
         assert ix.search("smoke aging detector", k=3)[0]["investigations"][0] in ("PSI-101", "PSI-102", "PSI-115", "PSI-47")
         assert all(h["investigations"] == ["PSI-69"] or "PSI-69" in h["investigations"]
                    for h in ix.search("droplet", k=5, investigation="PSI-69"))
+        assert any("sibal" in h["text"].lower() for h in ix.search("cotton fabric flame spread", k=5)), "synonym expansion"
         print("search self-check ok")
