@@ -3,7 +3,7 @@
 // one-step combustion model: fuel vapour + oxygen -> heat + soot, only where it is hot enough.
 // Buoyancy is proportional to gravity, so the flame shape emerges from the physics: tall and flickering in 1 g,
 // short and rounder on the Moon, a dim sphere fed only by diffusion in microgravity (which can starve itself of
-// oxygen when the fan is off, as BASS-II saw). ILLUSTRATIVE: qualitative behaviour, not calibrated to NASA data.
+// oxygen when the fan is off, as BASS-II saw). Pressure: reaction ~ sqrt(p), diffusion ~ 1/sqrt(p). ILLUSTRATIVE: qualitative behaviour, not calibrated to NASA data.
 
 const VS = `#version 300 es
 in vec2 p; out vec2 uv;
@@ -16,13 +16,16 @@ const SHADERS = {
   advect: `${HEAD} uniform sampler2D vel, src; uniform float dt; uniform vec4 keep;
     void main(){ vec2 v = texture(vel, uv).xy; o = texture(src, uv - dt * v * tx) * keep; }`,
   // r = temperature, g = fuel vapour, b = oxygen (1 = this cabin's O2 level), a = soot/smoke
-  react: `${HEAD} uniform sampler2D s; uniform float dt, k, heat, cool, ign, emit, o2, time; uniform vec4 fuelRect;
+  react: `${HEAD} uniform sampler2D s; uniform float dt, k, heat, cool, ign, emit, o2, time, dif, round_; uniform vec4 fuelRect;
     void main(){
       vec4 c = texture(s, uv);
       vec4 n = texture(s, uv + vec2(tx.x, 0.)) + texture(s, uv - vec2(tx.x, 0.)) + texture(s, uv + vec2(0., tx.y)) + texture(s, uv - vec2(0., tx.y));
-      c.b += (n.b * 0.25 - c.b) * 0.22;                     // oxygen diffusion: the only supply when nothing moves
+      c.b += (n.b * 0.25 - c.b) * min(0.24, 0.22 * dif);    // oxygen diffusion: the only supply when nothing moves (slower at high pressure)
+      c.g += (n.g * 0.25 - c.g) * min(0.24, 0.20 * dif);    // fuel vapour diffuses out too: in still microgravity air the flame sits where fuel meets oxygen
       c.r += (n.r * 0.25 - c.r) * 0.10;                     // heat conduction
-      bool onFuel = uv.x > fuelRect.x && uv.x < fuelRect.z && uv.y > fuelRect.y && uv.y < fuelRect.w;
+      vec2 ctr = 0.5 * (fuelRect.xy + fuelRect.zw), hs = 0.5 * (fuelRect.zw - fuelRect.xy);
+      vec2 d = (uv - ctr) / hs;
+      bool onFuel = round_ > 0.5 ? dot(d, d) < 1. : (abs(d.x) < 1. && abs(d.y) < 1.);   // droplet / porous sphere burner are round
       if (onFuel) { c.g += dt * emit * (0.7 + 2.0 * min(c.r, 1.5)); c.r = max(c.r, time < 1.2 ? 1.2 : 0.5); }  // burning surface stays at its vaporisation temperature (anchors the flame); igniter for 1.2 s
       float r = k * c.g * c.b * smoothstep(ign, ign + 0.25, c.r);   // reaction rate
       r = min(r, min(c.g, c.b) / max(dt, 1e-3));
@@ -63,7 +66,7 @@ const SHADERS = {
     void main(){
       vec4 c = texture(s, uv); float t = clamp(c.r, 0., 2.);
       vec3 fire = vec3(1.6 * t, 1.1 * t * t, 0.55 * t * t * t);                    // red -> orange -> yellow-white
-      float zone = clamp(k * c.g * c.b * smoothstep(0.35, 0.6, c.r) * 0.18, 0., 1.); // where it is reacting now
+      float zone = clamp(k * c.g * c.b * smoothstep(0.35, 0.6, c.r) * 0.45, 0., 1.); // where it is reacting now
       vec3 col = fire * mix(1.0, 0.45, blue) + vec3(0.18, 0.42, 1.0) * zone * (0.35 + 1.1 * blue);  // soot-free blue in microgravity
       col = mix(col, col * 0.4 + vec3(0.07), clamp(c.a * 0.35, 0., 0.7));          // smoke
       o = vec4(pow(col, vec3(0.85)) + vec3(0.018, 0.022, 0.035), 1.);
@@ -113,7 +116,7 @@ export function createFlameLab(canvas, init = {}) {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 
-  const P = { gravity_g: 1, o2: 0.21, flow_cm_s: 0, fuel: "fabric", ...init };
+  const P = { gravity_g: 1, o2: 0.21, flow_cm_s: 0, fuel: "fabric", pressure_kpa: 101.325, ...init };
   let time = 0, raf = 0, running = true;
   function clear() {
     for (const t of [vel.r, vel.w, prs.r, prs.w, dv, cu]) { gl.bindFramebuffer(gl.FRAMEBUFFER, t.fb); gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); }
@@ -122,7 +125,8 @@ export function createFlameLab(canvas, init = {}) {
   }
   // fuel: a burning sample (thin fabric strip, thick acrylic block) or a droplet
   const FUEL = { fabric: { rect: [0.38, 0.14, 0.62, 0.17], emit: 2.2 }, pmma: { rect: [0.40, 0.12, 0.60, 0.20], emit: 0.9 },
-                 droplet: { rect: [0.475, 0.30, 0.525, 0.34], emit: 3.0 } };
+                 droplet: { rect: [0.4625, 0.29, 0.5375, 0.3463], emit: 7.0, round: 1 },
+                 burner: { rect: [0.4625, 0.40, 0.5375, 0.4563], emit: 9.0, round: 1 } };   // ACME/CFI-G: gas fed through a small porous sphere
 
   function step(dt) {
     const g = Math.max(0, P.gravity_g), o2 = P.o2 / 0.21, f = FUEL[P.fuel] || FUEL.fabric;
@@ -130,9 +134,10 @@ export function createFlameLab(canvas, init = {}) {
     time += dt;
     pass("advect", vel.w, { vel: vel.r, src: vel.r, dt, keep: [0.995, 0.995, 1, 1] }); vel.swap();
     pass("advect", scal.w, { vel: vel.r, src: scal.r, dt, keep: [0.995, 0.99, 1, 0.997] }); scal.swap();
-    pass("react", scal.w, { s: scal.r, dt, k: 16.0 * Math.min(2.2, o2), heat: 1.5, cool: 0.6, ign: 0.35, emit: f.emit, o2, time, fuelRect: f.rect }); scal.swap();
+    const pr = Math.max(0.2, P.pressure_kpa / 101.325);   // denser gas: faster reaction, slower diffusion
+    pass("react", scal.w, { s: scal.r, dt, k: 16.0 * Math.min(2.2, o2) * Math.sqrt(pr), heat: 1.5, cool: 0.6, ign: 0.35, emit: f.emit, o2, time, dif: 1 / Math.sqrt(pr), fuelRect: f.rect, round_: f.round || 0 }); scal.swap();
     pass("curl", cu, { vel: vel.r });
-    pass("forces", vel.w, { vel: vel.r, s: scal.r, curl: cu, dt, buoy: 26 * g, flow, eps: 4 + 10 * Math.sqrt(g) }); vel.swap();
+    pass("forces", vel.w, { vel: vel.r, s: scal.r, curl: cu, dt, buoy: 26 * g * Math.sqrt(pr), flow, eps: 4 + 10 * Math.sqrt(g) }); vel.swap();
     pass("div", dv, { vel: vel.r });
     for (let i = 0; i < 24; i++) { pass("jacobi", prs.w, { pr: prs.r, dv }); prs.swap(); }
     pass("project", vel.w, { pr: prs.r, vel: vel.r }); vel.swap();
@@ -148,7 +153,7 @@ export function createFlameLab(canvas, init = {}) {
   frame();
   return {
     set(p) { Object.assign(P, p); },
-    reset(p) { if (p) Object.assign(P, p); clear(); },
+    reset(p) { if (p) Object.assign(P, p); clear(); for (let i = 0; i < (P.warmup || 0); i++) step(1 / 60); },
     stop() { running = false; cancelAnimationFrame(raf); },
     get params() { return { ...P }; },
   };

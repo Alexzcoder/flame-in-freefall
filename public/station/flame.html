@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Flame lab · Flame in Freefall</title>
-<link rel="icon" href="../img/ember.png">
+<link rel="icon" href="../img/ember-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -20,6 +20,15 @@
 .real video{width:100%;aspect-ratio:3/4;object-fit:contain;background:#000;display:block}
 .real .lbl{font-size:12px;color:var(--muted);padding:8px 10px}.real .lbl b{color:var(--text)}
 .honest{font-size:12.5px;color:var(--muted);margin-top:10px}
+.cmp{display:grid;grid-template-columns:1fr 1fr minmax(240px,320px);gap:14px;align-items:start}
+.real2 video{width:100%;aspect-ratio:3/4;object-fit:contain;background:#000;display:block}
+.fam-h{font-size:13px;color:var(--muted);margin:16px 0 6px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}.thumbs button{padding:0;border:2px solid var(--line);border-radius:8px;overflow:hidden;background:#000;cursor:pointer;width:96px}
+.thumbs button.on,.thumbs button:hover{border-color:var(--acc)}.thumbs img{width:100%;height:72px;object-fit:cover;display:block}
+.thumbs span{display:block;font-size:10.5px;color:#c9cdd6;padding:2px 4px;background:#12151e;font-family:monospace}
+.kv2{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin:8px 0}.kv2 div:nth-child(odd){color:var(--muted)}
+.limit{font-size:12.5px;color:#f3d98b;background:#2a2210;border:1px solid #f6c94555;border-radius:8px;padding:6px 9px;margin-top:8px}
+@media(max-width:1000px){.cmp{grid-template-columns:1fr 1fr}.cmp .card{grid-column:1/-1}}
 @media(max-width:1000px){.lab{grid-template-columns:1fr}.strip{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -51,6 +60,15 @@
   <h2 style="margin-top:28px">Same fire, four places</h2>
   <div class="strip" id="strip"></div>
   <p class="honest">Simulations are illustrative (2D, simplified chemistry). Real footage is from NASA's PSI archive, brightened for visibility.</p>
+
+  <h2 id="compare" style="margin-top:34px">Simulation vs. reality</h2>
+  <p class="lead">Pick a real NASA run. The simulation is set to that run's recorded conditions (fuel, oxygen, pressure, airflow, 0 g) and plays next to the real footage.</p>
+  <div class="cmp">
+    <div class="cv real2"><video id="cmpvid" muted autoplay loop playsinline></video><span class="cap">Real NASA footage, brightened for visibility</span></div>
+    <div class="cv"><canvas id="cmpsim" width="420" height="560"></canvas><span class="cap">Simulation, same conditions</span></div>
+    <div class="card" id="cmpinfo"><p class="mute" style="margin:0">Choose a run below.</p></div>
+  </div>
+  <div id="gallery"></div>
 </main>
 <script type="module">
 import { createFlameLab } from "./flamelab.js";
@@ -99,6 +117,46 @@ async function findReal() {
 }
 [...$("fuel").children].forEach(b => b.classList.toggle("on", b.dataset.f === cur.fuel));
 sync(true);
+
+// ---------- simulation vs. reality: Sophia's 23 clips (public/media) + each run's recorded conditions ----------
+const FAM = { solid: "Solid materials (BASS-II)", droplet: "Fuel droplets (CFI)", gas: "Gas flames (ACME CFI-G)" };
+const NAMES = { pmma: "acrylic (PMMA)", sibal: "cotton/fiberglass fabric", nomex: "Nomex fabric", "candle wax": "candle wax",
+  "n-dodecane/iso-dodecane": "dodecane blend", propane: "propane", butane: "butane", ethane: "ethane" };
+let cmpLab = null;
+(async () => {
+  const [idx, ds] = await Promise.all([fetch("/media/index.json").then(r => r.json()), fetch("/api/dataset").then(r => r.json())]);
+  const runs = Object.fromEntries(ds.runs.map(r => [r.id, r]));
+  $("gallery").innerHTML = Object.entries(FAM).map(([f, label]) => `<div class="fam-h">${label}</div><div class="thumbs">${
+    Object.entries(idx.runs).filter(([, c]) => c.family === f).map(([id, c]) =>
+      `<button data-id="${id}" title="${id}"><img src="/${c.thumbnail}" alt="${id}" loading="lazy"><span>${id.split("/")[1]}</span></button>`).join("")}</div>`).join("");
+  $("gallery").onclick = e => { const b = e.target.closest("button[data-id]"); if (b) pick(b.dataset.id); };
+  function pick(id) {
+    const c = idx.runs[id], r = runs[id], co = r.conditions, a = co.atmosphere, f = co.fuel;
+    document.querySelectorAll("#gallery button").forEach(b => b.classList.toggle("on", b.dataset.id === id));
+    $("cmpvid").src = "/" + c.clip; $("cmpvid").poster = "/" + c.thumbnail;
+    const inverse = co.o2_location === "burner_stream";
+    const fuel = c.family === "droplet" ? "droplet" : c.family === "gas" ? "burner"
+      : (f.name === "pmma" && (f.thickness_mm ?? 0) >= 1) || f.name === "candle wax" || f.geometry === "rod" ? "pmma" : "fabric";
+    const sim = { warmup, gravity_g: 0, o2: inverse ? 0.21 : a.o2_frac ?? 0.21, flow_cm_s: co.flow.velocity_cm_s ?? 0, pressure_kpa: a.pressure_kpa ?? 101.325, fuel };
+    cmpLab ? cmpLab.reset(sim) : (cmpLab = createFlameLab($("cmpsim"), sim));
+    const assumed = (r.assumed || []).map(x => x.split(".").pop());
+    const limits = [];
+    if (inverse) limits.push("This is an inverse flame (oxygen flows out of the burner into fuel). The simulation can't do that; it shows a normal flame instead.");
+    if (r.outcome.result === "no_ignition") limits.push("In the real test this flame never ignited. The simulation always lights it.");
+    if (assumed.includes("pressure_kpa")) limits.push("Pressure wasn't recorded for this run; cabin pressure is assumed.");
+    if (c.family === "solid") limits.push("The real sample is a strip or rod seen from the side; the simulation is a 2D cut through it.");
+    limits.push("Camera angle, scale and brightness differ: compare shape and behaviour, not exact size.");
+    $("cmpinfo").innerHTML = `<h3 style="margin:0 0 4px">Run ${id}</h3><div class="mute" style="font-size:12.5px">${FAM[c.family]}</div>
+      <div class="kv2"><div>Fuel</div><div>${NAMES[f.name] || f.name}${f.thickness_mm ? ` · ${f.thickness_mm} mm` : ""}</div>
+        <div>Oxygen</div><div>${a.o2_frac != null ? (a.o2_frac * 100).toFixed(1) + " %" : "–"}${inverse ? " (burner stream)" : ""}</div>
+        <div>Pressure</div><div>${a.pressure_kpa ? (a.pressure_kpa / 101.325).toFixed(2) + " atm" : "–"}${assumed.includes("pressure_kpa") ? " (assumed)" : ""}</div>
+        <div>Airflow</div><div>${co.flow.velocity_cm_s != null ? Math.round(co.flow.velocity_cm_s) + " cm/s" : "–"}</div>
+        <div>Gravity</div><div>0 g (on the ISS)</div>
+        <div>What happened</div><div>${r.outcome.result ? r.outcome.result.replace("_", " ") : "not recorded in the run table"}</div></div>
+      ${limits.map(l => `<div class="limit">${l}</div>`).join("")}`;
+  }
+  pick(new URLSearchParams(location.search).get("run") && idx.runs[new URLSearchParams(location.search).get("run")] ? new URLSearchParams(location.search).get("run") : "PSI-25/B8");
+})();
 </script>
 </body>
 </html>
