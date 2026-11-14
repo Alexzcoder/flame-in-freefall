@@ -3,6 +3,7 @@
     python -m flame.clips --select            # print the picked runs per family (no downloads)
     python -m flame.clips                     # download → find burn → cut → delete raw; → media_out/ + dataset/media_clips.json
     python -m flame.clips --only PSI-25/B12   # (re)process one run
+    python -m flame.clips --publish           # crop + denoise enhanced clips → public/media/ (served by Vercel)
 
 Needs ffmpeg and dataset/media_index.json (python -m flame.media). Outputs in media_out/ are git-ignored and get
 uploaded as a GitHub Release; dataset/media_clips.json (committed) says what each file shows.
@@ -21,6 +22,12 @@ from flame.media import ROOT
 INDEX = os.path.join(ROOT, "dataset", "media_index.json")
 OUT_JSON = os.path.join(ROOT, "dataset", "media_clips.json")
 OUT_DIR = os.path.join(ROOT, "media_out")
+WEB_DIR = os.path.join(ROOT, "public", "media")
+# looked at by hand (contact sheet 2026-11-14): kept in media_out/, not shown on the website
+NOT_ON_WEB = {
+    "PSI-159/21125J1": "tiny flame buried in sensor noise, looks like static",
+    "PSI-159/21265H1": "tiny flame buried in sensor noise, looks like static",
+}
 
 # per family: investigation, how many runs, max main-video size (download is the bottleneck), features to spread over
 PLAN = {
@@ -158,13 +165,96 @@ def process(run_id, entry):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+# ---------- website copy: crop away the empty black, denoise ----------
+def flame_box(f):
+    """Grey frames (t, rows, cols) → (x0, x1, y0, y1) as fractions of the frame, or None (keep the full frame).
+
+    Per pixel, the 90th percentile over time: bright for at least 10% of the clip (flame, lit hardware), so one-frame
+    noise and flashes don't count. Box = 1st-99th percentile of those pixels, padded, at least 40% of each side.
+    """
+    p = np.percentile(f.astype(float), 90, axis=0)
+    bg = np.median(p)
+    ys, xs = np.nonzero(p > bg + max(15, 8 * np.median(abs(p - bg))))
+    if len(xs) < 20:
+        return None
+
+    def span(a, b, n):
+        pad = 0.15 * (b - a) + 0.03 * n
+        a, b = a - pad, b + pad
+        if b - a < 0.4 * n:
+            c = (a + b) / 2
+            a, b = c - 0.2 * n, c + 0.2 * n
+        return max(0, a) / n, min(n, b) / n
+
+    rows, cols = p.shape
+    return (*span(*np.percentile(xs, [1, 99]) + [0, 1], cols), *span(*np.percentile(ys, [1, 99]) + [0, 1], rows))
+
+
+def _check_flame_box():
+    rng = np.random.default_rng(0)
+    f = rng.integers(0, 10, (20, 120, 160)).astype(np.uint8)  # dark noisy camera
+    f[:, 50:70, 100:130] = 200  # flame on the right
+    x0, x1, y0, y1 = flame_box(f)
+    assert x0 < 100 / 160 and x1 > 130 / 160 and y0 < 50 / 120 and y1 > 70 / 120 and x0 > 0.3, (x0, x1, y0, y1)
+    assert flame_box(np.zeros((20, 120, 160), np.uint8)) is None
+
+
+def publish():
+    """media_out/<run>/clip_enhanced.mp4 + thumb.jpg → public/media/<run>/clip.mp4 + thumb.jpg, cropped, and a `web`
+    entry per run in media_clips.json (null + `web_skip` when not shown)."""
+    data = json.load(open(OUT_JSON))
+    for run_id, e in data["runs"].items():
+        e.pop("web_skip", None)
+        e["web"] = None
+        if e["status"] != "ok" or run_id in NOT_ON_WEB:
+            e["web_skip"] = NOT_ON_WEB.get(run_id, e["status"])
+            continue
+        src = os.path.join(OUT_DIR, e["clip_enhanced"])
+        rel = os.path.dirname(e["clip_enhanced"])
+        raw = subprocess.run(["ffmpeg", "-v", "quiet", "-i", src, "-vf", f"fps=2,scale={W}:{H}:flags=area,format=gray",
+                              "-f", "rawvideo", "-"], capture_output=True, check=True).stdout
+        f = np.frombuffer(raw, np.uint8).reshape(-1, H, W)
+        box = flame_box(f)
+        # thumbnail: after the igniter glow (first PRE_S + 3 s), the frame with a typical (median) amount of visible
+        # flame; the max picks the blown-out ignition flash, a fixed time can land on a moment the flame is dim
+        lit = (f > np.median(f) + 30).sum(axis=(1, 2))[(PRE_S + 3) * 2:]
+        ok = np.nonzero(lit)[0]
+        thumb_s = PRE_S + 3 + (ok[np.argsort(lit[ok])[len(ok) // 2]] / 2 if len(ok) else 0)
+        # crop in source pixels; even sizes for x264. Thumb has the same size as clip_enhanced (same filter chain).
+        crop = (f"crop=trunc(iw*{box[1] - box[0]:.3f}/2)*2:trunc(ih*{box[3] - box[2]:.3f}/2)*2"
+                f":iw*{box[0]:.3f}:ih*{box[2]:.3f}," if box else "")
+        out = os.path.join(WEB_DIR, rel)
+        os.makedirs(out, exist_ok=True)
+        ff("-i", src, "-vf", crop + "hqdn3d=4:3:8:6", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "28",
+           "-preset", "slow", "-an", "-movflags", "+faststart", f"{out}/clip.mp4")
+        if e["family"] == "solid" or run_id == "PSI-39/f233d01":  # f233d01: mid-burn still is a blurry glow (checked by eye)
+            ff("-ss", thumb_s, "-i", f"{out}/clip.mp4", "-frames:v", "1", "-q:v", "3", f"{out}/thumb.jpg")
+        else:  # faint gas/droplet flames drown in camera noise for the pixel count; the mid-burn still works there
+            ff("-i", os.path.join(OUT_DIR, e["thumbnail"]), "-vf", crop + "null", "-q:v", "3", f"{out}/thumb.jpg")
+        e["web"] = {"clip": f"media/{rel}/clip.mp4", "thumbnail": f"media/{rel}/thumb.jpg",
+                    "crop": [round(v, 3) for v in box] if box else None,
+                    "note": "enhanced for visibility, cropped to the flame, denoised"}
+        print(f"{run_id:22} {os.path.getsize(f'{out}/clip.mp4') / 1e6:5.1f} MB  crop={e['web']['crop']}", flush=True)
+    with open(OUT_JSON, "w") as f:
+        json.dump(data, f, indent=1)
+    # what the frontend fetches (public/ is the only folder Vercel serves as static files)
+    web = {i: {"family": e["family"], **e["web"]} for i, e in data["runs"].items() if e["web"]}
+    with open(os.path.join(WEB_DIR, "index.json"), "w") as f:
+        json.dump({"runs": web}, f, indent=1)
+    print(f"{len(web)} clips on the website")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--select", action="store_true", help="only print the picked runs")
+    ap.add_argument("--publish", action="store_true", help="crop + copy finished clips to public/media/")
     ap.add_argument("--only", nargs="*", help="run ids to (re)process")
     ap.add_argument("--workers", type=int, default=3)
     a = ap.parse_args()
     _check_burn_window()
+    _check_flame_box()
+    if a.publish:
+        return publish()
     picked = select()
     if a.select:
         for fam, d in picked.items():

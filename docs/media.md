@@ -37,3 +37,11 @@ outputs ≈ 50–100 MB, hosted as a GitHub Release, not in git.
 | FLEX, SPICE, SAFFIRE | | | 0 (no per-run video files on PSI) |
 
 Not linked: 12 BASS side videos (LOS camera, post-burn pictures), CFI-G files for runs missing from the table.
+
+## Step 2: curated clips (`python -m flame.clips`, then `--publish`)
+
+25 runs picked to spread over conditions (10 solid, 7 droplet, 8 gas) → `media_out/` (git-ignored) +
+`dataset/media_clips.json`. `--publish` crops each enhanced clip to the flame, denoises it and writes
+`public/media/<run>/clip.mp4` + `thumb.jpg` + `public/media/index.json` (what the frontend loads; Vercel serves `public/`).
+23 clips on the website (20 MB); 2 gas runs left out (tiny flame in sensor noise, see `NOT_ON_WEB` in `flame/clips.py`).
+Clips are brightened for visibility: label them that way on the site.
