@@ -1,0 +1,6 @@
+data/
+explorer/
+examples/
+.venv/
+.env
+requirements.txt

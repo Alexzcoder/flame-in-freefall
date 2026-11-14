@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flame in Freefall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo"></div><div><b>Flame in Freefall</b><span>Fire-safety insights from NASA microgravity combustion data</span></div></div>
+  <nav id="tabs">
+    <button data-tab="overview" class="on">Overview</button>
+    <button data-tab="scenario">Scenario explorer</button>
+    <button data-tab="investigations">Investigations</button>
+    <button data-tab="ask">Ask the data</button>
+  </nav>
+</header>
+
+<main>
+  <!-- OVERVIEW -->
+  <section id="sec-overview" class="tab on">
+    <h1>What has been tested, and where the gaps are</h1>
+    <p class="lead">Every NASA PSI microgravity combustion run with a known atmosphere, plotted by oxygen and pressure. Planned lunar habitats sit in a region where NASA's public data has almost no tests, and none on cabin materials.</p>
+    <div class="tiles" id="tiles"></div>
+    <div class="card"><div id="map" style="height:520px"></div>
+      <div class="legend-note">Hollow markers = pressure or O₂ <b>assumed</b> (cabin air, not measured). Shaded box = planned habitat atmospheres (25–40 % O₂, 8–12 psi).</div></div>
+    <div class="card" id="finding"></div>
+  </section>
+
+  <!-- SCENARIO -->
+  <section id="sec-scenario" class="tab">
+    <h1>Scenario explorer</h1>
+    <p class="lead">Set a cabin atmosphere. See the closest real experiments, how well the data covers it, and which investigations matter most.</p>
+    <div class="grid2">
+      <div class="card controls">
+        <div class="presets" id="presets"></div>
+        <label>Oxygen <output id="o2v"></output><input id="o2" type="range" min="12" max="45" step="0.5" value="30"></label>
+        <label>Pressure <output id="pv"></output><input id="p" type="range" min="5" max="30" step="0.1" value="10.2"></label>
+        <label>Airflow <output id="fv"></output><input id="flow" type="range" min="0" max="40" step="1" value="10"></label>
+        <div class="row">
+          <label>Gravity<select id="g"><option value="0">Microgravity (ISS)</option><option value="0.166">Moon (0.166 g)</option><option value="0.38">Mars (0.38 g)</option></select></label>
+          <label>Fuel<select id="phase"><option value="">Any</option><option value="solid" selected>Solid materials</option><option value="liquid">Liquid droplets</option><option value="gas">Gas flames</option></select></label>
+        </div>
+      </div>
+      <div class="card" id="verdict"></div>
+    </div>
+    <div class="card"><h3>Closest real experiments</h3><div id="nearest"></div></div>
+    <div class="card"><h3>Most relevant investigations for this atmosphere</h3><div id="scenrank"></div></div>
+  </section>
+
+  <!-- INVESTIGATIONS -->
+  <section id="sec-investigations" class="tab">
+    <h1>Investigations, ranked</h1>
+    <div class="row filters">
+      <label>Habitat<select id="rscen"></select></label>
+      <label>Fire-safety pillar<select id="rfocus"><option value="">All</option><option>prevention</option><option>detection</option><option>suppression</option></select></label>
+    </div>
+    <div class="grid2 wide-right">
+      <div class="card list" id="ranklist"></div>
+      <div class="card" id="detail"><p class="mute">Select an investigation.</p></div>
+    </div>
+  </section>
+
+  <!-- ASK -->
+  <section id="sec-ask" class="tab">
+    <h1>Ask the data</h1>
+    <p class="lead">Answers come only from the dataset, NASA final reports and paper abstracts, with sources. The assistant says when the data doesn't cover a question.</p>
+    <div class="card chat">
+      <div id="msgs"></div>
+      <div class="suggest" id="suggest"></div>
+      <form id="chatform"><input id="q" placeholder="e.g. Which experiments are closest to a Moon base cabin?" autocomplete="off"><button>Ask</button></form>
+    </div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
