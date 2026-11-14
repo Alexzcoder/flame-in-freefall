@@ -13,6 +13,7 @@ dataset/coverage.md       ← auto-generated: what each investigation can be use
 dataset/publications.json ← 299 papers linked to investigations; 141 with abstract (title/venue/year/DOI for all)
 dataset/documents.jsonl   ← search corpus: 24 objectives + 299 papers + 1,559 NASA report pages, each with a citation
 dataset/flame_runs.csv    ← same runs, flattened (one row per run, dotted column names)
+dataset/media_index.json  ← run id → real NASA video files (main view, 2nd view, archives). See docs/media.md
 flame/schema.py           ← data contract: dataclasses + load/save. Read it, it is short.
 flame/normalize.py        ← raw PSI tables → dataset (one Normalizer class per table)
 flame/fetch.py            ← downloads raw PSI metadata + run tables into data/raw/ (git-ignored)

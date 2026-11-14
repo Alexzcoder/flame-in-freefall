@@ -22,3 +22,18 @@ next to the simulated flame, and so the procedural flame can be tuned to look li
 
 Download budget: ~30 curated runs ≈ 1–2 GB of raw downloads (processed one at a time, then deleted);
 outputs ≈ 50–100 MB, hosted as a GitHub Release, not in git.
+
+## Step 1: run → video index (`python -m flame.media` → `dataset/media_index.json`)
+
+`{"runs": {run_id: {investigation, family, main_video, files: [{name, role, size_mb}]}}}`, roles:
+`main` | `second_view` | `still_sequence` | `archive` (zips). Separate from `flame_runs.json`, joined by run id.
+
+| Investigation | Family | Runs | With video |
+|---|---|---|---|
+| PSI-25 BASS-II | solid | 129 | 121 (was 71: 2-char test ids like B1 were skipped; now matched on TEST id + SAMPLE no., GMT day checked against date) |
+| PSI-39 CFI | droplet | 79 | 47 (the other 32 runs have no video on PSI) |
+| PSI-159 CFI-G | gas | 333 | 324 |
+| PSI-10 Flame Design | gas | 327 | 306 |
+| FLEX, SPICE, SAFFIRE | | | 0 (no per-run video files on PSI) |
+
+Not linked: 12 BASS side videos (LOS camera, post-burn pictures), CFI-G files for runs missing from the table.
