@@ -1,6 +1,7 @@
 """Download PSI combustion metadata, file manifests and run tables into data/raw/.
 
     python -m flame.fetch            # metadata + manifests + run tables (~22 MB), skips what exists
+    python -m flame.fetch --reports  # + final reports / science-document PDFs (~126 MB, 42 files)
     python -m flame.fetch --force    # re-download everything
 
 PSI has no documented API; these are the endpoints its web app uses (found in its JS bundle).
@@ -62,14 +63,39 @@ class Fetcher:
         table = self.manifest(acc).get("experimentalTable")
         return [self.download(acc, t["file_name"], "run_tables") for t in table] if isinstance(table, list) else []
 
-    def all(self):
+    def reports(self, acc):
+        """PDFs in the investigation's 'Reports' and 'Science Documents' folders (final reports, test matrices)."""
+        files = {}
+
+        def walk(o):
+            if isinstance(o, dict):
+                if "file_name" in o and "file_size" in o:
+                    files[o.get("remote_path", "")] = o["file_name"]
+                    return
+                for v in o.values():
+                    walk(v)
+            elif isinstance(o, list):
+                for v in o:
+                    walk(v)
+        walk(self.manifest(acc))
+        out = []
+        for path, name in sorted(files.items()):
+            if name.lower().endswith(".pdf") and path.split("/")[4:5] in (["Reports"], ["Science Documents"]):
+                try:
+                    out.append(self.download(acc, name, "reports"))
+                except Exception as e:  # PSI lists some files it can't serve (404); skip, don't abort the run
+                    print(f"  skip {acc}/{name}: {e}", file=sys.stderr)
+        return out
+
+    def all(self, reports=False):
         invs = self.investigations()
         for s in invs:
             acc = s["Accession"]
             tables = self.run_tables(acc)
-            print(f"{acc:8} {s.get('Acronym') or '':22} run tables: {len(tables)}")
+            pdfs = self.reports(acc) if reports else []
+            print(f"{acc:8} {s.get('Acronym') or '':22} run tables: {len(tables)}" + (f"  report PDFs: {len(pdfs)}" if reports else ""))
         return invs
 
 
 if __name__ == "__main__":
-    Fetcher(force="--force" in sys.argv).all()
+    Fetcher(force="--force" in sys.argv).all(reports="--reports" in sys.argv)

@@ -10,6 +10,8 @@ We harmonise NASA PSI microgravity combustion run tables into one dataset. The p
 ```
 dataset/flame_runs.json   ← THE dataset (committed). 1,624 runs (633 with outcomes), 24 investigations.
 dataset/coverage.md       ← auto-generated: what each investigation can be used for. Read before modelling.
+dataset/publications.json ← 299 papers linked to investigations; 141 with abstract (title/venue/year/DOI for all)
+dataset/documents.jsonl   ← search corpus: 24 objectives + 299 papers + 1,559 NASA report pages, each with a citation
 dataset/flame_runs.csv    ← same runs, flattened (one row per run, dotted column names)
 flame/schema.py           ← data contract: dataclasses + load/save. Read it, it is short.
 flame/normalize.py        ← raw PSI tables → dataset (one Normalizer class per table)
@@ -94,6 +96,19 @@ The other 15 investigations are in `ds.investigations` with `normalized: false` 
 
 Splitting for ML: group by test day (`extra.day` for ACME, `date` for FLEX) so runs from one session don't land in both train and test.
 
+## Search the text (findings, not just numbers)
+
+```python
+from flame.search import Index
+ix = Index()                                   # loads dataset/documents.jsonl into in-memory SQLite FTS5
+for h in ix.search("extinction velocity opposed flow PMMA", k=5, investigation="PSI-25"):
+    print(h["cite"], h["text"][:200])          # cite = "PSI-25_Reports_BASS-II Summary Report.pdf, p. 34" or a DOI
+```
+`kind` filter: `objective` | `abstract` | `title` | `report`. Keyword search (BM25): pass key terms, not full questions.
+For an LLM: retrieve with `Index.search`, put `text` + `cite` in the prompt, require answers to quote `cite`.
+Report pages are NASA public-domain final reports, the best source for *findings*. 158 papers (mostly Elsevier) have no
+retrievable abstract, only a title.
+
 ## Physics engine contract
 
 ```python
@@ -112,4 +127,7 @@ python3 -m flame.fetch       # ~22 MB of metadata + run tables from psi.nasa.gov
 python3 -m flame.normalize   # → dataset/flame_runs.json + .csv + coverage.md, then checks: counts, ranges,
                              #   round trip, and ~5,000 numeric values re-read from the raw CSVs
 python3 -m flame.schema      # schema self-check on the sample file
+python3 -m flame.fetch --reports && python3 -m flame.docs   # 40 NASA report PDFs (~120 MB) → page text
+python3 -m flame.papers      # abstracts: OpenAlex → Semantic Scholar → NTRS (cached in data/raw/papers)
+python3 -m flame.search      # → dataset/documents.jsonl + search self-check
 ```
