@@ -134,16 +134,30 @@ function scenarioUI() {
     $('presetnote').textContent = ''; scenarioName = 'Your settings'; $('presets').querySelectorAll('button').forEach(b => b.classList.remove('on'));
   }));
   ['o2', 'p', 'flow', 'g', 'phase'].forEach(id => $(id).addEventListener('input', debounce(updateScenario, 250)));
+  [['o2n', 'o2'], ['pn', 'p'], ['flown', 'flow']].forEach(([n, id]) => $(n).addEventListener('change', () => {   // typed values drive the slider
+    const v = Math.min(+$(n).max, Math.max(+$(n).min, +$(n).value || 0)); $(n).value = v; $(id).value = v; $(id).dispatchEvent(new Event('input'));
+  }));
   const moonBtn = [...$('presets').querySelectorAll('button')].find(b => PRESETS[b.dataset.i]?.name === 'Moon base');
   moonBtn ? moonBtn.click() : updateScenario();   // start in a consistent state: Moon base selected, sliders and gravity matching
+}
+// Live fluid flame (station/flamelab.js) that follows the scenario settings; a fuel change relights it.
+let simLab = null, simFuel = null;
+async function scenSim(p) {
+  if (!simLab) { simLab = (await import('./station/flamelab.js')).createFlameLab($('scensim'), { ...p, warmup: 120 }) || 'none'; simFuel = p.fuel; return; }
+  if (simLab === 'none') return;
+  p.fuel !== simFuel ? simLab.reset({ ...p, warmup: 120 }) : simLab.set(p); simFuel = p.fuel;
 }
 function debounce(f, ms) { let t; return () => { clearTimeout(t); t = setTimeout(f, ms); }; }
 async function updateScenario() {
   const o2 = +$('o2').value / 100, psi = +$('p').value, flow = +$('flow').value, g = +$('g').value, phase = $('phase').value;
-  $('o2v').textContent = `${$('o2').value} %`; $('pv').textContent = `${psi.toFixed(1)} psi · ${(psi * PSI_KPA).toFixed(0)} kPa`;
-  $('fv').textContent = `${flow} cm/s`;
+  $('o2n').value = $('o2').value; $('pn').value = psi; $('pkpa').textContent = `${(psi * PSI_KPA).toFixed(0)} kPa`; $('flown').value = flow;
+  scenSim({ gravity_g: g, o2, flow_cm_s: flow, pressure_kpa: psi * PSI_KPA, fuel: { liquid: 'droplet', gas: 'burner' }[phase] || 'fabric' });
   const q = `o2=${o2}&pressure=${(psi * PSI_KPA).toFixed(2)}&flow=${flow}&gravity=${g}`;
   const [near, rk] = await Promise.all([api(`/api/nearest?${q}&phase=${phase}&k=8`), api(`/api/rank?scenario=custom&${q}&name=${encodeURIComponent(scenarioName)}`)]);
+  $('simnote').innerHTML = ({ well_covered: 'NASA tested conditions close to these, so the real footage below is a fair check.',
+    sparse: '<b>Few NASA tests near these settings:</b> trust the trend more than the exact shape.',
+    no_data: '<b>No NASA test near these settings:</b> this flame is an extrapolation and may be inaccurate.' })[near.coverage] +
+    ' The simulation is a 2D sketch of the physics, not calibrated to NASA numbers.';
   const label = {well_covered: 'Well covered', sparse: 'Sparse data', no_data: 'No nearby data'}[near.coverage];
   $('verdict').innerHTML = `${tip('coverage', `<span class="badge b-${near.coverage}">${label}</span>`)}<div class="verdict-big">${near.n_close} close experiment${near.n_close === 1 ? '' : 's'}</div>
     <div class="plain"><b>What this means:</b> ${plainSummary(near, phase)}</div>

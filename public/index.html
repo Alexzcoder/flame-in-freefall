@@ -38,7 +38,7 @@
         <p class="trust">Built for NASA Space Apps 2026 · every number traced to its NASA source, assumptions flagged</p>
       </div>
       <div class="hero-ember">
-        <img src="img/ember-freefall.gif" alt="Ember, a round flame with stick arms and legs, tumbling in free fall" width="220" height="220">
+        <img src="img/ember.gif" alt="Ember, a small flame" width="220" height="220">
         <div class="bubble">No solid material in NASA's public data has been burned in microgravity above <b>22 % oxygen</b>. Moon bases are planned at <b>30 %</b>.</div>
       </div>
     </div>
@@ -137,15 +137,17 @@
       <div class="card controls">
         <div class="presets" id="presets"></div>
         <p class="mute" id="presetnote" style="font-size:12.5px;margin:8px 0 0"></p>
-        <label><span data-term="o2">Oxygen</span> <output id="o2v"></output><input id="o2" type="range" min="12" max="100" step="0.5" value="30"></label>
-        <label><span data-term="pressure">Pressure</span> <output id="pv"></output><input id="p" type="range" min="3" max="40" step="0.1" value="10.2"></label>
-        <label><span data-term="airflow">Airflow</span> <output id="fv"></output><input id="flow" type="range" min="0" max="40" step="1" value="10"></label>
+        <label><span data-term="o2">Oxygen</span> <span class="numin"><input id="o2n" type="number" min="12" max="100" step="0.5" aria-label="Oxygen percent"> %</span><input id="o2" type="range" min="12" max="100" step="0.5" value="30"></label>
+        <label><span data-term="pressure">Pressure</span> <span class="numin"><input id="pn" type="number" min="3" max="40" step="0.1" aria-label="Pressure in psi"> psi <small id="pkpa"></small></span><input id="p" type="range" min="3" max="40" step="0.1" value="10.2"></label>
+        <label><span data-term="airflow">Airflow</span> <span class="numin"><input id="flown" type="number" min="0" max="40" step="1" aria-label="Airflow in cm/s"> cm/s</span><input id="flow" type="range" min="0" max="40" step="1" value="10"></label>
         <div class="row">
           <label><span data-term="gravity">Gravity</span><select id="g"><option value="0">Microgravity (ISS)</option><option value="0.166">Moon (0.166 g)</option><option value="0.38">Mars (0.38 g)</option><option value="1">Earth (1 g)</option></select></label>
           <label><span data-term="fuel">Fuel</span><select id="phase"><option value="">Any</option><option value="solid" selected>Solid materials</option><option value="liquid">Liquid droplets</option><option value="gas">Gas flames</option></select></label>
         </div>
       </div>
-      <div><div class="card" id="verdict"></div><div class="card footage" id="footage" hidden></div></div>
+      <div><div class="card" id="verdict"></div>
+        <div class="card scensim"><div class="labcv"><canvas id="scensim" width="300" height="400"></canvas><span class="cap">Simulated flame at these settings</span></div><p class="simnote" id="simnote"></p></div>
+        <div class="card footage" id="footage" hidden></div></div>
     </div>
     <div class="card"><h3>Closest real experiments</h3><div id="nearest"></div></div>
     <div class="card"><h3>Most relevant investigations for this atmosphere</h3><div id="scenrank"></div></div>
