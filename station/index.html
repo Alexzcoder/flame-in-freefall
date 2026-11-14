@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Space Station Fire Risk</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+  <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+<main>
+  <h1>Space Station Fire Risk</h1>
+  <p class="lead">What do real NASA microgravity tests say about fire in each habitat? Move the sliders to try other conditions.</p>
+  <ul class="legend">
+    <li><span class="dot green"></span> Real tests close by</li>
+    <li><span class="dot yellow"></span> Interpolating between tests</li>
+    <li><span class="dot red"></span> No reliable data: extrapolation</li>
+  </ul>
+
+  <p id="status">Loading data…</p>
+  <div id="error" hidden></div>
+  <div id="app" class="grid"></div>
+
+  <section class="chart">
+    <h2>The habitats in 3D</h2>
+    <p class="note">Drag to rotate, scroll to zoom. Each cube is a material in that habitat, coloured by how much real test data backs it
+      (same colours as above). It updates live with the sliders. Illustration only, not to scale.</p>
+    <div id="scene"></div>
+  </section>
+
+  <section class="chart">
+    <h2>What has actually been tested?</h2>
+    <p class="note">One dot per test run (all NASA PSI investigations in this dataset). Hollow dots: pressure was assumed, not measured.
+      The stars are the habitats above; they move with the sliders.</p>
+    <div id="chart"></div>
+  </section>
+
+  <section class="chart">
+    <h2>How to read this</h2>
+    <ul class="note">
+      <li><strong>Distance</strong> compares a habitat with a real test: 1 unit is about 5 points of oxygen or a doubling of airflow.
+        Pressure is not used for solid fuels, because those tests have no measured pressure.</li>
+      <li><strong>Risk</strong> is the share of the 5 nearest tests of the same material in which a flame ignited. It is indicative only.
+        Most tests (BASS-II) started with a burning flame and then reduced the airflow until it went out, so they say little about where a flame would <em>not</em> start.</li>
+      <li><strong>Confidence</strong> is red for any gravity above 0 (no Moon or Mars data exists), for materials with no tests, for pressures far from cabin air, and when the nearest test is more than 3 units away. Green needs a test within 0.5 units and at least 3 within 1.5.
+        These thresholds are judgement calls, not NASA values.</li>
+      <li>Habitat <strong>airflow values are placeholders</strong>, not verified ventilation speeds.</li>
+      <li>Not a physics simulation: it only reads back what the tests showed.</li>
+    </ul>
+  </section>
+</main>
+
+<script type="module">
+  import { HABITATS } from "./config.js";
+  import { loadData } from "./app.js";
+  import { assess } from "./app.js";
+  import { mountHabitat } from "./ui.js";
+  import { drawChart, moveHabitats } from "./chart.js";
+
+  const status = document.getElementById("status");
+  try {
+    const { tested, labelled, investigations } = await loadData();
+    const solids = labelled.filter(r => r.conditions.fuel.phase === "solid").length;
+    status.textContent = `Based on ${tested.length} real test runs (${labelled.length} with a recorded outcome, ${solids} of them solid fuels).`;
+
+    const chart = document.getElementById("chart");
+    const root = document.getElementById("app");
+    const states = [];
+    let scene3d = null;
+    const refresh = () => {
+      if (states.length < HABITATS.length) return;   // still mounting
+      moveHabitats(chart, states);
+      scene3d?.update(states.map(s => s.materials.map(m => assess(s, m, labelled).confidence)));
+    };
+    for (const h of HABITATS) {
+      states.push(mountHabitat(root, h, labelled, refresh));
+    }
+    drawChart(chart, tested, investigations, states);
+
+    // The 3D view loads Three.js from a CDN. If that fails, the rest of the page must still work.
+    try {
+      const { createStation3D } = await import("./station3d.js");
+      scene3d = createStation3D(document.getElementById("scene"), HABITATS);
+      refresh();
+    } catch (err) {
+      document.getElementById("scene").textContent = "The 3D view could not be loaded: " + err.message;
+      console.error(err);
+    }
+
+    // handy for debugging in the console
+    window.station = { tested, labelled, investigations, states };
+  } catch (err) {
+    status.hidden = true;
+    const box = document.getElementById("error");
+    box.hidden = false;
+    box.textContent = "Could not load the data: " + err.message;
+    console.error(err);
+  }
+</script>
+</body>
+</html>
