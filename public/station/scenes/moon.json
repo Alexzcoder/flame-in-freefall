@@ -1,0 +1,18 @@
+{
+ "habitat": "moon", "name": "Moon base",
+ "air": {"o2": 0.30, "pressure_kpa": 70.3, "gravity_g": 0.166, "vent_cm_s": 5},
+ "vent_dir": [-0.6, -0.8],
+ "note": "Concept layout (no lunar habitat exists yet). Positions in metres from station/habitat3d.js. Vent blows from the life-support rack across the room: an assumption.",
+ "objects": [
+  {"id": "crew_quarters", "material": "fabric", "pos": [-3.9, 0, -0.9], "load_m2": 2.0},
+  {"id": "stowage", "material": "nomex", "pos": [-3.4, 0, 1.0], "load_m2": 1.5},
+  {"id": "glovebox", "material": "pmma_thick", "pos": [3.8, 0, 0.2], "load_m2": 0.3},
+  {"id": "galley", "material": "fabric", "pos": [-0.3, 0, -0.2], "load_m2": 0.5},
+  {"id": "eclss", "material": null, "pos": [-0.4, 0, 3.95], "source": "fans, electronics"},
+  {"id": "battery", "material": null, "pos": [1.4, 0, 3.6], "source": "lithium-ion thermal runaway"},
+  {"id": "plants", "material": null, "pos": [3.0, 0, 2.6], "source": "grow lights, pumps"},
+  {"id": "laptop", "material": null, "pos": [3.2, 0, -2.0], "source": "battery, electronics"},
+  {"id": "treadmill", "material": null, "pos": [1.2, 0, -3.5], "source": "motor, belt friction"},
+  {"id": "suit", "material": null, "pos": [-1.4, 0, -3.7], "source": "pure-oxygen system"}
+ ]
+}

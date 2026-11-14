@@ -28,7 +28,15 @@ THETA = {  # website defaults; calibrate.py changes these
     "inv_fuel": 1.0, "inv_o2": 1.0, "cam_blue": 1.0, "cam_soot": 0.7,
     "tad_exp": 0.0,
     "anchor": 0.5,  # temperature the burning surface keeps after the igniter (above "ign" = the flame can never die)
-    "emit0": 0.7,   # fuel released by a cold surface (pyrolysis also grows with temperature: + 2.0 * T)  # heat release ~ (adiabatic flame temperature / 2300 K)^tad_exp when a run records it (CFI-G)  # inverse flames: ambient fuel level and burner oxygen release (not on the website)
+    "emit0": 0.7,   # fuel released by a cold surface (pyrolysis also grows with temperature: + 2.0 * T)
+    # spread mode (a strip of fuel that heats up, pyrolyses and burns out, so the flame moves): fitted by flame/spread.py
+    # (defaults = best of a first trial fit; they only affect conds with spread=True)
+    "pyro": 0.25,     # solid temperature at which a strip cell starts releasing fuel vapour
+    "c_thin": 2.84,   # sim-seconds for a thin fuel (fabric, film) to heat up to the gas temperature
+    "c_thick": 33.2,  # same for thick acrylic: slow to heat, so a slow spread
+    "burn_thin": 0.113, "burn_thick": 0.004,  # share of a cell's material burnt per sim-second while it burns
+    "k_strip": 4.4,   # sub-grid heat transfer along the strip (the ~1 mm forward heating that drives spread against
+                      # the airflow is smaller than one cell), per sim-second  # heat release ~ (adiabatic flame temperature / 2300 K)^tad_exp when a run records it (CFI-G)  # inverse flames: ambient fuel level and burner oxygen release (not on the website)
 }
 DT = 1 / 60
 PARAMS_JSON = os.path.join(os.path.dirname(__file__), "..", "public", "station", "simparams.json")
@@ -84,6 +92,16 @@ class Sim:
         dx = (xs - ctr[:, 0].view(B, 1, 1)) / hs[:, 0].view(B, 1, 1)
         dy = (ys - ctr[:, 1].view(B, 1, 1)) / hs[:, 1].view(B, 1, 1)
         self.on_fuel = torch.where(rnd, dx * dx + dy * dy < 1, (dx.abs() < 1) & (dy.abs() < 1))
+        # spread mode: fuel strip along the bottom, lit at one end; cond spread=True, ignite="upstream"|"downstream"
+        self.spread = torch.tensor([bool(c.get("spread")) for c in conds], device=d).view(B, 1, 1)
+        y0, y1 = FUELS["fabric"][0][1], FUELS["fabric"][0][3]
+        strip = (ys > y0) & (ys < y1) & (xs > 0.08) & (xs < 0.92)
+        self.strip = self.spread & strip
+        up = torch.tensor([c.get("ignite", "upstream") == "upstream" for c in conds], device=d).view(B, 1, 1)
+        self.ign_zone = self.strip & torch.where(up, xs < 0.12, xs > 0.88)
+        self.on_fuel = self.on_fuel & ~self.spread
+        thick = torch.tensor([c.get("fuel") == "pmma" for c in conds], device=d).view(B, 1, 1)
+        self._thick = thick
         self.edge = torch.minimum(torch.minimum(xs, 1 - xs), torch.minimum(ys, 1 - ys)) < 0.025
         self.left = 1 - _smooth(0.0, 0.12, xs)
         base = torch.stack([xs, ys], -1) * 2 - 1  # grid_sample coordinates of cell centres
@@ -102,6 +120,9 @@ class Sim:
         self.s[:, 1] = torch.where(self.inv, self.amb_fuel * self.th["inv_fuel"], 0.0).expand(B, H, W)
         self.time = 0.0
         self.tt = torch.zeros((), device=self.dev)
+        self.mass = self.strip.float().expand(B, H, W).clone()   # unburnt material per strip cell (1 = full)
+        self.Ts = torch.zeros(B, H, W, device=self.dev)        # solid temperature of the strip
+        self.lit = torch.zeros(B, H, W, dtype=torch.bool, device=self.dev)
 
     def _advect(self, f, keep):
         off = torch.stack([self.vel[:, 0] / W, self.vel[:, 1] / H], -1) * DT * 2  # cells/s -> grid_sample units
@@ -132,6 +153,23 @@ class Sim:
         fu = torch.where(normal_src, fu + src, fu)
         ox = torch.where(inv_src, ox + src * th["inv_o2"], ox)  # inverse flame: oxygen comes out of the burner
         T = torch.where(self.on_fuel, T.clamp(min=surf), T)
+        # spread mode: the solid heats toward the gas temperature (slowly if thick), releases fuel vapour while hot
+        # enough and not burnt out, keeps some heat while it burns, and is used up
+        firing = self.ign_zone & (self.tt < 1.2)
+        C = torch.where(self._thick, th["c_thick"], th["c_thin"])
+        Ts = self.Ts + dt * (T - self.Ts) / C
+        sL = torch.roll(self.Ts, 1, -1) * torch.roll(self.strip, 1, -1)
+        sR = torch.roll(self.Ts, -1, -1) * torch.roll(self.strip, -1, -1)
+        nb = torch.roll(self.strip, 1, -1).float() + torch.roll(self.strip, -1, -1).float()
+        Ts = torch.where(self.strip, Ts + (dt * th["k_strip"] / C).clamp(max=0.45) * (sL + sR - nb * self.Ts), Ts)
+        Ts = torch.where(firing, 1.2, Ts)
+        T = torch.where(firing, T.clamp(min=1.2), T)
+        lit = self.strip & (self.mass > 0) & (Ts > th["pyro"])
+        fu = fu + torch.where(lit, dt * self.emit * th["emit_scale"] * (th["emit0"] + 2.0 * T.clamp(max=1.5)), 0.0)
+        T = torch.where(lit, T.clamp(min=th["anchor"]), T)
+        burn = torch.where(self._thick, th["burn_thick"], th["burn_thin"])
+        self.mass = torch.where(lit, (self.mass - dt * burn).clamp(min=0), self.mass)
+        self.Ts, self.lit = Ts, lit
         k = th["k"] * o2.clamp(max=2.2) * pr.sqrt()
         r = k * fu * ox * _smooth(th["ign"], th["ign"] + 0.25, T)
         r = torch.minimum(r, torch.minimum(fu, ox) / dt)
@@ -215,6 +253,27 @@ class Sim:
                 times.append(self.time)
                 nxt += every
         return torch.stack(alive, 1).numpy(), times
+
+
+    def run_spread(self, seconds=30.0, every=0.25):
+        """Spread mode: how far burning has reached along the strip, per row over time. → front (B, n) as a fraction
+        0..1 of the strip from the lit end (NaN before anything burns), alive (B, n): something burning now, times."""
+        x = (torch.arange(W, device=self.dev) + 0.5) / W
+        up = self.ign_zone[..., :W // 2].any(-1).any(-1)  # lit at the left end
+        fronts, alive, times, nxt = [], [], [], every
+        for _ in range(int(round(seconds / DT))):
+            self.step()
+            if self.time + 1e-9 >= nxt:
+                anyl = self.lit.any(1).any(-1)
+                cols = (self.strip & (self.mass < 0.999)).any(1)  # (B, W): burning has reached this column (monotonic)
+                right = torch.where(cols, x, -1.0).max(-1).values
+                left = torch.where(cols, x, 2.0).min(-1).values
+                pos = torch.where(up, (right - 0.08) / 0.84, (0.92 - left) / 0.84)
+                fronts.append(torch.where(anyl, pos, torch.nan).cpu())
+                alive.append(anyl.cpu())
+                times.append(self.time)
+                nxt += every
+        return torch.stack(fronts, 1).numpy(), torch.stack(alive, 1).numpy(), times
 
 
 def _check():
