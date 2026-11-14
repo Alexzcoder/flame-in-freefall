@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How we checked · Flame in Freefall</title><link rel="icon" href="img/ember-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0d12;--panel:#12151e;--line:#2a303c;--fg:#e4e7ee;--mute:#8a93a6;--acc:#ff7a2f;--ok:#3ecf8e;--warn:#f6c945}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.6 Inter,system-ui,sans-serif}
+main{max-width:900px;margin:0 auto;padding:28px 16px 60px}a{color:#5aa9ff}h1{font-size:30px;margin:10px 0 6px}
+h2{font-size:20px;margin:34px 0 8px}.lead{color:#c9cdd6}.mute{color:var(--mute);font-size:13px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{color:var(--mute);font-weight:600}.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:12px 0}
+.k{display:inline-block;font-size:11px;font-weight:700;border-radius:4px;padding:1px 6px;margin-right:6px}
+.cv{background:#3ecf8e22;color:#7ee8b8}.ho{background:#5aa9ff22;color:#9ccaff}.fit{background:#f6c94522;color:#f6dc8a}
+header{display:flex;align-items:center;gap:10px}header img{width:40px;height:40px}
+.scroll{overflow-x:auto}
+</style></head><body><main>
+<header><a href="/"><img src="img/ember-logo.gif" alt="Flame in Freefall"></a><a href="/" style="color:var(--fg);text-decoration:none;font-weight:700">Flame in Freefall</a></header>
+<h1>How we checked our numbers</h1>
+<p class="lead">Every claim on this site comes with how it was tested. Labels:
+<span class="k cv">CROSS-VALIDATED</span>scored on whole NASA test days the model never saw ·
+<span class="k ho">HELD OUT</span>one set of test days kept aside ·
+<span class="k fit">FIT</span>reproduces cases it was tuned on (not a prediction).</p>
+
+<h2>1. The data</h2>
+<div class="card">1,624 NASA microgravity combustion runs from 24 investigations in NASA's Physical Sciences Informatics archive,
+one schema, every value traced to its source file and row. 5,123 numbers re-read from NASA's raw files and matched.
+Assumed values (e.g. cabin pressure when not recorded) and censored burn times are flagged on every run.</div>
+
+<h2>2. Data models: the numbers we predict <span class="k cv">CROSS-VALIDATED</span></h2>
+<p class="mute">Gradient-boosted trees, 5-fold cross-validation by NASA test day; 80 % ranges calibrated on the same folds.</p>
+<div class="scroll"><table><tr><th>What is predicted</th><th>Runs</th><th>Model</th><th>Guessing</th></tr>
+<tr><td>Gas flame (CFI-G): no ignition / goes out / still burning</td><td>333</td><td><b>0.58</b> balanced accuracy</td><td>0.33</td></tr>
+<tr><td>Gas flame: seconds until it goes out</td><td>183</td><td>typically off by <b>×1.42</b></td><td>×2.67</td></tr>
+<tr><td>Droplet (FLEX): goes out vs. burns completely</td><td>213</td><td><b>0.62</b> balanced accuracy</td><td>0.50</td></tr>
+<tr><td>Droplet burning rate K</td><td>258</td><td><b>0.040</b> mm²/s median error</td><td>0.095</td></tr>
+<tr><td>Droplet size when the flame goes out (share of start)</td><td>159</td><td><b>0.067</b> median error</td><td>0.210</td></tr></table></div>
+
+<h2>3. The flame simulation <span class="k ho">HELD OUT</span></h2>
+<p class="mute">A 2D fluid + combustion simulation, tuned on NASA gas-flame outcomes (331 runs), BASS-II flame shapes measured
+from 384 NASA videos, and solid burn-or-out cases. Scored on test days the tuning never saw.</p>
+<div class="scroll"><table><tr><th>Physics</th><th>Gas flame outcome, balanced accuracy (test days)</th><th>Gas flame-out time error (test days)</th><th>Solid burns or goes out (all cases)</th></tr><tr><td>Original (hand-tuned)</td><td>0.11</td><td>×2.49</td><td>18 of 31</td></tr><tr><td>Tuned on NASA runs</td><td>0.33</td><td>×1.54</td><td>31 of 31</td></tr></table></div>
+<div class="card"><b>What tuning bought:</b> solid fires now survive or go out the way NASA saw (burning at the initial
+airflow, out when the fan is turned down). Predicted without seeing the case (leave-one-out): <b>pending</b>
+<span class="k cv">LEAVE-ONE-OUT</span><br><b>What it did not:</b> gas-flame outcomes are no better than guessing on test
+days, so gas-flame and droplet numbers on this site come from the data models above. Flame shapes did not hold up on
+held-out runs, so the flames you see in the simulator are illustrative.</div>
+
+<h2>4. Flame spread <span class="k fit">FIT</span> <span class="k cv">LEAVE-ONE-OUT</span></h2>
+<div class="card">Seven NASA targets (BASS-II Summary Report NASA/TM-20210011385; SAFFIRE-II): spread speeds and the
+airflow below which a flame goes out. Fit: <b>5 of 7</b> matched. Predicted with each target left out: <b>pending</b>.</div>
+
+<h2>5. The instant predictor (neural network)</h2>
+<div class="card">A small neural network trained on 20,000 runs of the tuned simulation, so the site can answer instantly.
+Tested on 2,000 held-out simulations: it predicts whether a flame lights in 99.4% and whether it goes out in 97.9% of cases. It copies the simulation, errors included.</div>
+
+<h2>6. What we do not claim</h2>
+<ul><li>Every NASA run here was in microgravity. Moon and Earth gravity effects come from physics, not data.</li>
+<li>Spread between objects (safe separation distances) uses standard fire-engineering heat-radiation estimates with
+typical laboratory values, not NASA microgravity data, and ignores fire travelling along cables or bags.</li>
+<li>Above 22 % oxygen no solid material has been burned in microgravity in NASA's public data: anything there is an extrapolation.</li></ul>
+<p class="mute">Full reports in the repository: dataset/predict_eval.md, dataset/shape_eval.md, dataset/spread_eval.md,
+dataset/loo_eval.md, docs/models.md.</p>
+</main></body></html>
