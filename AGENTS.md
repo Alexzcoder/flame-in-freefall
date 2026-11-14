@@ -133,6 +133,15 @@ python3 -m flame.papers      # abstracts: OpenAlex → Semantic Scholar → NTRS
 python3 -m flame.search      # → dataset/documents.jsonl + search self-check
 ```
 
+## Flame models (simulation ↔ NASA video, outcome models, emulator)
+
+See `docs/models.md`. In short: `flame/sim.py` (GPU port of the website flame simulation), `flame/shape.py` (flame
+measures from video or sim frames), `flame/harvest.py` (NASA video → burn frames in `data/frames/`, git-ignored),
+`flame/shape_eval.py` → `dataset/shape_eval.md`, `flame/calibrate.py` → `public/station/simparams.json` (the website
+simulation loads it), `flame/predict.py` → `dataset/predict_eval.md`, `flame/emulator.py` →
+`public/models/flame_emulator.json` (+ `public/station/emulator.js`), `flame/insights.py` → `public/station/insights.json`.
+Every NASA run is microgravity: gravity effects in the simulation are physics, not fitted to data.
+
 ## Dashboard (app/ + public/)
 
 ```bash

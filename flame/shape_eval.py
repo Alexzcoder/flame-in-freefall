@@ -61,13 +61,19 @@ def sim_conditions(run):
 
 def real_measures(refresh=False):
     """Measures of every harvested video (cached; recomputed for new or changed files)."""
+    import hashlib
+    import flame.shape
+    code = hashlib.sha1(open(flame.shape.__file__, "rb").read()).hexdigest()[:12]  # new measuring code → recompute
     cache = {} if refresh or not os.path.exists(REAL_CACHE) else json.load(open(REAL_CACHE))
+    if cache.get("_code") != code:
+        cache = {}
+    cache["_code"] = code
     for f in sorted(os.listdir(FRAMES)):
         if not f.endswith(".npz") or ".part" in f:
             continue
         rid = f[:-4].replace("_", "/", 1)
         mtime = os.path.getmtime(os.path.join(FRAMES, f))
-        if cache.get(rid, {}).get("mtime") == mtime:
+        if (cache.get(rid) or {}).get("mtime") == mtime:
             continue
         d = np.load(os.path.join(FRAMES, f))
         m = clip_measures(d["frames"])
@@ -75,7 +81,7 @@ def real_measures(refresh=False):
         cache[rid] = {**m, "mtime": mtime, "fps": float(d["fps"]), "seconds": int(d["flame_end_s"]) - int(d["ignition_s"])}
     with open(REAL_CACHE, "w") as f:
         json.dump(cache, f)
-    return cache
+    return {k: v for k, v in cache.items() if k != "_code"}
 
 
 def sim_measures(conds, theta=None, batch=512, seconds=SIM_SECONDS):

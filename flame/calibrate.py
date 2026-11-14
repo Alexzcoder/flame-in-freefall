@@ -6,13 +6,14 @@ Targets (training days only; test days are held out and reported separately):
     fitted factor tau. Per-run loss 0..1: wrong ignition = 1, extinction time off by a factor of 4 or more = 1,
     flame dies before the crew stopped a still-burning run = up to 1.
   * BASS-II solids (video): rank agreement of flame aspect ratio (how stretched by the airflow), weight 0.25.
-  * Solid fate, weight 0.5: the 17 BASS-II runs that went out by themselves must go out; the SAFFIRE runs that
-    burned steadily (fabric and acrylic, ~21.5 % O2, 20 cm/s) must keep burning. Each side weighs half.
+  * Solid fate, weight 0.5. BASS-II: flames burned at the initial airflow and went out when the crew turned the fan
+    down (`extra.air_display`, e.g. "5 down to ext"): keep burning at the initial flow, go out at the last fan setting
+    (0 when not logged). SAFFIRE: burned steadily (~21.5 % O2, 20 cm/s). Burning and going out weigh half each.
 Search: cross-entropy method over a box, 16 candidates per generation, all candidates x runs in one GPU batch.
 
     python -m flame.calibrate --gens 30          # → public/station/simparams.json + data/calib/log.jsonl
 """
-import argparse, json, multiprocessing as mp, os, time
+import argparse, json, multiprocessing as mp, os, re, time
 
 import numpy as np
 import torch
@@ -70,17 +71,25 @@ def datasets():
                           "split": "test" if (runs[rid]["date"] or "") in test_dates else "train"})
     fate = []
     for rid, r in runs.items():
-        burned = r["investigation"] in ("PSI-98", "PSI-99") and r["outcome"]["burn_time_s"] and \
-            r["conditions"]["fuel"]["name"] in ("sibal", "pmma", "pmma+nomex")
-        went_out = r["investigation"] == "PSI-25" and r["outcome"]["result"] == "extinction"
-        if not (burned or went_out):
-            continue
         c = r["conditions"]
-        cond = sim_conditions(r)[0] if went_out else dict(
-            gravity_g=0.0, o2=c["atmosphere"]["o2_frac"], pressure_kpa=101.325, flow_cm_s=c["flow"]["velocity_cm_s"],
-            fuel="fabric" if c["fuel"]["name"] == "sibal" else "pmma")
-        if cond:
-            fate.append({"id": rid, "cond": cond, "burns": bool(burned)})
+        if r["investigation"] in ("PSI-98", "PSI-99") and r["outcome"]["burn_time_s"] and \
+                c["fuel"]["name"] in ("sibal", "pmma", "pmma+nomex"):  # SAFFIRE: burned steadily
+            fate.append({"id": rid, "burns": True, "cond": dict(
+                gravity_g=0.0, o2=c["atmosphere"]["o2_frac"], pressure_kpa=101.325,
+                flow_cm_s=c["flow"]["velocity_cm_s"], fuel="fabric" if c["fuel"]["name"] == "sibal" else "pmma")})
+        elif r["investigation"] == "PSI-25" and r["outcome"]["result"] == "extinction":
+            # BASS-II: the flame burned at the initial airflow; the crew then turned the fan DOWN until it went out
+            # ("5 down to ext", "5 3 2 ext"). Blowoff and unclear entries are left out.
+            txt = str(r["extra"].get("air_display") or "")
+            if "blowoff" in txt or "pots" in txt or not any(w in txt for w in ("down", "decr", "ext")):
+                continue
+            cond = sim_conditions(r)[0]
+            if not cond:
+                continue
+            nums = [float(x) for x in re.findall(r"\d+(?:\.\d+)?", txt)]
+            last = 1.0066 * nums[-1] if len(nums) > 1 else 0.0  # fan display → cm/s (NASA calibration sheet)
+            fate.append({"id": rid, "burns": True, "cond": cond})
+            fate.append({"id": rid + "@low", "burns": False, "cond": {**cond, "flow_cm_s": last}})
     return gas, solid, fate
 
 
@@ -152,10 +161,11 @@ def best_tau(alive, rows):
 
 
 def fate_loss(alive, rows):
-    """Solid fate: half the weight on runs that went out, half on runs that kept burning."""
-    burning_at_end = alive[:, -2:].all(1)
+    """Solid fate: half the weight on runs that went out, half on runs that kept burning. Smooth: share of the last
+    quarter of the simulated time with a visible flame (pass/fail gives the search nothing to climb)."""
+    burning_at_end = alive[:, -alive.shape[1] // 4:].mean(1)
     miss_out = [b for b, r in zip(burning_at_end, rows) if not r["burns"]]
-    miss_burn = [not b for b, r in zip(burning_at_end, rows) if r["burns"]]
+    miss_burn = [1 - b for b, r in zip(burning_at_end, rows) if r["burns"]]
     return 0.5 * float(np.mean(miss_out) if miss_out else 0) + 0.5 * float(np.mean(miss_burn) if miss_burn else 0)
 
 
@@ -216,6 +226,9 @@ def main():
     ap.add_argument("--gens", type=int, default=30)
     ap.add_argument("--pop", type=int, default=16)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--start", default='{"anchor": 0.4, "ign": 0.5, "cool": 0.6, "dif_o2": 0.1}',
+                    help="knobs to start the search from (JSON; rest = website defaults). Default: a corner found by a "
+                         "grid where all 31 solid fate targets are right")
     a = ap.parse_args()
     os.makedirs(os.path.dirname(LOG), exist_ok=True)
     gas, solid, fate = datasets()
@@ -223,7 +236,7 @@ def main():
     print(f"gas {len(tr_g)} train / {len(gas) - len(tr_g)} test, solid {len(tr_s)} train / {len(solid) - len(tr_s)} test, "
           f"solid fate {len(fate)} (all used: too few to split)", flush=True)
     rng = np.random.default_rng(a.seed)
-    base = {k: THETA[k] for k in NAMES}
+    base = {**{k: THETA[k] for k in NAMES}, **json.loads(a.start)}
     mean, std = from_theta(base), np.full(len(NAMES), 0.3)
     best = None
     with mp.Pool(min(24, os.cpu_count())) as pool:
@@ -231,7 +244,7 @@ def main():
             t0 = time.time()
             Z = np.clip(mean + std * rng.standard_normal((a.pop, len(NAMES))), 0, 1)
             if gen == 0:
-                Z[0] = mean  # the website's hand-tuned physics is candidate 0
+                Z[0] = mean  # the starting point is candidate 0
             if best is not None:
                 Z[-1] = best["z"]  # keep the best so far (re-evaluated: it is deterministic, so this is a check)
             thetas = [{**THETA, **to_theta(z)} for z in Z]

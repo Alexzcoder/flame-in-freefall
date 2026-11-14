@@ -42,10 +42,17 @@ def frame_measures(img, th):
     lum = luminance(img)
     h, w = lum.shape
     m = (lum > th).astype(np.uint8)
-    k = max(1, round(min(h, w) * 0.05))
-    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))  # drop noise and thin lit hardware (needles, wires)
-    k = max(1, round(min(h, w) * 0.01))
-    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((3 * k, 3 * k), np.uint8))  # a ring is one object, not many
+    # lit hardware (droplet needles, wires) is thin and much brighter than a dim flame: remove thin *bright* parts only,
+    # so thin dim flame rings survive
+    peak = float(lum.max())
+    hi = (lum > th + 0.5 * (peak - th)).astype(np.uint8)
+    k = max(3, round(min(h, w) * 0.05))
+    thin = hi & (1 - cv2.morphologyEx(hi, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k))))
+    m &= 1 - cv2.dilate(thin, np.ones((3, 3), np.uint8))
+    k = max(1, round(min(h, w) * 0.012))
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))  # single-pixel noise
+    k = max(3, round(min(h, w) * 0.06))  # bridges gaps left by removed needles; a broken ring stays one object
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k)))
     n, lab, stats, _ = cv2.connectedComponentsWithStats(m, connectivity=8)
     if n < 2:
         return None

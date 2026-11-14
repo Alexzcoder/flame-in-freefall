@@ -142,7 +142,21 @@ function scenarioUI() {
 }
 // Live fluid flame (station/flamelab.js) that follows the scenario settings; a fuel change relights it.
 let simLab = null, simFuel = null;
+// Instant prediction from the neural-network emulator of the calibrated simulation (public/models/flame_emulator.json)
+let emu = null;
+async function scenEmu(p) {
+  emu ??= import('./station/emulator.js').then(async m => (await m.loadEmulator(), m)).catch(() => false);
+  const m = await emu, el = $('emunote');
+  if (!m || !el) return;
+  const r = m.predictFlame(p), pct = v => Math.round(v * 100);
+  const fate = r.ignited < 0.5 ? 'probably does not stay lit' : r.extinguished > 0.5 ? `likely goes out by itself (${pct(r.extinguished)} %)` : `likely keeps burning (${pct(1 - r.extinguished)} %)`;
+  const look = [r.aspect > 2.5 ? 'stretched downstream by the airflow' : r.aspect < 1.4 ? 'round' : '', r.blue > 0.4 ? 'blue and dim (little soot)' : ''].filter(Boolean).join(', ');
+  el.hidden = false;
+  el.innerHTML = `<b style="color:var(--fg)">Model prediction:</b> a small flame here ${fate}${look ? `; ${look}` : ''}.` +
+    (r.unsure ? ' <b>The model is unsure here.</b>' : '');
+}
 async function scenSim(p) {
+  scenEmu(p);
   if (!simLab) { simLab = (await import('./station/flamelab.js')).createFlameLab($('scensim'), { ...p, warmup: 120 }) || 'none'; simFuel = p.fuel; return; }
   if (simLab === 'none') return;
   p.fuel !== simFuel ? simLab.reset({ ...p, warmup: 120 }) : simLab.set(p); simFuel = p.fuel;
