@@ -170,6 +170,12 @@ $("time").oninput = () => { t = +$("time").value; world?.setTime(t); };
   $("tval").innerHTML = alarm ? `<span class="alarm">🔔 ${fmtT(t)}</span>` : fmtT(t).replace(" min", "").replace(" s", "s");
   requestAnimationFrame(tick);
 })();
+// test hook: ?click=x,y dispatches a real pointer click on the canvas (exercises the picking code)
+const clk = new URLSearchParams(location.search).get("click");
+if (clk && world) setTimeout(() => {
+  const [x, y] = clk.split(",").map(Number), cv = document.querySelector("#view canvas");
+  for (const type of ["pointerdown", "pointerup"]) cv.dispatchEvent(new PointerEvent(type, { clientX: x, clientY: y, bubbles: true }));
+}, 800);
 // test hook: ?auto=<surface name> lights that surface after load (used for screenshots)
 const auto = new URLSearchParams(location.search).get("auto");
 if (auto && world) setTimeout(() => {
