@@ -58,10 +58,15 @@ async function overview() {
       text: p.map(d => `${d.id}<br>${d.fuel}${d.has_outcome ? '' : ' · no outcome'}${asm ? ' · assumed' : ''}`), hoverinfo: 'text',
       marker: {size: 8, color: asm ? 'rgba(0,0,0,0)' : CAT_C[cat], line: {color: CAT_C[cat], width: asm ? 1.5 : 0}, opacity: 0.85}});
   }
+  traces.unshift({type: 'scatter', mode: 'lines', name: 'Planned habitat zone', showlegend: false, fill: 'toself',
+    fillcolor: 'rgba(0,0,0,0)', line: {width: 0}, x: [8, 12, 12, 8, 8], y: [25, 25, 40, 40, 25], hoveron: 'fills',
+    text: 'Planned habitat zone: 25–40 % O₂ at 8–12 psi.<br>Covers the Moon base (30 %, 10.2 psi), NASA exploration atmosphere<br>(34 %, 8.2 psi) and Shuttle pre-spacewalk cabin (26.5 %, 10.2 psi).<br>Only FLEX fuel droplets were tested here; no solid materials.', hoverinfo: 'text'});
   traces.unshift({type: 'scatter', mode: 'markers+text', name: 'habitats', x: [14.7, 10.2], y: [21, 30], text: ['ISS', 'Moon Base'],
     textposition: 'top center', marker: {symbol: 'star', size: 18, color: '#ffd27a', line: {color: '#000', width: 1}}, hoverinfo: 'text'});
-  Plotly.newPlot('map', traces, lay({xaxis: {title: 'Pressure (psi, log scale)', range: [Math.log10(4), Math.log10(75)], type: 'log'}, yaxis: {title: 'Oxygen (%)', range: [10, 45]},
-    shapes: [{type: 'rect', x0: 8, x1: 12, y0: 25, y1: 40, fillcolor: 'rgba(255,210,122,.08)', line: {color: '#ffd27a', dash: 'dot', width: 1}}]}),
+  Plotly.newPlot('map', traces, lay({xaxis: {title: 'Pressure (psi, log scale)', range: [Math.log10(4), Math.log10(75)], type: 'log', tickvals: [4, 5, 6, 8, 10, 12, 14.7, 20, 30, 40, 60], ticktext: ['4', '5', '6', '8', '10', '12', '14.7 (sea level)', '20', '30', '40', '60']}, yaxis: {title: 'Oxygen (%)', range: [10, 45]},
+    shapes: [{type: 'rect', x0: 8, x1: 12, y0: 25, y1: 40, fillcolor: 'rgba(255,210,122,.10)', line: {color: '#ffd27a', dash: 'dot', width: 1.5}, layer: 'below'}],
+    annotations: [{x: Math.log10(8.15), y: 39.3, xanchor: 'left', yanchor: 'top', showarrow: false, align: 'left',
+      text: '<b>Planned habitat zone</b><br>25–40 % O₂ · 8–12 psi', font: {size: 11, color: '#ffd27a'}}]}),
     {displaylogo: false, responsive: true});
   const box = pts.filter(d => d.o2_pct >= 25 && d.o2_pct <= 40 && d.pressure_kpa >= 8 * PSI_KPA && d.pressure_kpa <= 12 * PSI_KPA && !d.assumed);
   const byInv = {}; box.forEach(d => byInv[d.inv] = (byInv[d.inv] || 0) + 1);
