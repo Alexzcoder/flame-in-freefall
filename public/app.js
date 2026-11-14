@@ -7,6 +7,32 @@ const lay = o => ({paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
   legend: {orientation: 'h', y: -0.18}, margin: {t: 20, r: 20, l: 60, b: 60}, ...o,
   xaxis: {gridcolor: '#232834', zeroline: false, ...(o.xaxis || {})}, yaxis: {gridcolor: '#232834', zeroline: false, ...(o.yaxis || {})}});
 let META;
+// Plain-language explanations for every technical term (hover, focus or tap). Used via data-term="key" or tip().
+const TIPS = {
+  o2: 'Share of the air that is oxygen. Normal air is 21 %. More oxygen: materials ignite more easily and burn faster.',
+  pressure: 'How hard the air pushes. Sea level is 14.7 psi (101 kPa). Habitats at lower pressure add extra oxygen so people can breathe, which raises fire risk.',
+  airflow: 'Speed of the air moving past the burning item, from ventilation fans (cm/s). In space there is no natural draft, so the fans decide how much fresh oxygen a fire gets.',
+  gravity: 'All NASA data here is from microgravity (about 0 g, on the ISS or a cargo ship). Moon, Mars and Earth gravity make hot gas rise, which changes how flames behave. Treat results as bounds.',
+  fuel: 'What burns. Solid materials (fabrics, plastics) are closest to a real cabin fire; droplets and gas flames teach the underlying physics.',
+  near: 'Close match: this experiment ran in very similar conditions to your settings.',
+  partial: 'Partly similar: one or two settings differ noticeably.',
+  far: 'Not similar: shown only because it is the closest available. Conditions were different.',
+  assumed: 'Not measured in the experiment. We filled in normal ISS cabin air (14.7 psi, 21 % oxygen).',
+  censored: 'The run was stopped while the flame was still burning, so the real burn time was longer than shown.',
+  score: 'Relevance 0–100: 50 % how close its experiments are to this atmosphere, 20 % whether they recorded results, 20 % how close the fuel is to a cabin fire (solids highest), 10 % how directly it targets fire safety.',
+  coverage: 'How many real experiments ran near these settings: well covered (10 or more), sparse (1–9), no nearby data (0).',
+  similarity: 'Similarity from 0 to 1 between the experiment and your settings (1 = same oxygen, pressure and airflow).',
+  pillars: 'Prevention: stop fires starting and spreading. Detection: notice them early (smoke). Suppression: put them out.',
+  outcome: 'What happened in the experiment: did it ignite, how it ended (burned out, went out, stopped), how long it burned.',
+};
+const tip = (k, label, cls = '') => `<span class="term ${cls}" tabindex="0" data-tip="${esc(TIPS[k])}">${label}</span>`;
+function decorateTerms(root = document) {
+  root.querySelectorAll('[data-term]').forEach(el => { el.classList.add('term'); el.tabIndex = 0; el.dataset.tip = TIPS[el.dataset.term]; el.removeAttribute('data-term'); });
+}
+document.addEventListener('click', e => {  // "start here" buttons: switch tab or scroll to an element
+  const go = e.target.closest('[data-go]')?.dataset.go; if (!go) return;
+  if (go.startsWith('#')) document.querySelector(go)?.scrollIntoView({behavior: 'smooth', block: 'start'}); else { show(go); window.scrollTo(0, 0); }
+});
 
 // ---------- tabs ----------
 $('tabs').onclick = e => { const b = e.target.closest('button'); if (b) show(b.dataset.tab); };
@@ -96,14 +122,23 @@ async function updateScenario() {
   const q = `o2=${o2}&pressure=${(psi * PSI_KPA).toFixed(2)}&flow=${flow}&gravity=${g}`;
   const [near, rk] = await Promise.all([api(`/api/nearest?${q}&phase=${phase}&k=8`), api(`/api/rank?scenario=custom&${q}`)]);
   const label = {well_covered: 'Well covered', sparse: 'Sparse data', no_data: 'No nearby data'}[near.coverage];
-  $('verdict').innerHTML = `<span class="badge b-${near.coverage}">${label}</span><div class="verdict-big">${near.n_close} close experiment${near.n_close === 1 ? '' : 's'}</div>
+  $('verdict').innerHTML = `${tip('coverage', `<span class="badge b-${near.coverage}">${label}</span>`)}<div class="verdict-big">${near.n_close} close experiment${near.n_close === 1 ? '' : 's'}</div>
+    <div class="plain"><b>What this means:</b> ${plainSummary(near, phase)}</div>
     <p>${esc(near.message)}</p>${near.warning ? `<p class="warn">⚠ ${esc(near.warning)}</p>` : ''}${near.caveat ? `<p class="mute">${esc(near.caveat)}</p>` : ''}`;
-  $('nearest').innerHTML = `<table><tr><th>Match</th><th>Run</th><th>Fuel</th><th>O₂</th><th>Pressure</th><th>Flow</th><th>Outcome</th></tr>${near.matches.map(m => `<tr>
-    <td><span class="badge b-${m.match}">${m.match}</span> <small>${m.similarity.toFixed(2)}</small></td>
+  $('nearest').innerHTML = `<div class="scroll"><table><tr><th>${tip('similarity', 'Match')}</th><th>Run</th><th>${tip('fuel', 'Fuel')}</th><th>${tip('o2', 'O₂')}</th><th>${tip('pressure', 'Pressure')}</th><th class="hide-sm">${tip('airflow', 'Flow')}</th><th>${tip('outcome', 'Outcome')}</th></tr>${near.matches.map(m => `<tr>
+    <td>${tip(m.match, `<span class="badge b-${m.match}">${m.match}</span>`)} <small>${m.similarity.toFixed(2)}</small></td>
     <td class="mono">${esc(m.run_id)}<small>${esc(m.acronym)}</small></td><td>${esc(m.fuel)}<small>${esc(m.fuel_phase)}</small></td>
-    <td>${m.o2_pct ?? '–'} %</td><td>${m.pressure_kpa ? (m.pressure_kpa / PSI_KPA).toFixed(1) + ' psi' : '–'}${m.assumed?.length ? '<small>assumed</small>' : ''}</td>
-    <td>${m.flow_cm_s ?? '–'} cm/s</td><td>${outcomeText(m.outcome)}${m.match !== 'near' && m.differences.length ? `<small class="warn">${esc(m.differences.slice(0, 2).join('; '))}</small>` : ''}</td></tr>`).join('')}</table>`;
+    <td>${m.o2_pct ?? '–'} %</td><td>${m.pressure_kpa ? (m.pressure_kpa / PSI_KPA).toFixed(1) + ' psi' : '–'}${m.assumed?.length ? `<small>${tip('assumed', 'assumed')}</small>` : ''}</td>
+    <td class="hide-sm">${m.flow_cm_s ?? '–'} cm/s</td><td>${outcomeText(m.outcome)}${m.match !== 'near' && m.differences.length ? `<small class="warn">${esc(m.differences.slice(0, 2).join('; '))}</small>` : ''}</td></tr>`).join('')}</table></div>`;
   $('scenrank').innerHTML = rankHTML(rk.results.slice(0, 8), false);
+}
+function plainSummary(near, phase) {
+  const what = {solid: 'solid materials', liquid: 'fuel droplets', gas: 'gas flames'}[phase] || 'any fuel';
+  if (near.coverage === 'well_covered') return `NASA ran ${near.n_close} experiments with ${what} close to these conditions, so there is real evidence to compare against.`;
+  if (near.coverage === 'sparse') return `Only ${near.n_close} NASA experiment${near.n_close === 1 ? '' : 's'} with ${what} came close to these conditions. Use ${near.n_close === 1 ? 'it' : 'them'} as a hint, not as proof.`;
+  const top = near.matches[0];
+  if (!top) return `NASA has no experiments with ${what} at all.`;
+  return `NASA has never tested ${what} in conditions like these. The closest test (${esc(top.acronym)}, ${top.o2_pct} % oxygen at ${(top.pressure_kpa / PSI_KPA).toFixed(1)} psi) is the nearest evidence, but compared with it ${esc(top.differences.slice(0, 2).join(' and '))}. Anything predicted here is an educated guess beyond the data.`;
 }
 function outcomeText(o) {
   if (!o || !Object.keys(o).length) return '<span class="mute">not recorded</span>';
@@ -112,11 +147,11 @@ function outcomeText(o) {
   if (o.burn_time_s != null) parts.push(`${o.burn_time_s} s${o.censored ? '+' : ''}`);
   if (o.burning_rate_mm2_s != null) parts.push(`K ${o.burning_rate_mm2_s} mm²/s`);
   if (o.spread_rate_mm_s != null) parts.push(`spread ${o.spread_rate_mm_s} mm/s`);
-  return esc(parts.join(' · ')) + (o.censored ? '<small>censored: still burning when stopped</small>' : '');
+  return esc(parts.join(' · ')) + (o.censored ? `<small>${tip('censored', 'censored')}: still burning when stopped</small>` : '');
 }
 function rankHTML(rows, clickable) {
   return rows.map(r => `<div class="rk" data-id="${r.id}"><div class="n">${r.rank}</div><div class="body">
-    <div class="t">${esc(r.acronym)} <span class="mute mono">${r.id}</span> <span class="badge">${esc(r.category)}</span> <b style="float:right">${r.score}</b></div>
+    <div class="t">${esc(r.acronym)} <span class="mute mono">${r.id}</span> <span class="badge">${esc(r.category)}</span> <b style="float:right">${tip('score', r.score, 'r')}</b></div>
     <div class="s">${esc(r.title)}</div><div class="bar"><i style="width:${r.score}%"></i></div>
     ${clickable ? '' : `<ul class="tight">${r.reasons.map(x => `<li>${esc(x)}</li>`).join('')}${r.caveats.map(x => `<li class="warn">${esc(x)}</li>`).join('')}</ul>`}
   </div></div>`).join('');
@@ -144,10 +179,10 @@ async function detail(id, rk) {
     <div class="kv"><div>Hardware</div><div>${esc(p.hardware || '–')}</div>
       <div>Runs</div><div>${p.n_runs} (${p.n_with_outcome} with outcome)${p.normalized ? '' : ` <span class="warn">${esc(p.note)}</span>`}</div>
       <div>Fuels</div><div>${esc(p.fuels.join(', ') || '–')}</div>
-      <div>Oxygen tested</div><div>${rng(p.o2_frac_range, v => (v * 100).toFixed(1), '%')}</div>
-      <div>Pressure tested</div><div>${rng(p.pressure_kpa_range, v => (v / PSI_KPA).toFixed(1), 'psi')}</div>
-      <div>Airflow tested</div><div>${p.flow_cm_s_range && p.flow_cm_s_range[1] === 0 ? 'still air (0 cm/s)' : rng(p.flow_cm_s_range, v => v, 'cm/s')}</div>
-      <div>Measured outcomes</div><div>${esc(p.outcome_fields.join(', ') || 'none in run table')}</div>
+      <div>${tip('o2', 'Oxygen tested')}</div><div>${rng(p.o2_frac_range, v => (v * 100).toFixed(1), '%')}</div>
+      <div>${tip('pressure', 'Pressure tested')}</div><div>${rng(p.pressure_kpa_range, v => (v / PSI_KPA).toFixed(1), 'psi')}</div>
+      <div>${tip('airflow', 'Airflow tested')}</div><div>${p.flow_cm_s_range && p.flow_cm_s_range[1] === 0 ? 'still air (0 cm/s)' : rng(p.flow_cm_s_range, v => v, 'cm/s')}</div>
+      <div>${tip('outcome', 'Measured outcomes')}</div><div>${esc(p.outcome_fields.join(', ') || 'none in run table')}</div>
       <div>DOI</div><div>${p.doi ? `<a target="_blank" href="https://doi.org/${esc(p.doi)}">${esc(p.doi)}</a>` : '–'}</div></div>
     <details open><summary><b>Objective</b></summary><p>${esc(p.objective || '–')}</p></details>
     <details><summary><b>Publications (${p.publications.length})</b></summary>${p.publications.map(x => `<details><summary>${esc(x.title)} <span class="mute">${x.year || ''}</span></summary>
@@ -214,6 +249,7 @@ async function send() {
 // ---------- boot ----------
 (async () => {
   META = await api('/api/meta');
+  decorateTerms();
   askUI();
   await Promise.all([overview(), investigationsUI()]);
   scenarioUI();

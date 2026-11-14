@@ -25,14 +25,21 @@
   <section id="sec-overview" class="tab on">
     <h1>What has been tested, and where the gaps are</h1>
     <p class="lead">Every NASA PSI microgravity combustion run with a known atmosphere, plotted by oxygen and pressure. Planned lunar habitats sit in a region where NASA's public data has almost no tests, and none on cabin materials.</p>
+    <div class="steps">
+      <button data-go="#map">1<b>See what was tested</b><small>The map below: every dot is a real fire on the ISS</small></button>
+      <button data-go="scenario">2<b>Try a habitat</b><small>Moon base, spacesuit, airliner… how close is real data?</small></button>
+      <button data-go="investigations">3<b>Compare experiments</b><small>Ranked by relevance, side-by-side comparison</small></button>
+      <button data-go="ask">4<b>Ask a question</b><small>An AI assistant that answers only from NASA data, with sources</small></button>
+    </div>
+    <p class="mute tiphint">Tip: words with a dotted underline explain themselves. Hover or tap them.</p>
     <div class="tiles" id="tiles"></div>
     <div class="explain3">
       <div class="card ex"><h3>🔥 Why fire is different in space</h3><p>On Earth, hot gas rises and pulls in fresh air: flames are tall and flicker. In microgravity nothing rises, so oxygen only arrives by slow diffusion or by the ventilation fans. Flames become small, round, cooler and slower, and can survive at oxygen levels or airflows where they would go out on Earth. Ground tests therefore can't fully predict a cabin fire.</p></div>
       <div class="card ex"><h3>🗺️ How to read the map</h3><p>Each dot is one experiment run on the ISS or a Cygnus cargo ship. Horizontal = cabin pressure (log scale), vertical = oxygen. Colour = experiment family. Stars mark the ISS (sea-level air) and a planned Moon base (30 % O₂ at 10.2 psi). The dotted box is the range of planned exploration habitats. Empty space means <b>nobody has tested it</b>.</p></div>
       <div class="card ex"><h3>✅ How much to trust a point</h3><p><b>Filled dot</b>: atmosphere measured. <b>Hollow dot</b>: atmosphere not recorded, so we assumed ISS cabin air. Only <b>633 of 1,624 runs</b> record what happened (ignition, extinction, burn time). Some burn times are <b>censored</b>: the run was stopped while still burning, so the time is a lower bound. The Scenario explorer and the assistant flag all of these.</p></div>
     </div>
-    <div class="card"><div id="map" style="height:520px"></div>
-      <div class="legend-note">Hollow markers = pressure or O₂ <b>assumed</b> (cabin air, not measured). Shaded box = planned habitat atmospheres (25–40 % O₂, 8–12 psi).</div></div>
+    <div class="card"><div id="map" class="map"></div>
+      <div class="legend-note">Hollow markers = pressure or O₂ <b data-term="assumed">assumed</b> (cabin air, not measured). Shaded box = planned habitat atmospheres (25–40 % O₂, 8–12 psi).</div></div>
     <div class="card" id="finding"></div>
     <h3 style="margin-top:22px">What's in the data</h3>
     <div class="fam" id="families"></div>
@@ -50,12 +57,12 @@
       <div class="card controls">
         <div class="presets" id="presets"></div>
         <p class="mute" id="presetnote" style="font-size:12.5px;margin:8px 0 0"></p>
-        <label>Oxygen <output id="o2v"></output><input id="o2" type="range" min="12" max="100" step="0.5" value="30"></label>
-        <label>Pressure <output id="pv"></output><input id="p" type="range" min="3" max="40" step="0.1" value="10.2"></label>
-        <label>Airflow <output id="fv"></output><input id="flow" type="range" min="0" max="40" step="1" value="10"></label>
+        <label><span data-term="o2">Oxygen</span> <output id="o2v"></output><input id="o2" type="range" min="12" max="100" step="0.5" value="30"></label>
+        <label><span data-term="pressure">Pressure</span> <output id="pv"></output><input id="p" type="range" min="3" max="40" step="0.1" value="10.2"></label>
+        <label><span data-term="airflow">Airflow</span> <output id="fv"></output><input id="flow" type="range" min="0" max="40" step="1" value="10"></label>
         <div class="row">
-          <label>Gravity<select id="g"><option value="0">Microgravity (ISS)</option><option value="0.166">Moon (0.166 g)</option><option value="0.38">Mars (0.38 g)</option><option value="1">Earth (1 g)</option></select></label>
-          <label>Fuel<select id="phase"><option value="">Any</option><option value="solid" selected>Solid materials</option><option value="liquid">Liquid droplets</option><option value="gas">Gas flames</option></select></label>
+          <label><span data-term="gravity">Gravity</span><select id="g"><option value="0">Microgravity (ISS)</option><option value="0.166">Moon (0.166 g)</option><option value="0.38">Mars (0.38 g)</option><option value="1">Earth (1 g)</option></select></label>
+          <label><span data-term="fuel">Fuel</span><select id="phase"><option value="">Any</option><option value="solid" selected>Solid materials</option><option value="liquid">Liquid droplets</option><option value="gas">Gas flames</option></select></label>
         </div>
       </div>
       <div class="card" id="verdict"></div>
@@ -69,7 +76,7 @@
     <h1>Investigations, ranked</h1>
     <div class="row filters">
       <label>Habitat<select id="rscen"></select></label>
-      <label>Fire-safety pillar<select id="rfocus"><option value="">All</option><option>prevention</option><option>detection</option><option>suppression</option></select></label>
+      <label><span data-term="pillars">Fire-safety pillar</span><select id="rfocus"><option value="">All</option><option>prevention</option><option>detection</option><option>suppression</option></select></label>
     </div>
     <div class="grid2 wide-right">
       <div class="card list" id="ranklist"></div>
