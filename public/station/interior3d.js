@@ -2,6 +2,7 @@
 // Geometry is illustrative. Flammable surfaces are split into 6 cm cells; firemodel.js decides how fire moves.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MATERIALS } from "./firemodel.js";
 
 const CELL = 0.06;
@@ -36,7 +37,15 @@ weaveTex.wrapS = weaveTex.wrapT = THREE.RepeatWrapping; weaveTex.repeat.set(6, 6
 const windowTex = (kind) => canvasTex((g, w, h) => {   // the view outside: lunar plain with Earth, or Earth from orbit
   g.fillStyle = "#02030a"; g.fillRect(0, 0, w, h);
   for (let i = 0; i < 90; i++) { g.fillStyle = `rgba(255,255,255,${Math.random() * 0.8})`; g.fillRect(Math.random() * w, Math.random() * h * 0.7, 1.2, 1.2); }
-  if (kind === "moon") {
+  if (kind === "mars") {
+    const sky = g.createLinearGradient(0, 0, 0, h * 0.65); sky.addColorStop(0, "#3a1e14"); sky.addColorStop(1, "#c98a5a");
+    g.fillStyle = sky; g.fillRect(0, 0, w, h);
+    g.fillStyle = "#fff8e8"; g.beginPath(); g.arc(w * 0.72, h * 0.25, 7, 0, 7); g.fill();   // small, distant Sun
+    const gr = g.createLinearGradient(0, h * 0.6, 0, h); gr.addColorStop(0, "#a0522d"); gr.addColorStop(1, "#5e2a14");
+    g.fillStyle = gr; g.beginPath(); g.moveTo(0, h * 0.64);
+    for (let x = 0; x <= w; x += 12) g.lineTo(x, h * 0.6 + Math.sin(x / 23) * 10 + Math.random() * 5);
+    g.lineTo(w, h); g.lineTo(0, h); g.fill();
+  } else if (kind === "moon") {
     const e = g.createRadialGradient(w * 0.7, h * 0.28, 2, w * 0.7, h * 0.28, 26);
     e.addColorStop(0, "#9fd0ff"); e.addColorStop(0.6, "#2f6fd1"); e.addColorStop(1, "rgba(47,111,209,0)");
     g.fillStyle = e; g.beginPath(); g.arc(w * 0.7, h * 0.28, 26, 0, 7); g.fill();
@@ -58,7 +67,8 @@ const panelTex = canvasTex((g, w, h) => {   // ISS-style rack panel
 
 // ---------------- scene building blocks ----------------
 class Builder {
-  constructor(scene) { this.scene = scene; this.surfaces = []; this.cells = []; this.pickables = []; }
+  constructor(scene) { this.scene = scene; this.surfaces = []; this.cells = []; this.pickables = []; this.props = {}; this.prop = null; }
+  track(mesh) { if (this.prop) (this.props[this.prop] ||= []).push(mesh); return mesh; }
   mat(color, opts = {}) { return new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.1, side: THREE.DoubleSide, ...opts }); }
 
   // Rectangle p0 + a*U + b*V. Flammable if mat != metal: split into cells.
@@ -69,7 +79,7 @@ class Builder {
       this.mat(opts.color ?? MAT_COLOR[mat], { ...(mat === "fabric" || mat === "nomex" ? { map: weaveTex } : {}), ...(opts.matOpts || {}) }));
     mesh.matrixAutoUpdate = false;
     mesh.matrix.makeBasis(Uh, Vh, N).setPosition(p0.clone().add(U.clone().multiplyScalar(0.5)).add(V.clone().multiplyScalar(0.5)));
-    this.scene.add(mesh);
+    this.scene.add(mesh); this.track(mesh);
     if (mat === "metal" || MATERIALS[mat]?.inert) return mesh;
     const surf = { name, mat, mesh, first: this.cells.length, count: 0 };
     const na = Math.max(1, Math.round(len[0] / CELL)), nb = Math.max(1, Math.round(len[1] / CELL));
@@ -88,7 +98,7 @@ class Builder {
     const [cx, cy, cz] = center, [sx, sy, sz] = size, h = [sx / 2, sy / 2, sz / 2];
     if (mat === "metal") {
       const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), this.mat(opts.color ?? MAT_COLOR.metal, { side: THREE.FrontSide, ...(opts.matOpts || {}) }));
-      m.position.set(cx, cy, cz); this.scene.add(m); return m;
+      m.position.set(cx, cy, cz); this.scene.add(m); this.track(m); return m;
     }
     const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
     const faces = [
@@ -119,10 +129,11 @@ class Builder {
 
 // ---------------- the two interiors ----------------
 // Flow is along +x everywhere (supply vent at -x, return at +x). Y is up.
-function buildMoonBase(B) {
+function buildMoonBase(B, kind = "moon") {
   const s = B.scene, R = 4.6, H = 2.7;
-  const floor = new THREE.Mesh(new THREE.CircleGeometry(R, 64), B.mat(0x55595f)); floor.rotation.x = -Math.PI / 2; s.add(floor);
-  const wall = new THREE.Mesh(new THREE.CylinderGeometry(R, R, H, 64, 1, true), B.mat(0xd8dde3, { side: THREE.BackSide }));
+  const mars = kind === "mars";   // same layout, Martian dust tracked in, warmer light
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(R, 64), B.mat(mars ? 0x6e4232 : 0x55595f)); floor.rotation.x = -Math.PI / 2; s.add(floor);
+  const wall = new THREE.Mesh(new THREE.CylinderGeometry(R, R, H, 64, 1, true), B.mat(mars ? 0xe2d2c6 : 0xd8dde3, { side: THREE.BackSide }));
   wall.position.y = H / 2; s.add(wall);
   const dome = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 24, 0, Math.PI * 2, 0, Math.PI / 2), B.mat(0xe6eaef, { side: THREE.BackSide }));
   dome.position.y = H; dome.scale.y = 0.45; s.add(dome);
@@ -131,34 +142,39 @@ function buildMoonBase(B) {
   }
   const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
   // crew quarters (-x side): metal cubicle, fabric curtain, sleeping bag, clothes
+  B.prop = "crew_quarters";
   B.box("Crew quarters wall", "metal", [-3.2, 1.0, -1.2], [1.2, 2.0, 0.05]);
   B.box("Crew quarters wall", "metal", [-3.2, 1.0, 0.0], [1.2, 2.0, 0.05]);
   B.box("Crew quarters back", "metal", [-3.8, 1.0, -0.6], [0.05, 2.0, 1.2]);
   B.rect("Privacy curtain", "fabric", V3(-2.6, 0.1, -1.15), V3(0, 0, 1.1), V3(0, 1.85, 0));
   B.box("Sleeping bag", "fabric", [-3.15, 0.55, -0.6], [0.9, 0.25, 0.9]);
   B.box("Bunk", "metal", [-3.15, 0.3, -0.6], [1.0, 0.25, 1.0]);
+  B.prop = "stowage";
   B.box("Stowage bags", "nomex", [-2.3, 0.3, 0.45], [0.55, 0.55, 0.55]);
   B.box("Stowage bags", "nomex", [-2.3, 0.85, 0.45], [0.5, 0.5, 0.5]);
-  B.rect("Hanging clothes", "fabric", V3(-2.62, 0.9, 0.05), V3(0, 0, 0.6), V3(0, 0.9, 0));
+  B.prop = null;
   // cable tray along the wall at 2.1 m, silicone-jacketed cables
   B.box("Cable tray", "metal", [0, 2.08, -2.2], [5.0, 0.04, 0.25]);
   B.box("Cable bundle (silicone jacket)", "silicone", [0, 2.16, -2.2], [5.0, 0.1, 0.18]);
   // galley table with a cloth
+  B.prop = "galley";
   B.box("Table", "metal", [0.3, 0.7, 1.4], [1.4, 0.05, 0.8]);
   B.box("Table leg", "metal", [0.3, 0.35, 1.4], [0.08, 0.7, 0.08]);
   B.rect("Tablecloth", "fabric", V3(-0.4, 0.735, 1.0), V3(1.4, 0, 0), V3(0, 0, 0.8));
   B.rect("Tablecloth (drape)", "fabric", V3(-0.4, 0.43, 1.8), V3(1.4, 0, 0), V3(0, 0.3, 0));
   // lab bench (+x): glovebox with thick acrylic window, thin acrylic labels
+  B.prop = "glovebox";
   B.box("Lab bench", "metal", [3.0, 0.45, -0.5], [0.9, 0.9, 1.8]);
   B.box("Glovebox frame", "metal", [3.05, 1.2, -0.5], [0.7, 0.6, 1.0]);
   B.rect("Glovebox window (thick acrylic)", "pmma_thick", V3(2.69, 0.95, -0.95), V3(0, 0, 0.9), V3(0, 0.5, 0));
   B.rect("Acrylic labels & film", "pmma_thin", V3(2.68, 0.55, -1.3), V3(0, 0, 0.6), V3(0, 0.3, 0));
   // window to the lunar surface, ceiling light ring
-  const win = new THREE.Mesh(new THREE.CircleGeometry(0.75, 48), new THREE.MeshBasicMaterial({ map: windowTex("moon") }));
+  const win = new THREE.Mesh(new THREE.CircleGeometry(0.75, 48), new THREE.MeshBasicMaterial({ map: windowTex(kind) }));
   win.position.set(0, 1.5, R - 0.02); win.rotation.y = Math.PI; s.add(win);
   const rim = new THREE.Mesh(new THREE.TorusGeometry(0.77, 0.05, 12, 48), B.mat(0x7c838c)); rim.position.copy(win.position); s.add(rim);
   const ring = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.05, 8, 64), new THREE.MeshBasicMaterial({ color: 0xfff6e0 }));
   ring.position.y = H + 0.5; ring.rotation.x = Math.PI / 2; s.add(ring);
+  B.prop = null;
   // vents and detector
   const vent = (x, label) => { const m = B.box(label, "metal", [x, 1.6, 2.0], [0.05, 0.4, 0.6], { color: 0x6b7280 }); return m; };
   vent(-4.3, "Supply vent"); vent(4.3, "Return vent");
@@ -167,6 +183,7 @@ function buildMoonBase(B) {
     "Crew quarters": { pos: V3(-1.2, 1.5, 0.6), look: V3(-3.2, 1.0, -0.6) },
     "Lab bench": { pos: V3(1.4, 1.5, 0.4), look: V3(3.0, 1.0, -0.5) },
     "Galley": { pos: V3(0.3, 1.6, -1.0), look: V3(0.3, 0.7, 1.4) },
+    "Window": { pos: V3(0, 1.6, 2.2), look: V3(0, 1.5, 4.6) },
   }};
 }
 
@@ -191,18 +208,23 @@ function buildISS(B) {
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.06, 12, 40), B.mat(0x8b9198)); ring.position.x = x; ring.rotation.y = Math.PI / 2; s.add(ring);
   }
   // crew quarters on the +z wall
+  B.prop = "crew_quarters_iss";
   B.rect("Crew quarters curtain", "fabric", V3(-3.2, -0.9, W / 2 - 0.03), V3(1.0, 0, 0), V3(0, 1.8, 0));
   B.box("Sleeping bag", "fabric", [-2.7, 0.0, W / 2 - 0.2], [0.5, 1.6, 0.25]);
   B.rect("Towel", "fabric", V3(-2.15, 0.1, W / 2 - 0.04), V3(0.4, 0, 0), V3(0, 0.6, 0));
   // stowage on the ceiling (Nomex bags)
+  B.prop = "stowage";
   B.box("Stowage bags (Nomex)", "nomex", [-1.2, W / 2 - 0.22, 0], [1.0, 0.4, 0.8]);
+  B.prop = null;
   // cable bundles in the corners
   B.box("Cable bundle (silicone jacket)", "silicone", [0, W / 2 - 0.08, W / 2 - 0.08], [8.6, 0.12, 0.12]);
   B.box("Cable bundle (silicone jacket)", "silicone", [0, -W / 2 + 0.08, -W / 2 + 0.08], [8.6, 0.12, 0.12]);
   // science glovebox on the -z wall
+  B.prop = "glovebox_iss";
   B.box("Glovebox frame", "metal", [1.6, 0.0, -W / 2 + 0.3], [1.0, 0.7, 0.5]);
   B.rect("Glovebox window (thick acrylic)", "pmma_thick", V3(1.15, -0.3, -W / 2 + 0.56), V3(0.9, 0, 0), V3(0, 0.6, 0));
   B.rect("Acrylic labels & film", "pmma_thin", V3(2.3, -0.2, -W / 2 + 0.03), V3(0.6, 0, 0), V3(0, 0.4, 0));
+  B.prop = null;
   // laptop with a fabric cover floating (Velcro'd) near the glovebox
   B.rect("Fabric laptop cover", "fabric", V3(0.6, -0.55, -W / 2 + 0.03), V3(0.45, 0, 0), V3(0, 0.35, 0));
   for (const x of [-L / 2 + 0.2, L / 2 - 0.2]) B.box(x < 0 ? "Supply vent" : "Return vent", "metal", [x, 0.6, 0], [0.04, 0.3, 0.5], { color: 0x6b7280 });
@@ -212,6 +234,40 @@ function buildISS(B) {
     "Glovebox": { pos: V3(1.2, 0.2, 0.4), look: V3(1.6, -0.1, -1.0) },
     "Down the module": { pos: V3(-4.1, 0.2, 0), look: V3(4, 0, 0) },
   }};
+}
+
+// ---------------- generated models (public/models/*.glb) over the simulation geometry ----------------
+// Each prop's boxes/rects stay in the scene as the fire model's surfaces (invisible but still clickable/hoverable).
+const PROP_MODELS = {   // rotY turns each model's front (+x in the generated file) to face into the room
+  crew_quarters: { url: "../models/crew_quarters.glb", rotY: 0 },
+  glovebox: { url: "../models/glovebox.glb", rotY: Math.PI },
+  glovebox_iss: { url: "../models/glovebox.glb", rotY: -Math.PI / 2 },
+  stowage: { url: "../models/stowage.glb", rotY: 0 },
+  galley: { url: "../models/galley.glb", rotY: 0 },
+};
+function fitModels(B, habitatId) {
+  const loader = new GLTFLoader();
+  for (const [key, meshes] of Object.entries(B.props)) {
+    const spec = PROP_MODELS[key]; if (!spec) continue;
+    const box = new THREE.Box3(); meshes.forEach(m => { m.updateMatrixWorld(); box.expandByObject(m); });
+    const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
+    loader.load(spec.url, g => {
+      const m = g.scene; m.rotation.y = spec.rotY;
+      const mb = new THREE.Box3().setFromObject(m), ms = mb.getSize(new THREE.Vector3());
+      m.scale.setScalar(Math.min(size.x / ms.x, size.y / ms.y, size.z / ms.z));   // fit inside the prop's footprint
+      const c = new THREE.Box3().setFromObject(m);
+      m.position.add(center.clone().sub(c.getCenter(new THREE.Vector3())));
+      if (habitatId !== "iss") m.position.y += box.min.y - new THREE.Box3().setFromObject(m).min.y;   // rest on the floor
+      B.scene.add(m);
+      meshes.forEach(x => {   // still raycast: hover and fire keep working
+        const surf = B.surfaces[x.userData.surf];
+        if (surf?.mat === "pmma_thick") {   // the generated glovebox is an open frame: keep the acrylic window as glass
+          Object.assign(x.material, { transparent: true, opacity: 0.28, color: new THREE.Color(0xbfe6ff), roughness: 0.05, metalness: 0.1, map: null });
+          x.material.needsUpdate = true;
+        } else x.material.visible = false;
+      });
+    }, undefined, () => console.warn("prop model not loaded, keeping simple geometry:", spec.url));
+  }
 }
 
 // ---------------- public API ----------------
@@ -230,7 +286,8 @@ export function createInterior(container, habitatId, { onPick, onHover } = {}) {
   const camera = new THREE.PerspectiveCamera(70, 1, 0.02, 60);
 
   const B = new Builder(scene);
-  const room = habitatId === "iss" ? buildISS(B) : buildMoonBase(B);
+  const room = habitatId === "iss" ? buildISS(B) : buildMoonBase(B, habitatId);
+  fitModels(B, habitatId);
   const nbrs = B.neighbours();
   const cells = B.cells;
 

@@ -22,7 +22,10 @@
 .views{position:fixed;left:14px;top:62px;z-index:5;display:flex;flex-direction:column;gap:6px}
 .chip{background:#12151ecc;border:1px solid var(--line);color:var(--fg);text-align:left}.chip:hover{border-color:var(--acc)}
 .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:5;background:#12151ecc;border:1px solid var(--line);border-radius:20px;padding:7px 16px;color:#d3d7df;pointer-events:none;white-space:nowrap}
-#tip{position:fixed;z-index:9;pointer-events:none;background:#1f2532;border:1px solid #39414f;border-radius:8px;padding:5px 9px;font-size:12.5px;display:none}
+#tip{position:fixed;z-index:9;pointer-events:none;background:#161a23f2;border:1px solid #39414f;border-radius:10px;padding:10px 12px;font-size:12.5px;display:none;width:280px;box-shadow:0 10px 30px #000a}
+#tip b{font-size:14px}#tip .tm{color:var(--mute);margin:2px 0 6px}#tip .ts{display:inline-block;font-weight:700;border-radius:12px;padding:1px 9px;margin-bottom:6px}
+#tip .tsrc{color:#c9cdd6;font-size:11.5px;line-height:1.4}#tip .tclick{color:var(--acc);font-size:11.5px;margin-top:6px}
+#tip .s-spreads{background:#ff5c8a22;color:#ff9ab6}#tip .s-quench,#tip .s-no_spread,#tip .s-blowoff{background:#3ecf8e22;color:#7ee8b8}#tip .s-untested{background:#f6c94522;color:#f6dc8a}
 .panel{position:fixed;right:14px;top:62px;z-index:6;width:min(360px,calc(100vw - 28px));max-height:calc(100vh - 170px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
 .panel h2{font-size:17px;margin:0 0 4px}.panel .sub{color:var(--mute);font-size:12.5px;margin:0 0 10px}
 .status{display:inline-block;font-weight:700;border-radius:20px;padding:3px 12px;margin:2px 0 8px;font-size:13px}
@@ -48,7 +51,7 @@ label.sl output{color:var(--fg);text-align:right}input[type=range]{accent-color:
 <div id="view"></div>
 <div class="bar">
   <a href="/station/"><img src="../img/ember.png" width="24" height="24" alt=""> ← Station</a>
-  <div class="seg" id="hab"><button data-h="moon">Moon base</button><button data-h="iss">ISS module</button></div>
+  <div class="seg" id="hab"><button data-h="iss">ISS module</button><button data-h="moon">Moon base</button><button data-h="mars">Mars base</button></div>
 </div>
 <div class="views" id="views"></div>
 <div class="hint" id="hint">Drag to look around · click any object to start a fire there</div>
@@ -86,9 +89,10 @@ import { simulate, materialVerdict, MATERIALS, SRC, buoyantFlow } from "./firemo
 const HAB = {
   moon: { name: "Moon base", o2: 0.30, pressure_kpa: 70.3, gravity_g: 0.166, vent_cm_s: 5 },
   iss: { name: "ISS module", o2: 0.21, pressure_kpa: 101.3, gravity_g: 0, vent_cm_s: 10 },
+  mars: { name: "Mars base", o2: 0.30, pressure_kpa: 70.3, gravity_g: 0.38, vent_cm_s: 5 },   // atmosphere assumed = Moon base
 };
 const $ = id => document.getElementById(id);
-const hab = new URLSearchParams(location.search).get("hab") === "iss" ? "iss" : "moon";
+const hab = ["iss", "moon", "mars"].includes(new URLSearchParams(location.search).get("hab")) ? new URLSearchParams(location.search).get("hab") : "moon";
 document.querySelectorAll("#hab button").forEach(b => {
   b.classList.toggle("on", b.dataset.h === hab);
   b.onclick = () => { location.search = "?hab=" + b.dataset.h; };
@@ -145,8 +149,15 @@ world = createInterior($("view"), hab, {
   onHover: (s, e) => {
     const tip = $("tip");
     if (!s) { tip.style.display = "none"; return; }
-    tip.style.display = "block"; tip.style.left = e.clientX + 14 + "px"; tip.style.top = e.clientY + 14 + "px";
-    tip.textContent = `${s.name} · ${MATERIALS[s.mat].name}`;
+    $("hint").style.display = "none";
+    const v = materialVerdict(s.mat, cond), m = MATERIALS[s.mat], src = (v.src || [])[0];
+    tip.innerHTML = `<b>${s.name}</b><div class="tm">${m.name}${m.proxy ? ` · NASA tested ${m.proxy}` : ""}</div>
+      <div class="ts s-${v.state}">${STATE[v.state]}${v.extrapolated ? " · extrapolated" : ""}</div>
+      ${src ? `<div class="tsrc"><span class="tag t-${SRC[src].kind}">${SRC[src].kind === "data" ? "DATA" : "ASSUMPTION"}</span>${SRC[src].text}</div>` : ""}
+      <div class="tclick">Click to start a fire here</div>`;
+    tip.style.display = "block";
+    const x = Math.min(e.clientX + 16, innerWidth - tip.offsetWidth - 8), y = Math.min(e.clientY + 16, innerHeight - tip.offsetHeight - 8);
+    tip.style.left = x + "px"; tip.style.top = y + "px";
   },
 });
 if (world) {
@@ -170,6 +181,12 @@ $("time").oninput = () => { t = +$("time").value; world?.setTime(t); };
   $("tval").innerHTML = alarm ? `<span class="alarm">🔔 ${fmtT(t)}</span>` : fmtT(t).replace(" min", "").replace(" s", "s");
   requestAnimationFrame(tick);
 })();
+// test hook: ?hover=x,y moves the pointer there (shows the hover card)
+const hov = new URLSearchParams(location.search).get("hover");
+if (hov && world) setTimeout(() => {
+  const [x, y] = hov.split(",").map(Number);
+  document.querySelector("#view canvas").dispatchEvent(new PointerEvent("pointermove", { clientX: x, clientY: y, bubbles: true }));
+}, 1500);
 // test hook: ?click=x,y dispatches a real pointer click on the canvas (exercises the picking code)
 const clk = new URLSearchParams(location.search).get("click");
 if (clk && world) setTimeout(() => {

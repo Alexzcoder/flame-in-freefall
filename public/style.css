@@ -166,3 +166,25 @@ body[data-tab=ask] .ember-fab{display:none}
 .foldbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-top:4px}.foldbar .more{flex:1;min-width:240px}
 .linkbtn{background:none;border:1px solid var(--line);border-radius:20px;color:var(--mute);font:inherit;font-size:12.5px;padding:4px 12px;margin-top:6px;cursor:pointer}.linkbtn:hover{color:var(--fg);border-color:var(--acc)}
 .rk .more{margin-top:4px}
+
+/* ---- low-key disclosure: no "Learn more" labels, just quiet icons ---- */
+.card,.value{position:relative}
+.more>summary{position:absolute;top:12px;right:12px;font-size:0;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;color:var(--mute);list-style:none}
+.more>summary::-webkit-details-marker{display:none}
+.more>summary::before{content:"ⓘ";font-size:15px;line-height:1}
+.more.haswarn>summary{width:auto;padding:0 4px}.more.haswarn>summary::before{content:"ⓘ ⚠";color:var(--warn)}
+.more[open]>summary::before{content:"×";font-size:18px}
+.more>summary:hover{color:var(--fg);background:var(--panel2);text-decoration:none}
+.more[open]>summary{margin:0}.more p:first-of-type{margin-top:4px}
+.value h3,#verdict .verdict-big{padding-right:28px}
+.fold>summary::after{content:"›";width:auto;height:auto;border:0;color:var(--mute);font-size:20px;font-weight:400;transition:transform .2s}
+.fold[open]>summary::after{content:"›";transform:rotate(90deg)}
+.fold>summary:hover::after{color:var(--fg)}
+.why>summary{color:var(--mute);font-size:12px;cursor:pointer;list-style:none;margin-top:4px}.why>summary::-webkit-details-marker{display:none}
+.why>summary::after{content:" ›"}.why[open]>summary::after{content:" ⌄"}.why>summary:hover{color:var(--fg)}
+.quiet>summary{color:var(--mute);font-size:12.5px;cursor:pointer;list-style:none;width:fit-content}.quiet>summary::-webkit-details-marker{display:none}
+.quiet>summary::after{content:" ›"}.quiet[open]>summary::after{content:" ⌄"}.quiet>summary:hover{color:var(--fg)}
+.linkbtn{border:0;padding:4px 0;font-size:12px}.linkbtn:hover{text-decoration:underline}
+.more>summary::before{content:"i";font:italic 700 11px/1 Georgia,serif;width:16px;height:16px;border:1.3px solid currentColor;border-radius:50%;display:grid;place-items:center}
+.more.haswarn>summary::before{content:"!";font-style:normal;color:var(--warn)}
+.more[open]>summary::before{content:"×";font:400 15px/1 Inter,sans-serif;border:0}
