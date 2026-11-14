@@ -6,6 +6,8 @@ Fire behaves differently without gravity: there is no buoyant convection, so fla
 in conditions (low O₂, low flow) where they would go out on Earth. This project mines microgravity combustion experiment
 data to pull out fire-safety insights for spacecraft and habitats.
 
+**Live dashboard:** https://flame-in-freefall-ivory.vercel.app (coverage map, scenario explorer, ranked investigations, AI research assistant)
+
 ## Dataset
 
 `dataset/flame_runs.json` has 1,624 microgravity combustion runs (633 with outcomes) from 9 NASA PSI investigations (FLEX, CFI, CFI-G, Flame Design, SPICE, BASS-II, SAFFIRE I–III), harmonised into one schema, plus metadata for all 24 combustion investigations.
