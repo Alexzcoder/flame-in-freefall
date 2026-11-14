@@ -141,10 +141,23 @@ function askUI() {
   $('chatform').onsubmit = e => { e.preventDefault(); send(); };
 }
 function md(text) {
-  let h = esc(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\[([^\]]{3,160})\]/g, '<span class="cite">$1</span>');
-  return h.split(/\n{2,}/).map(par => /^\s*[-*•] /m.test(par)
-    ? '<ul class="tight">' + par.split('\n').filter(l => l.trim()).map(l => `<li>${l.replace(/^\s*[-*•] /, '')}</li>`).join('') + '</ul>'
-    : `<p>${par.replace(/\n/g, '<br>')}</p>`).join('');
+  const inline = t => t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]{3,160})\]/g, '<span class="cite">$1</span>');
+  const cells = l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => inline(c.trim()));
+  return esc(text).split(/\n{2,}/).map(block => {
+    const lines = block.split('\n').filter(l => l.trim());
+    if (lines.length >= 2 && lines.every(l => l.trim().startsWith('|'))) {          // markdown table
+      const rows = lines.filter(l => !/^\s*\|?\s*:?-{2,}/.test(l));
+      return `<table class="mdt"><tr>${cells(rows[0]).map(c => `<th>${c}</th>`).join('')}</tr>${rows.slice(1)
+        .map(r => `<tr>${cells(r).map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+    }
+    return lines.map(l => {
+      const m = l.match(/^(#{1,4})\s+(.*)/);
+      if (m) return `<h4>${inline(m[2])}</h4>`;
+      if (/^\s*[-*•] /.test(l)) return `<li>${inline(l.replace(/^\s*[-*•] /, ''))}</li>`;
+      return `<p>${inline(l)}</p>`;
+    }).join('').replace(/(<li>.*?<\/li>)+/g, x => `<ul class="tight">${x}</ul>`);
+  }).join('');
 }
 async function send() {
   const q = $('q').value.trim(); if (!q) return;

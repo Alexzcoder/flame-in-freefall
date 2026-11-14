@@ -23,7 +23,11 @@ Rules:
 - Say clearly when the data does not cover something (e.g. no solid-fuel runs above 22% O2; no partial-gravity data;
   only 633 runs have measured outcomes). Flag assumed values (run.assumed) and censored burn times.
 - Units: O2 as % or fraction (state which), pressure in kPa and psi (1 psi = 6.895 kPa), flow in cm/s.
-- Be concise: short paragraphs or bullets, for engineers and researchers. Answer in the user's language."""
+- Be concise: short paragraphs or bullets, for engineers and researchers. Answer in the user's language.
+- Use at most 4 tool calls in total, then answer.
+
+Investigation ids (use these exact ids in tools):
+{ids}"""
 
 TOOLS = [
     {"type": "function", "function": {
@@ -150,13 +154,25 @@ def answer(messages):
     if prov != "deepseek":
         return {"answer": "The AI assistant isn't configured: set DEEPSEEK_API_KEY (in .env locally, or the Vercel project env).",
                 "trace": [], "sources": [], "model": None}
-    model = os.environ.get("CHAT_MODEL", "deepseek-chat")
-    convo = [{"role": "system", "content": SYSTEM}] + messages
+    model = os.environ.get("CHAT_MODEL", "deepseek-flash")
+    from .main import data
+    ids = "; ".join(f"{p['id']} = {p['acronym']} ({p['category']}, {p['n_runs']} runs)" for p in data()[1].values())
+    convo = [{"role": "system", "content": SYSTEM.format(ids=ids)}] + messages
     trace, sources = [], {}
-    for _ in range(MAX_STEPS):
+    for step in range(MAX_STEPS):
+        last = step == MAX_STEPS - 1
+        if last:  # out of tool rounds: answer with what has been gathered instead of giving up
+            convo.append({"role": "user", "content": "Answer now using only the tool results above. Say what is missing."})
+        body = {"model": model, "messages": convo, "temperature": 0.2, "max_tokens": 1200, "thinking": {"type": "disabled"},
+                **({} if last else {"tools": TOOLS})}
         try:
-            resp = _post("https://api.deepseek.com/chat/completions", key,
-                         {"model": model, "messages": convo, "tools": TOOLS, "temperature": 0.2, "max_tokens": 1200})
+            try:
+                resp = _post("https://api.deepseek.com/chat/completions", key, body)
+            except urllib.error.HTTPError as e:
+                if e.code != 400:
+                    raise
+                body.pop("thinking")  # model doesn't accept the switch: retry without it
+                resp = _post("https://api.deepseek.com/chat/completions", key, body)
         except urllib.error.HTTPError as e:
             return {"answer": f"AI provider error {e.code}: {e.read().decode(errors='replace')[:300]}",
                     "trace": trace, "sources": list(sources.values()), "model": model}
@@ -171,7 +187,8 @@ def answer(messages):
                 result = call_tool(c["function"]["name"], args, sources)
             except Exception as e:  # bad args from the model: report back so it can retry
                 args, result = {}, {"error": str(e)[:200]}
-            trace.append({"tool": c["function"]["name"], "args": args})
+            trace.append({"tool": c["function"]["name"], "args": args,
+                          **({"error": result["error"]} if isinstance(result, dict) and "error" in result else {})})
             convo.append({"role": "tool", "tool_call_id": c["id"], "content": json.dumps(result, default=str)[:12000]})
     return {"answer": "I couldn't finish within the tool-call limit; try a narrower question.",
             "trace": trace, "sources": list(sources.values()), "model": model}

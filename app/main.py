@@ -6,9 +6,10 @@ Everything is read-only over dataset/ (flame) and ranking/ (Kai). Loaded once pe
 """
 import json
 import os
+import time
 from functools import lru_cache
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -119,13 +120,27 @@ class ChatIn(BaseModel):
     messages: list[dict]
 
 
+CHAT_LIMIT, CHAT_WINDOW_S = 20, 600   # per client IP
+_chat_hits: dict[str, list[float]] = {}
+
+
 @app.post("/api/chat")
-def api_chat(body: ChatIn):
+def api_chat(body: ChatIn, request: Request):
+    # ponytail: in-memory limiter, per function instance (not global); enough to stop a casual credit drain.
+    # Upgrade path: Vercel Firewall rate-limit rule or a Redis counter if the link gets shared widely.
+    ip = (request.headers.get("x-forwarded-for") or (request.client.host if request.client else "?")).split(",")[0].strip()
+    now = time.time()
+    hits = [t for t in _chat_hits.get(ip, []) if now - t < CHAT_WINDOW_S]
+    if len(hits) >= CHAT_LIMIT:
+        raise HTTPException(429, f"Too many questions: limit is {CHAT_LIMIT} per {CHAT_WINDOW_S // 60} minutes.")
+    _chat_hits[ip] = hits + [now]
     from .chat import answer
     msgs = [m for m in body.messages if m.get("role") in ("user", "assistant") and isinstance(m.get("content"), str)][-12:]
     if not msgs or msgs[-1]["role"] != "user":
         raise HTTPException(400, "last message must be from the user")
-    return answer(msgs)
+    if len(msgs[-1]["content"]) > 2000:
+        raise HTTPException(400, "question too long (max 2,000 characters)")
+    return answer([{"role": m["role"], "content": m["content"][:4000]} for m in msgs])
 
 
 if os.path.isdir(os.path.join(ROOT, "public")):  # local dev; on Vercel public/ is served by the CDN, not the function
