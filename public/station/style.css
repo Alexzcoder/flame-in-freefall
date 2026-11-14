@@ -55,3 +55,5 @@ section.chart { margin-top: 30px; }
 #panel .inside{display:inline-block;background:var(--acc);color:#1a0d05;font-weight:700;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px}
 #panel .more{background:var(--card2);color:var(--text);border:1px solid var(--line);font-weight:500}
 .orbit-hint{pointer-events:auto}
+.howto{margin:0 0 14px;color:#c9cdd6}.howto summary{cursor:pointer;color:#5aa9ff}.howto ul{margin-top:8px}
+.flyto{position:absolute;left:16px;top:14px;z-index:2;display:flex;gap:6px;flex-wrap:wrap;align-items:center}.flyto span{color:#8a93a6;font-size:12.5px;margin-right:2px}.flyto button{font:inherit;font-size:13px;background:#12151ecc;color:#e4e7ee;border:1px solid #2a303c;border-radius:20px;padding:6px 12px;cursor:pointer}.flyto button:hover{border-color:#ff7a2f}

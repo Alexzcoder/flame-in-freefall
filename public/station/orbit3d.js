@@ -3,16 +3,41 @@
 // Reuses the habitat models from station3d.js. Beacon colours come from the confidence logic in app.js.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { buildOrbitalModule, buildMoonBase, makeLabel } from "./station3d.js";
 
 const TEX = "https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/";
 const COLORS = { green: 0x3ecf8e, yellow: 0xf6c945, red: 0xff5c8a, none: 0x8a93a6 };
 const DEG = Math.PI / 180;
-const EARTH_R = 5, ISS_R = 7.2, MOON_R = 1.4, MOON_ORBIT = 26;
+const EARTH_R = 5, ISS_R = 7.2, MOON_R = 1.4, MOON_ORBIT = 26, MARS_R = 2.6;
+const MARS_POS = new THREE.Vector3(48, 4, -22);   // not to scale: Mars is ~225 million km away on average
+
+// Swap a placeholder for a generated GLB model (public/models/), scaled to `size`. Keeps the placeholder if loading fails.
+const gltf = new GLTFLoader();
+function swapModel(url, holder, placeholder, size, rotY = 0) {
+  gltf.load(url, g => {
+    const m = g.scene, box = new THREE.Box3().setFromObject(m), dim = box.getSize(new THREE.Vector3());
+    m.scale.setScalar(size / Math.max(dim.x, dim.y, dim.z));
+    const c = new THREE.Box3().setFromObject(m).getCenter(new THREE.Vector3()); m.position.sub(c);
+    m.rotation.y = rotY; holder.add(m); placeholder.visible = false;
+  }, undefined, () => console.warn("model not loaded, keeping placeholder:", url));
+}
+function hitSphere(r) {   // invisible, generous click target
+  return new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), new THREE.MeshBasicMaterial({ visible: false }));
+}
 
 function texture(loader, file, apply) {
   loader.load(TEX + file, t => { t.colorSpace = THREE.SRGBColorSpace; apply(t); }, undefined,
     () => console.warn("texture not loaded, using plain colour:", file));  // offline: keep the plain material
+}
+
+function canvasMars() {   // rusty procedural fallback surface
+  const c = document.createElement("canvas"); c.width = 512; c.height = 256; const g = c.getContext("2d");
+  g.fillStyle = "#b5532b"; g.fillRect(0, 0, 512, 256);
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(${60 + Math.random() * 90},${20 + Math.random() * 30},10,${Math.random() * 0.35})`;
+    g.beginPath(); g.arc(Math.random() * 512, Math.random() * 256, Math.random() * 14, 0, 7); g.fill(); }
+  g.fillStyle = "rgba(255,240,230,.7)"; g.fillRect(0, 0, 512, 10); g.fillRect(0, 246, 512, 10);   // polar caps
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
 function beacon(color) {
@@ -42,7 +67,7 @@ export function createOrbit3D(container, { onSelect } = {}) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x03050a);
   const camera = new THREE.PerspectiveCamera(45, 1, 0.05, 600);
-  const HOME = { pos: new THREE.Vector3(0, 16, 42), target: new THREE.Vector3(6, 0, 0) };
+  const HOME = { pos: new THREE.Vector3(10, 20, 66), target: new THREE.Vector3(16, 0, -4) };
   camera.position.copy(HOME.pos);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.25));
@@ -82,6 +107,8 @@ export function createOrbit3D(container, { onSelect } = {}) {
   const issPivot = new THREE.Group(); issPlane.add(issPivot);
   const issHolder = new THREE.Group(); issHolder.position.x = ISS_R; issPivot.add(issHolder);
   const iss = buildOrbitalModule().group; iss.scale.setScalar(0.3); issHolder.add(iss);
+  swapModel("../models/iss.glb", issHolder, iss, 2.4);
+  const issHit = hitSphere(1.6); issHolder.add(issHit);
   const issBeacon = beacon(COLORS.none); issBeacon.group.position.y = 0.65; issHolder.add(issBeacon.group);
   const issLabel = makeLabel("ISS", 1.9); issLabel.position.y = 1.7; issHolder.add(issLabel);
 
@@ -97,13 +124,30 @@ export function createOrbit3D(container, { onSelect } = {}) {
   const baseMount = new THREE.Group(); baseMount.rotation.z = 35 * DEG; baseMount.add(base); moonHolder.add(baseMount);
   const moonBeacon = beacon(COLORS.none); moonBeacon.group.position.y = MOON_R + 0.7; baseMount.add(moonBeacon.group);
   const moonLabel = makeLabel("Moon base", 2.4); moonLabel.position.y = MOON_R + 2.0; moonHolder.add(moonLabel);
+  const baseHolder = new THREE.Group(); baseHolder.position.copy(base.position); baseMount.add(baseHolder);
+  swapModel("../models/moon_base.glb", baseHolder, base, 0.55);
+
+  // Mars with a Mars base (procedural surface until a texture loads)
+  const marsTex = canvasMars();
+  const mars = new THREE.Mesh(new THREE.SphereGeometry(MARS_R, 64, 48), new THREE.MeshPhongMaterial({ map: marsTex, shininess: 3 }));
+  new THREE.TextureLoader().load("../models/mars_texture.jpg", t => { t.colorSpace = THREE.SRGBColorSpace; mars.material.map = t; mars.material.needsUpdate = true; }, undefined, () => {});
+  const marsHolder = new THREE.Group(); marsHolder.position.copy(MARS_POS); marsHolder.add(mars); scene.add(marsHolder);
+  const marsMount = new THREE.Group(); marsMount.rotation.z = 25 * DEG; marsMount.rotation.y = -0.6; marsHolder.add(marsMount);
+  const marsBase = buildMoonBase().group; marsBase.scale.setScalar(0.18); marsBase.position.set(0, MARS_R + 0.02, 0); marsMount.add(marsBase);
+  const marsBaseHolder = new THREE.Group(); marsBaseHolder.position.copy(marsBase.position); marsMount.add(marsBaseHolder);
+  swapModel("../models/mars_base.glb", marsBaseHolder, marsBase, 0.8);
+  const marsBeacon = beacon(COLORS.none); marsBeacon.group.position.y = MARS_R + 0.9; marsMount.add(marsBeacon.group);
+  const marsLabel = makeLabel("Mars base", 2.6); marsLabel.position.y = MARS_R + 2.0; marsHolder.add(marsLabel);
+  const moonHit = hitSphere(MOON_R * 1.6), marsHit = hitSphere(MARS_R * 1.4);
+  moonHolder.add(moonHit); marsHolder.add(marsHit);
   const scaleNote = makeLabel("not to scale", 1.2); scaleNote.position.set(0, -EARTH_R - 1.8, 0);
   scaleNote.material.opacity = 0.5; scene.add(scaleNote);
 
   // focus = point the camera looks at; center = body it sits on (the camera arrives from outside, above the habitat)
   const targets = {
-    iss: { focus: issHolder, center: earth, pick: [iss, issBeacon.group], dist: 2.4, label: issLabel, beacon: issBeacon },
-    moon: { focus: base, center: moon, pick: [moon, base, moonBeacon.group], dist: 2.6, label: moonLabel, beacon: moonBeacon },
+    iss: { focus: issHolder, center: earth, pick: [issHit, issLabel, issBeacon.group], dist: 3.2, label: issLabel, beacon: issBeacon },
+    moon: { focus: baseHolder, center: moon, pick: [moonHit, moonLabel, moonBeacon.group], dist: 2.6, label: moonLabel, beacon: moonBeacon },
+    mars: { focus: marsBaseHolder, center: mars, pick: [marsHit, marsLabel, marsBeacon.group], dist: 3.2, label: marsLabel, beacon: marsBeacon },
   };
 
   const controls = new OrbitControls(camera, renderer.domElement);
@@ -170,7 +214,8 @@ export function createOrbit3D(container, { onSelect } = {}) {
     moonHolder.rotation.y = -moonPivot.rotation.y + Math.PI;  // keep the base facing Earth (tidally locked)
     iss.rotation.y += dt * 0.3;
     const pulse = 1 + 0.25 * Math.sin(now / 350);
-    issBeacon.halo.scale.setScalar(pulse); moonBeacon.halo.scale.setScalar(pulse);
+    issBeacon.halo.scale.setScalar(pulse); moonBeacon.halo.scale.setScalar(pulse); marsBeacon.halo.scale.setScalar(pulse);
+    mars.rotation.y += dt * 0.05;
 
     if (flight) {
       const k = Math.min(1, (now - flight.t0) / flight.ms), e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
@@ -191,7 +236,7 @@ export function createOrbit3D(container, { onSelect } = {}) {
     focus, overview,
     // level per habitat: "green" | "yellow" | "red"
     update(levels) {
-      for (const [id, b] of [["iss", issBeacon], ["moon", moonBeacon]]) {
+      for (const [id, b] of [["iss", issBeacon], ["moon", moonBeacon], ["mars", marsBeacon]]) {
         const c = COLORS[levels[id]] ?? COLORS.none;
         b.core.material.color.setHex(c); b.halo.material.color.setHex(c);
       }
