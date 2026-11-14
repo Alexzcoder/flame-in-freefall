@@ -211,5 +211,12 @@ main{padding-bottom:110px}
 .footage video,#labreal video{max-height:300px}
 .controls .numin{float:right;color:var(--mute);font-size:12.5px}.controls .numin small{margin-left:4px}
 .controls .numin input{width:64px;font:inherit;font-weight:600;color:var(--fg);background:var(--bg,#0b0d12);border:1px solid var(--line);border-radius:6px;padding:2px 6px;text-align:right}
-.scensim{margin-top:14px}.scensim .labcv canvas{aspect-ratio:3/4;height:360px;width:auto;margin:0 auto}.simnote{font-size:12.5px;color:var(--mute);margin:8px 0 0}.simnote b{color:var(--warn,#f6c945)}
-.scensim+.footage{margin-top:14px}
+.compare2{margin-top:14px}.compare2 h3{margin:0 0 10px}
+.compare2 .panes{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.compare2 figure{margin:0;min-width:0}.compare2 figcaption{font-size:12px;color:var(--mute);margin-top:6px}
+.compare2 .pane{aspect-ratio:4/3;background:#05070d;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.compare2 .pane canvas,.compare2 .pane video{width:100%;height:100%;display:block;object-fit:contain;max-height:none;border-radius:0}
+.compare2 .pane p{padding:12px;font-size:12.5px;text-align:center}
+.compare2 #footage .vl{display:none}
+@media(max-width:560px){.compare2 .panes{grid-template-columns:1fr}}.simnote{font-size:12.5px;color:var(--mute);margin:8px 0 0}.simnote b{color:var(--warn,#f6c945)}
+

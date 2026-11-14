@@ -1,0 +1,163 @@
+{
+ "theta": {
+  "k": 45.43455,
+  "heat": 1.88389,
+  "cool": 1.64899,
+  "ign": 0.49593,
+  "buoy": 26.0,
+  "dif_o2": 0.0697,
+  "dif_fuel": 0.23989,
+  "cond": 0.12992,
+  "flow_scale": 1.19958,
+  "eps0": 4.0,
+  "eps_g": 10.0,
+  "emit_scale": 2.44111,
+  "inv_fuel": 2.88265,
+  "inv_o2": 0.67721,
+  "cam_blue": 1.0,
+  "cam_soot": 0.7,
+  "tad_exp": 1.1911,
+  "anchor": 0.37192,
+  "emit0": 0.66613
+ },
+ "tau_real_s_per_sim_s": 4.540844575842341,
+ "fit": {
+  "solid_fate": {
+   "went_out_runs": 13,
+   "sim_goes_out": 13,
+   "burned_runs": 18,
+   "sim_keeps_burning": 18
+  },
+  "train": {
+   "gas_runs": 261,
+   "gas_loss": 0.5537317221200848,
+   "balanced_accuracy": 0.3739095151146277,
+   "recall": {
+    "extinction": 0.8387096774193549,
+    "no_ignition": 0.2830188679245283,
+    "terminated": 0.0
+   },
+   "confusion": {
+    "extinction": {
+     "extinction": 130,
+     "no_ignition": 25,
+     "terminated": 0
+    },
+    "no_ignition": {
+     "extinction": 38,
+     "no_ignition": 15,
+     "terminated": 0
+    },
+    "terminated": {
+     "extinction": 45,
+     "no_ignition": 8,
+     "terminated": 0
+    }
+   },
+   "extinction_time_factor_median": 1.4446098280181277,
+   "solid_runs": 65,
+   "aspect_rho": 0.6970940170940171
+  },
+  "test": {
+   "gas_runs": 70,
+   "gas_loss": 0.6846922257971013,
+   "balanced_accuracy": 0.3333333333333333,
+   "recall": {
+    "extinction": 1.0,
+    "no_ignition": 0.0,
+    "terminated": 0.0
+   },
+   "confusion": {
+    "extinction": {
+     "extinction": 28,
+     "no_ignition": 0,
+     "terminated": 0
+    },
+    "no_ignition": {
+     "extinction": 7,
+     "no_ignition": 0,
+     "terminated": 0
+    },
+    "terminated": {
+     "extinction": 35,
+     "no_ignition": 0,
+     "terminated": 0
+    }
+   },
+   "extinction_time_factor_median": 1.544826696124784,
+   "solid_runs": 19,
+   "aspect_rho": -0.309090909090909
+  }
+ },
+ "website_defaults_fit": {
+  "solid_fate": {
+   "went_out_runs": 13,
+   "sim_goes_out": 0,
+   "burned_runs": 18,
+   "sim_keeps_burning": 18
+  },
+  "train": {
+   "gas_runs": 261,
+   "gas_loss": 0.7252557640475168,
+   "balanced_accuracy": 0.29900588354635826,
+   "recall": {
+    "extinction": 0.4064516129032258,
+    "no_ignition": 0.07547169811320754,
+    "terminated": 0.41509433962264153
+   },
+   "confusion": {
+    "extinction": {
+     "extinction": 63,
+     "no_ignition": 15,
+     "terminated": 77
+    },
+    "no_ignition": {
+     "extinction": 9,
+     "no_ignition": 4,
+     "terminated": 40
+    },
+    "terminated": {
+     "extinction": 28,
+     "no_ignition": 3,
+     "terminated": 22
+    }
+   },
+   "extinction_time_factor_median": 1.7063925767120254,
+   "solid_runs": 65,
+   "aspect_rho": -0.0792395104895105
+  },
+  "test": {
+   "gas_runs": 70,
+   "gas_loss": 0.7829039825490945,
+   "balanced_accuracy": 0.1119047619047619,
+   "recall": {
+    "extinction": 0.10714285714285714,
+    "no_ignition": 0.0,
+    "terminated": 0.22857142857142856
+   },
+   "confusion": {
+    "extinction": {
+     "extinction": 3,
+     "no_ignition": 0,
+     "terminated": 25
+    },
+    "no_ignition": {
+     "extinction": 2,
+     "no_ignition": 0,
+     "terminated": 5
+    },
+    "terminated": {
+     "extinction": 27,
+     "no_ignition": 0,
+     "terminated": 8
+    }
+   },
+   "extinction_time_factor_median": 2.4906343698406976,
+   "solid_runs": 19,
+   "aspect_rho": -0.28771929824561404
+  }
+ },
+ "generations": 36,
+ "population": 16,
+ "note": "Fitted by flame/calibrate.py to CFI-G outcomes (gas) and BASS-II flame aspect (solid). Test days held out; see dataset/shape_eval.md."
+}

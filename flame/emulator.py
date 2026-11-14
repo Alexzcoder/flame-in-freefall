@@ -19,7 +19,7 @@ import torch.nn as nn
 
 from flame.media import ROOT
 from flame.shape import clip_measures
-from flame.sim import FUELS, Sim, load_theta
+from flame.sim import FUELS, Sim, load_theta, theta_for
 
 DATA = os.path.join(ROOT, "data", "emulator", "sims.npz")
 EXPORT = os.path.join(ROOT, "public", "models", "flame_emulator.json")
@@ -62,7 +62,8 @@ def generate(n, batch=1024, seed=0):
             t0 = time.time()
             chunk = conds[i:i + batch]
             pad = batch - len(chunk)
-            sim = Sim(chunk + [chunk[-1]] * pad, theta)
+            padded = chunk + [chunk[-1]] * pad
+            sim = Sim(padded, [theta_for(c["fuel"], theta) for c in padded])  # tuned physics for solids only
             fr = sim.run(SECONDS, EVERY).numpy()[:len(chunk)]  # (b, t, 128, 96, 3)
             late = fr[:, -int(10 / EVERY):].astype(np.float32).mean(1) / 255  # last 10 s average
             img = torch.nn.functional.avg_pool2d(torch.from_numpy(late).permute(0, 3, 1, 2), 4).permute(0, 2, 3, 1).numpy()

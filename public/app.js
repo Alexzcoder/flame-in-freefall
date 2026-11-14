@@ -186,7 +186,9 @@ async function updateScenario() {
     <td class="hide-sm">${fmtFlow(m.flow_cm_s)}</td><td>${outcomeText(m.outcome)}</td></tr>`).join('')}</table></div>
     ${more > 0 ? `<p class="mute" style="font-size:12.5px;margin:8px 0 0">+ ${more} more similar runs not shown.</p>` : ''}`;
   $('scenrank').innerHTML = `<p class="mute" style="margin:0 0 6px;font-size:12.5px">Ranked for: <b style="color:var(--fg)">${esc(scenarioName)}</b> (${(o2 * 100).toFixed(0)} % O₂, ${psi.toFixed(1)} psi). Scores combine closeness of conditions, recorded outcomes, fuel type and fire-safety focus.</p>` + rankHTML(rk.results.slice(0, 8), false);
-  import('./footage.js').then(f => f.realFootage($('footage'), { o2, pressure: (psi * PSI_KPA).toFixed(2), flow, gravity: g, phase }));
+  $('footage').dataset.cap = 'footcap';
+  import('./footage.js').then(f => f.realFootage($('footage'), { o2, pressure: (psi * PSI_KPA).toFixed(2), flow, gravity: g, phase },
+    'No NASA video near these settings.'));
   // Close experiments per fuel type, so "solids were only tested at ISS conditions" is visible whatever the filter
   const fams = await Promise.all(['solid', 'liquid', 'gas'].map(f => api(`/api/nearest?${q}&phase=${f}&k=1`)));
   if ($('famcov')) $('famcov').innerHTML = '<span class="mute" style="border:0;background:none;padding-left:0">Close experiments by fuel:</span>' +

@@ -146,8 +146,14 @@
         </div>
       </div>
       <div><div class="card" id="verdict"></div>
-        <div class="card scensim"><div class="labcv"><canvas id="scensim" width="300" height="400"></canvas><span class="cap">Simulated flame at these settings</span></div><p class="simnote" id="simnote"></p><p class="simnote" id="emunote" hidden></p></div>
-        <div class="card footage" id="footage" hidden></div></div>
+        <div class="card compare2">
+          <h3>Simulation vs. closest real NASA run</h3>
+          <div class="panes">
+            <figure><div class="pane"><canvas id="scensim" width="480" height="360"></canvas></div><figcaption>Simulated flame at your settings <span class="mute">(illustrative)</span></figcaption></figure>
+            <figure><div class="pane" id="footage"></div><figcaption id="footcap">Real NASA footage, brightened</figcaption></figure>
+          </div>
+          <p class="simnote" id="simnote"></p><p class="simnote" id="emunote" hidden></p>
+        </div></div>
     </div>
     <div class="card"><h3>Closest real experiments</h3><div id="nearest"></div></div>
     <div class="card"><h3>Most relevant investigations for this atmosphere</h3><div id="scenrank"></div></div>

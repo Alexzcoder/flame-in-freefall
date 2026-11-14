@@ -3,7 +3,8 @@
 // one-step combustion model: fuel vapour + oxygen -> heat + soot, only where it is hot enough.
 // Buoyancy is proportional to gravity, so the flame shape emerges from the physics: tall and flickering in 1 g,
 // short and rounder on the Moon, a dim sphere fed only by diffusion in microgravity (which can starve itself of
-// oxygen when the fan is off, as BASS-II saw). Pressure: reaction ~ sqrt(p), diffusion ~ 1/sqrt(p). ILLUSTRATIVE: qualitative behaviour, not calibrated to NASA data.
+// oxygen when the fan is off, as BASS-II saw). Pressure: reaction ~ sqrt(p), diffusion ~ 1/sqrt(p). ILLUSTRATIVE: drawn with hand-tuned knobs.
+// The NASA-calibrated knobs (simparams.json, flame/calibrate.py) drive the predictions; see dataset/shape_eval.md.
 
 const VS = `#version 300 es
 in vec2 p; out vec2 uv;
@@ -62,9 +63,9 @@ const SHADERS = {
     void main(){ float L = texture(pr, uv - vec2(tx.x, 0.)).r, R = texture(pr, uv + vec2(tx.x, 0.)).r;
       float B = texture(pr, uv - vec2(0., tx.y)).r, T = texture(pr, uv + vec2(0., tx.y)).r;
       o = vec4(texture(vel, uv).xy - 0.5 * vec2(R - L, T - B), 0., 1.); }`,
-  show: `${HEAD} uniform sampler2D s; uniform float blue, k;
+  show: `${HEAD} uniform sampler2D s; uniform float blue, k; uniform vec4 win;
     void main(){
-      vec4 c = texture(s, uv); float t = clamp(c.r, 0., 2.);
+      vec4 c = texture(s, win.xy + uv * win.zw); float t = clamp(c.r, 0., 2.);   // win: shown part of the domain
       vec3 fire = vec3(1.6 * t, 1.1 * t * t, 0.55 * t * t * t);                    // red -> orange -> yellow-white
       float zone = clamp(k * c.g * c.b * smoothstep(0.35, 0.6, c.r) * 0.45, 0., 1.); // where it is reacting now
       vec3 col = fire * mix(1.0, 0.45, blue) + vec3(0.18, 0.42, 1.0) * zone * (0.35 + 1.1 * blue);  // soot-free blue in microgravity
@@ -77,8 +78,13 @@ const SHADERS = {
 // which replaces them when present (same knobs as flame/sim.py THETA; see dataset/shape_eval.md for how well it fits).
 const TH = { k: 16, heat: 1.5, cool: 0.6, ign: 0.35, buoy: 26, dif_o2: 0.22, dif_fuel: 0.20, cond: 0.10, flow_scale: 0.9,
              eps0: 4, eps_g: 10, emit_scale: 1, anchor: 0.5, emit0: 0.7 };
+// What you SEE stays on the hand-tuned knobs: the tuned set (fitted at 0 g to whether flames survive) shrinks the flames
+// to a thin rim and loses the 1 g plume. Predictions (insights.json, risk.json, the emulator) use the tuned set.
+// To draw with tuned knobs for some fuels, list them in TUNED.
+const THC = { ...TH }, TUNED = [];
 const knobs = fetch(new URL("simparams.json", import.meta.url)).then(r => r.ok ? r.json() : null)
-  .then(j => { for (const key in TH) if (j?.theta?.[key] != null) TH[key] = j.theta[key]; }).catch(() => {});
+  .then(j => { for (const key in THC) if (j?.theta?.[key] != null) THC[key] = j.theta[key]; }).catch(() => {});
+const knobsFor = fuel => TUNED.includes(fuel) ? THC : TH;
 export const calibrated = knobs;
 
 export function createFlameLab(canvas, init = {}) {
@@ -137,25 +143,34 @@ export function createFlameLab(canvas, init = {}) {
                  burner: { rect: [0.4625, 0.40, 0.5375, 0.4563], emit: 9.0, round: 1 } };   // ACME/CFI-G: gas fed through a small porous sphere
 
   function step(dt) {
+    const T = knobsFor(P.fuel);
     const g = Math.max(0, P.gravity_g), o2 = P.o2 / 0.21, f = FUEL[P.fuel] || FUEL.fabric;
-    const flow = P.flow_cm_s * TH.flow_scale;   // cm/s -> cells/s (one cell ~ 1 mm, playback slowed for visibility)
+    const flow = P.flow_cm_s * T.flow_scale;   // cm/s -> cells/s (one cell ~ 1 mm, playback slowed for visibility)
     time += dt;
     pass("advect", vel.w, { vel: vel.r, src: vel.r, dt, keep: [0.995, 0.995, 1, 1] }); vel.swap();
     pass("advect", scal.w, { vel: vel.r, src: scal.r, dt, keep: [0.995, 0.99, 1, 0.997] }); scal.swap();
     const pr = Math.max(0.2, P.pressure_kpa / 101.325);   // denser gas: faster reaction, slower diffusion
-    pass("react", scal.w, { s: scal.r, dt, k: TH.k * Math.min(2.2, o2) * Math.sqrt(pr), heat: TH.heat, cool: TH.cool, ign: TH.ign,
-      emit: f.emit * TH.emit_scale, o2, time, dif: 1 / Math.sqrt(pr), fuelRect: f.rect, round_: f.round || 0,
-      difO: TH.dif_o2, difF: TH.dif_fuel, cond: TH.cond, anchor: TH.anchor, emit0: TH.emit0 }); scal.swap();
+    pass("react", scal.w, { s: scal.r, dt, k: T.k * Math.min(2.2, o2) * Math.sqrt(pr), heat: T.heat, cool: T.cool, ign: T.ign,
+      emit: f.emit * T.emit_scale, o2, time, dif: 1 / Math.sqrt(pr), fuelRect: f.rect, round_: f.round || 0,
+      difO: T.dif_o2, difF: T.dif_fuel, cond: T.cond, anchor: T.anchor, emit0: T.emit0 }); scal.swap();
     pass("curl", cu, { vel: vel.r });
-    pass("forces", vel.w, { vel: vel.r, s: scal.r, curl: cu, dt, buoy: TH.buoy * g * Math.sqrt(pr), flow, eps: TH.eps0 + TH.eps_g * Math.sqrt(g) }); vel.swap();
+    pass("forces", vel.w, { vel: vel.r, s: scal.r, curl: cu, dt, buoy: T.buoy * g * Math.sqrt(pr), flow, eps: T.eps0 + T.eps_g * Math.sqrt(g) }); vel.swap();
     pass("div", dv, { vel: vel.r });
     for (let i = 0; i < 24; i++) { pass("jacobi", prs.w, { pr: prs.r, dv }); prs.swap(); }
     pass("project", vel.w, { pr: prs.r, vel: vel.r }); vel.swap();
   }
+  // Shown part of the domain: the whole domain fits a 3:4 canvas; a wider canvas shows a band around the fuel
+  // (more room above it, where a rising flame goes) instead of stretching.
+  function view() {
+    const a = canvas.width / canvas.height, d = W / H, f = FUEL[P.fuel] || FUEL.fabric;
+    if (a <= d) { const w = a / d; return [(1 - w) / 2, 0, w, 1]; }
+    const h = d / a, fy = (f.rect[1] + f.rect[3]) / 2;
+    return [0, Math.min(Math.max(fy - 0.3 * h, 0), 1 - h), 1, h];
+  }
   function frame() {
     if (!running) return;
     for (let i = 0; i < 2; i++) step(1 / 60);
-    pass("show", null, { s: scal.r, blue: Math.max(0, 1 - P.gravity_g * 3), k: TH.k });
+    pass("show", null, { s: scal.r, blue: Math.max(0, 1 - P.gravity_g * 3), k: knobsFor(P.fuel).k, win: view() });
     raf = requestAnimationFrame(frame);
   }
   clear();

@@ -42,6 +42,19 @@ DT = 1 / 60
 PARAMS_JSON = os.path.join(os.path.dirname(__file__), "..", "public", "station", "simparams.json")
 
 
+TUNED_FUELS = ("fabric", "pmma")  # calibrated knobs improved held-out results only for solids (dataset/shape_eval.md);
+                                  # droplets and gas burners keep the hand-tuned defaults
+
+
+def theta_for(fuel, theta=None):
+    """Knobs for one fuel: the calibrated set for solids, the website defaults (+ spread knobs) for the rest."""
+    theta = theta or load_theta()
+    return theta if fuel in TUNED_FUELS else {**THETA, **{k: theta[k] for k in SPREAD_KNOBS if k in theta}}
+
+
+SPREAD_KNOBS = ("pyro", "c_thin", "c_thick", "burn_thin", "burn_thick", "k_strip")
+
+
 def load_theta():
     """Calibrated knobs if calibrate.py has written them, else the website defaults."""
     try:
