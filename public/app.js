@@ -32,7 +32,7 @@ async function overview() {
       text: p.map(d => `${d.id}<br>${d.fuel}${d.has_outcome ? '' : ' · no outcome'}${asm ? ' · assumed' : ''}`), hoverinfo: 'text',
       marker: {size: 8, color: asm ? 'rgba(0,0,0,0)' : CAT_C[cat], line: {color: CAT_C[cat], width: asm ? 1.5 : 0}, opacity: 0.85}});
   }
-  traces.push({type: 'scatter', mode: 'markers+text', name: 'habitats', x: [14.7, 10.2], y: [21, 30], text: ['ISS', 'Moon Base'],
+  traces.unshift({type: 'scatter', mode: 'markers+text', name: 'habitats', x: [14.7, 10.2], y: [21, 30], text: ['ISS', 'Moon Base'],
     textposition: 'top center', marker: {symbol: 'star', size: 18, color: '#ffd27a', line: {color: '#000', width: 1}}, hoverinfo: 'text'});
   Plotly.newPlot('map', traces, lay({xaxis: {title: 'Pressure (psi, log scale)', range: [Math.log10(4), Math.log10(75)], type: 'log'}, yaxis: {title: 'Oxygen (%)', range: [10, 45]},
     shapes: [{type: 'rect', x0: 8, x1: 12, y0: 25, y1: 40, fillcolor: 'rgba(255,210,122,.08)', line: {color: '#ffd27a', dash: 'dot', width: 1}}]}),
@@ -40,6 +40,16 @@ async function overview() {
   const box = pts.filter(d => d.o2_pct >= 25 && d.o2_pct <= 40 && d.pressure_kpa >= 8 * PSI_KPA && d.pressure_kpa <= 12 * PSI_KPA && !d.assumed);
   const byInv = {}; box.forEach(d => byInv[d.inv] = (byInv[d.inv] || 0) + 1);
   const solidMax = Math.max(...pts.filter(d => d.category === 'solid').map(d => d.o2_pct));
+  const FAM = {droplet: ['💧 Fuel droplets', 'A fuel drop burns as a perfect sphere. Measures burning rate and the size at which the flame goes out. Used to test suppressants (CO₂, helium).'],
+    gaseous: ['🔵 Gas flames', 'Gas fed through a porous sphere or a jet. Studies soot, cool flames and extinction limits: the basic chemistry of flames.'],
+    solid: ['🟧 Solid materials', 'Acrylic, fabrics, silicone burned in airflow, up to SAFFIRE\'s metre-scale fires in an empty cargo ship. Closest to a real cabin fire.'],
+    smoke: ['🌫️ Smoke & dust', 'Smoke from overheated materials, to design detectors that work in microgravity. Mostly in reports, not run tables.']};
+  $('families').innerHTML = Object.entries(FAM).map(([k, [t, d]]) => {
+    const inv = META.investigations.filter(x => x.category === k);
+    const runs = inv.reduce((s, x) => s + x.n_runs, 0), lab = inv.reduce((s, x) => s + x.n_with_outcome, 0);
+    return `<div class="card ex"><h3>${t}</h3><p>${d}</p><div class="chips"><span>${inv.length} investigations</span><span>${runs} runs</span><span>${lab} with outcome</span></div>
+      <div class="mute" style="font-size:12px;margin-top:6px">${inv.map(x => esc(x.acronym)).join(' · ')}</div></div>`;
+  }).join('');
   $('finding').innerHTML = `<h3>Key finding</h3><p>Only <b>${box.length} runs</b> were tested near planned habitat atmospheres
     (${Object.entries(byInv).map(([k, v]) => `${esc(k)}: ${v}`).join(', ') || 'none'}). No solid cabin material in NASA's public PSI data
     was burned in microgravity above <b>${solidMax.toFixed(1)} % O₂</b>. Moon Base cabins are planned at 30 %+. How fabrics and plastics burn there
@@ -47,13 +57,34 @@ async function overview() {
 }
 
 // ---------- scenario ----------
-const SC_PRESETS = {iss: 'ISS', moon_base: 'Moon Base', pressurized_rover: 'Rover', mars_base: 'Mars base'};
+// Published atmospheres. Many are far outside the tested data on purpose: the explorer then shows "no nearby data".
+const PRESETS = [
+  {g: 'Space', name: 'ISS cabin', o2: 21, psi: 14.7, flow: 10, grav: 0, note: 'ISS and most spacecraft: sea-level air, microgravity, ventilation 5–20 cm/s.'},
+  {g: 'Space', name: 'Moon base', o2: 30, psi: 10.2, flow: 10, grav: 0.166, note: 'Challenge brief: lunar habitats planned at 30 %+ O₂ and ~10.2 psi, which makes materials more flammable.'},
+  {g: 'Space', name: 'Pressurized rover', o2: 30, psi: 10.2, flow: 20, grav: 0.166, note: 'Same atmosphere as the Moon base in a small cabin with stronger local airflow (team assumption).'},
+  {g: 'Space', name: 'Mars base', o2: 30, psi: 10.2, flow: 10, grav: 0.38, note: 'No official figure; assumed equal to the Moon base.'},
+  {g: 'Space', name: 'NASA exploration atm.', o2: 34, psi: 8.2, flow: 10, grav: 0.166, note: 'NASA Exploration Atmospheres Working Group (2006) recommendation for lunar missions: 8.2 psi, 34 % O₂.'},
+  {g: 'Space', name: 'Shuttle pre-spacewalk', o2: 26.5, psi: 10.2, flow: 10, grav: 0, note: 'Space Shuttle cabin was lowered to 10.2 psi / 26.5 % O₂ before spacewalks to shorten pre-breathing.'},
+  {g: 'Space', name: 'Spacesuit', o2: 100, psi: 4.3, flow: 10, grav: 0, note: 'US spacesuit (EMU): pure oxygen at 4.3 psi.'},
+  {g: 'Space', name: 'Apollo 1 (1967)', o2: 100, psi: 16.7, flow: 0, grav: 1, note: 'Pure O₂ at ~16.7 psi during the ground test where a cabin fire killed three astronauts.'},
+  {g: 'Earth', name: 'Room air', o2: 21, psi: 14.7, flow: 0, grav: 1, note: 'Normal air at sea level, still air. The microgravity data has no buoyancy, so compare with care.'},
+  {g: 'Earth', name: 'Airliner cabin', o2: 21, psi: 10.9, flow: 10, grav: 1, note: 'Airliner cabins are pressurised to an ~8,000 ft altitude: ~10.9 psi.'},
+  {g: 'Earth', name: 'Hyperbaric chamber', o2: 100, psi: 35.3, flow: 0, grav: 1, note: 'Monoplace hyperbaric oxygen therapy: pure O₂ at ~2.4 atm. Clothing and bedding are tightly restricted because of fire risk.'},
+];
 function scenarioUI() {
-  $('presets').innerHTML = Object.entries(SC_PRESETS).map(([k, n]) => `<button data-s="${k}">${n}</button>`).join('');
+  const grp = g => `<span class="mute" style="font-size:12px;align-self:center;margin-right:2px">${g}</span>` +
+    PRESETS.map((p, i) => p.g === g ? `<button data-i="${i}">${esc(p.name)}</button>` : '').join('');
+  $('presets').innerHTML = grp('Space') + '<span style="flex-basis:100%"></span>' + grp('Earth');
   $('presets').onclick = e => {
-    const s = META.scenarios[e.target.dataset.s]; if (!s) return;
-    $('o2').value = s.o2_pct; $('p').value = s.pressure_psi; $('flow').value = s.flow_cm_s; $('g').value = String(s.gravity_g); updateScenario();
+    const p = PRESETS[e.target.dataset.i]; if (!p) return;
+    $('o2').value = p.o2; $('p').value = p.psi; $('flow').value = p.flow; $('g').value = String(p.grav);
+    $('presetnote').textContent = p.note;
+    $('presets').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === e.target));
+    updateScenario();
   };
+  ['o2', 'p', 'flow', 'g', 'phase'].forEach(id => $(id).addEventListener('input', () => {
+    $('presetnote').textContent = ''; $('presets').querySelectorAll('button').forEach(b => b.classList.remove('on'));
+  }));
   ['o2', 'p', 'flow', 'g', 'phase'].forEach(id => $(id).addEventListener('input', debounce(updateScenario, 250)));
   updateScenario();
 }
@@ -167,7 +198,11 @@ async function send() {
   try {
     const r = await api('/api/chat', {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({messages: history_})});
     history_.push({role: 'assistant', content: r.answer});
-    $('pending').outerHTML = `<div class="msg bot">${md(r.answer)}
+    let html = md(r.answer);
+    for (const u of r.unverified || [])  // citations the server couldn't match to any retrieved source
+      html = html.split(`<span class="cite">${esc(u)}`).join(`<span class="cite bad" title="not found in the retrieved sources">${esc(u)}`);
+    $('pending').outerHTML = `<div class="msg bot">${html}
+      ${(r.unverified || []).length ? `<div class="trace warn">⚠ ${r.unverified.length} citation(s) could not be matched to a retrieved source: ${r.unverified.map(esc).join('; ')}</div>` : ''}
       ${r.trace.length ? `<div class="trace">Looked up: ${r.trace.map(t => `${esc(t.tool)}(${esc(Object.values(t.args).join(', ').slice(0, 60))})`).join(' → ')}</div>` : ''}
       ${r.sources.length ? `<details class="trace"><summary>${r.sources.length} sources</summary><ul class="tight">${r.sources.map(s => `<li><span class="cite">${esc(s.cite)}</span> ${esc(s.investigations.join(', '))}</li>`).join('')}</ul></details>` : ''}</div>`;
   } catch (e) {
