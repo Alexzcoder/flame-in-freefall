@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Space Station Fire Risk</title>
+  <title>Station explorer · Flame in Freefall</title>
+  <link rel="icon" href="../img/ember.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
   <script type="importmap">
@@ -14,9 +16,15 @@
   </script>
 </head>
 <body>
+<header class="top"><a href="/" class="home"><img src="../img/ember.png" alt="" width="28" height="28"> Flame in Freefall</a>
+  <nav><a href="/">Overview</a><a href="/#scenario">Habitat check</a><a href="/#ask">Ask Ember</a></nav></header>
+<section class="orbit-wrap">
+  <div id="orbit"><div class="orbit-hint">🛰️ Drag to look around · scroll to zoom · <b>click the ISS or the Moon base</b></div>
+    <aside id="panel" hidden></aside></div>
+</section>
 <main>
-  <h1>Space Station Fire Risk</h1>
-  <p class="lead">What do real NASA microgravity tests say about fire in each habitat? Move the sliders to try other conditions.</p>
+  <h1>Station explorer: fire risk in each habitat</h1>
+  <p class="lead">Above: Earth, the ISS and a Moon base. The beacon on each habitat shows how much real NASA test data backs it. Below: what the nearest real tests say for each material. Move the sliders to try other conditions.</p>
   <ul class="legend">
     <li><span class="dot green"></span> Real tests close by</li>
     <li><span class="dot yellow"></span> Interpolating between tests</li>
@@ -73,17 +81,49 @@
     const root = document.getElementById("app");
     const states = [];
     let scene3d = null;
+    const RANK = { green: 0, yellow: 1, red: 2 };
+    const worst = s => s.materials.map(m => assess(s, m, labelled).confidence).sort((a, b) => RANK[b] - RANK[a])[0];
+    let orbit = null, shown = null;
     const refresh = () => {
       if (states.length < HABITATS.length) return;   // still mounting
       moveHabitats(chart, states);
       scene3d?.update(states.map(s => s.materials.map(m => assess(s, m, labelled).confidence)));
+      orbit?.update(Object.fromEntries(states.map(s => [s.id, worst(s)])));
+      if (shown) showPanel(shown);
     };
+    // Info panel for the habitat clicked in the orbit view (same numbers as the cards below).
+    const panel = document.getElementById("panel");
+    const LEVEL = { green: "Real tests close by", yellow: "Interpolating between tests", red: "No reliable data: extrapolation" };
+    function showPanel(id) {
+      shown = id;
+      const s = states.find(x => x.id === id);
+      const rows = s.materials.map(m => { const a = assess(s, m, labelled);
+        return `<li><span class="dot ${a.confidence}"></span><b>${m === "pmma" ? "PMMA (acrylic)" : "Cotton fabric (Sibal)"}</b>:
+          ${a.risk ? `risk ${a.risk}` : "no reliable estimate"} <small>${a.reason}</small></li>`; }).join("");
+      panel.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${s.name}</h3>
+        <p class="atm">${(s.o2_frac * 100).toFixed(0)} % O₂ · ${(s.pressure_kpa / 6.895).toFixed(1)} psi · ${s.gravity_g ? s.gravity_g + " g" : "microgravity"}</p>
+        <ul>${rows}</ul><div class="btns"><button class="more">See the nearest tests ↓</button><button class="back">Back to Earth view</button></div>`;
+      panel.hidden = false;
+      panel.querySelector(".x").onclick = panel.querySelector(".back").onclick = () => { panel.hidden = true; shown = null; orbit?.overview(); };
+      panel.querySelector(".more").onclick = () => document.getElementById("hab-" + id)?.scrollIntoView({ behavior: "smooth" });
+    }
     for (const h of HABITATS) {
       states.push(mountHabitat(root, h, labelled, refresh));
     }
     drawChart(chart, tested, investigations, states);
 
-    // The 3D view loads Three.js from a CDN. If that fails, the rest of the page must still work.
+    // The 3D views load Three.js from a CDN. If that fails, the rest of the page must still work.
+    try {
+      const { createOrbit3D } = await import("./orbit3d.js");
+      orbit = createOrbit3D(document.getElementById("orbit"), { onSelect: showPanel });
+      refresh();
+      // deep links: /station/#iss or /station/#moon fly straight to a habitat
+      const want = location.hash.slice(1);
+      if (orbit && states.some(s => s.id === want)) setTimeout(() => { orbit.focus(want); showPanel(want); }, 600);
+    } catch (err) {
+      document.getElementById("orbit").textContent = "The orbit view could not be loaded: " + err.message;
+      console.error(err);
+    }
     try {
       const { createStation3D } = await import("./station3d.js");
       scene3d = createStation3D(document.getElementById("scene"), HABITATS);

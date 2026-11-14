@@ -14,7 +14,9 @@ export const GREEN_MIN = 3;
 
 // ---------- loading (the ONLY place that reads data) ----------
 export async function loadData() {
-  const res = await fetch("../dataset/flame_runs.json");
+  // Deployed: the API serves the dataset. Local `python3 -m http.server` from the repo root: read the file directly.
+  let res = await fetch("/api/dataset").catch(() => null);
+  if (!res || !res.ok) res = await fetch("../../dataset/flame_runs.json");
   if (!res.ok) throw new Error("could not load dataset: " + res.status);
   const d = await res.json();
   if (d.schema_version !== "0.2") throw new Error("schema changed: " + d.schema_version);

@@ -130,6 +130,7 @@ async function updateScenario() {
   const label = {well_covered: 'Well covered', sparse: 'Sparse data', no_data: 'No nearby data'}[near.coverage];
   $('verdict').innerHTML = `${tip('coverage', `<span class="badge b-${near.coverage}">${label}</span>`)}<div class="verdict-big">${near.n_close} close experiment${near.n_close === 1 ? '' : 's'}</div>
     <div class="plain"><b>What this means:</b> ${plainSummary(near, phase)}</div>
+    <div class="famcov" id="famcov"></div>
     <p>${esc(near.message)}</p>${near.warning ? `<p class="warn">⚠ ${esc(near.warning)}</p>` : ''}${near.caveat ? `<p class="mute">${esc(near.caveat)}</p>` : ''}`;
   $('nearest').innerHTML = `<div class="scroll"><table><tr><th>${tip('similarity', 'Match')}</th><th>Run</th><th>${tip('fuel', 'Fuel')}</th><th>${tip('o2', 'O₂')}</th><th>${tip('pressure', 'Pressure')}</th><th class="hide-sm">${tip('airflow', 'Flow')}</th><th>${tip('outcome', 'Outcome')}</th></tr>${near.matches.map(m => `<tr>
     <td>${tip(m.match, `<span class="badge b-${m.match}">${m.match}</span>`)} <small>${m.similarity.toFixed(2)}</small></td>
@@ -137,6 +138,10 @@ async function updateScenario() {
     <td>${m.o2_pct ?? '–'} %</td><td>${m.pressure_kpa ? (m.pressure_kpa / PSI_KPA).toFixed(1) + ' psi' : '–'}${m.assumed?.length ? `<small>${tip('assumed', 'assumed')}</small>` : ''}</td>
     <td class="hide-sm">${m.flow_cm_s ?? '–'} cm/s</td><td>${outcomeText(m.outcome)}${m.match !== 'near' && m.differences.length ? `<small class="warn">${esc(m.differences.slice(0, 2).join('; '))}</small>` : ''}</td></tr>`).join('')}</table></div>`;
   $('scenrank').innerHTML = rankHTML(rk.results.slice(0, 8), false);
+  // Close experiments per fuel type, so "solids were only tested at ISS conditions" is visible whatever the filter
+  const fams = await Promise.all(['solid', 'liquid', 'gas'].map(f => api(`/api/nearest?${q}&phase=${f}&k=1`)));
+  if ($('famcov')) $('famcov').innerHTML = '<span class="mute" style="border:0;background:none;padding-left:0">Close experiments by fuel:</span>' +
+    ['Solids', 'Droplets', 'Gas flames'].map((n, i) => `<span>${n}: <b>${fams[i].n_close}</b></span>`).join('');
 }
 function plainSummary(near, phase) {
   const what = {solid: 'solid materials', liquid: 'fuel droplets', gas: 'gas flames'}[phase] || 'any fuel';

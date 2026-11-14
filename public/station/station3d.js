@@ -4,11 +4,11 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const COLORS = { green: 0x2ea043, yellow: 0xd29922, red: 0xe5534b };
-const MATERIAL_NAMES = { pmma: "PMMA", sibal: "Sibal", cotton: "Cotton" };
+const MATERIAL_NAMES = { pmma: "PMMA", sibal: "Cotton fabric" };
 const niceName = m => MATERIAL_NAMES[m] ?? m.charAt(0).toUpperCase() + m.slice(1);
 const SPACING = 8;
 
-function makeLabel(text, scale = 1) {
+export function makeLabel(text, scale = 1) {
   const canvas = document.createElement("canvas");
   canvas.width = 512; canvas.height = 128;
   const ctx = canvas.getContext("2d");
@@ -26,7 +26,7 @@ function metal(color) {
 }
 
 // ISS-style module: hull, long truss and two solar panels, floating in space.
-function buildOrbitalModule() {
+export function buildOrbitalModule() {
   const g = new THREE.Group();
   const hull = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 3.2, 32), metal(0xcfd4da));
   hull.rotation.z = Math.PI / 2;
@@ -49,7 +49,7 @@ function buildOrbitalModule() {
 }
 
 // Moon base: translucent dome on a grey lunar patch.
-function buildMoonBase() {
+export function buildMoonBase() {
   const g = new THREE.Group();
   const ground = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.4, 0.2, 48),
     new THREE.MeshStandardMaterial({ color: 0x8a8d93, roughness: 1 }));

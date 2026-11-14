@@ -10,6 +10,8 @@ import time
 from functools import lru_cache
 
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -23,6 +25,7 @@ from ranking.scenarios import SCENARIOS, custom
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app = FastAPI(title="Flame in Freefall API")
+app.add_middleware(GZipMiddleware, minimum_size=1000)  # dataset is 2.8 MB raw, ~0.3 MB gzipped
 
 
 @lru_cache(maxsize=1)
@@ -54,6 +57,13 @@ def meta():
             "scenarios": {k: v.to_dict() for k, v in SCENARIOS.items()},
             "investigations": [{"id": p["id"], "acronym": p["acronym"], "title": p["title"], "category": p["category"],
                                 "n_runs": p["n_runs"], "n_with_outcome": p["n_with_outcome"]} for p in profs.values()]}
+
+
+@app.get("/api/dataset")
+def dataset_file():
+    """The full dataset JSON (for the station simulator, which runs its model in the browser)."""
+    return FileResponse(os.path.join(ROOT, "dataset", "flame_runs.json"), media_type="application/json",
+                        headers={"Cache-Control": "public, max-age=3600"})
 
 
 @app.get("/api/coverage")
@@ -144,11 +154,11 @@ def api_chat(body: ChatIn, request: Request):
 
 
 if os.path.isdir(os.path.join(ROOT, "public")):
-    from fastapi.responses import FileResponse
+    from fastapi.responses import RedirectResponse
 
     @app.get("/v2", include_in_schema=False)
-    def v2_page():  # local dev; on Vercel /v2 is a rewrite in vercel.json
-        return FileResponse(os.path.join(ROOT, "public", "v2.html"))
+    def v2_page():  # local dev; on Vercel this redirect lives in vercel.json (v2 is now the home page)
+        return RedirectResponse("/")
 
     # on Vercel public/ is served by the CDN, not the function, so this mount is local-only too
     app.mount("/", StaticFiles(directory=os.path.join(ROOT, "public"), html=True), name="static")
