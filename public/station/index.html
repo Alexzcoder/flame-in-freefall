@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Station explorer · Flame in Freefall</title>
-  <link rel="icon" href="../img/ember.png">
+  <link rel="icon" href="../img/ember-icon.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
@@ -16,16 +16,16 @@
   </script>
 </head>
 <body>
-<header class="top"><a href="/" class="home"><img src="../img/ember.png" alt="" width="28" height="28"> Flame in Freefall</a>
+<header class="top"><a href="/" class="home"><img src="../img/ember-logo.gif" alt="Flame in Freefall logo" width="38" height="38"> Flame in Freefall</a>
   <nav><a href="/">Overview</a><a href="/#scenario">Habitat check</a><a href="/#ask">Ask Ember</a></nav></header>
 <section class="orbit-wrap">
-  <div id="orbit"><div class="flyto" id="flyto"><span>Fly to</span><button data-f="iss">🛰️ ISS</button><button data-f="moon">🌙 Moon base</button><button data-f="mars">🔴 Mars base</button><button data-f="home">🌍 Overview</button></div>
+  <div id="orbit"><div class="flyto" id="flyto"><span>Fly to</span><button data-f="iss">🛰️ ISS</button><button data-f="moon">🌙 Moon base</button><button data-f="home">🌍 Overview</button></div>
     <div class="orbit-hint">🛰️ Drag to look around · scroll to zoom · <b>click a habitat</b> · or <a href="inside.html?hab=moon" style="color:#ffb08a;pointer-events:auto">walk inside the Moon base →</a></div>
     <aside id="panel" hidden></aside></div>
 </section>
 <main>
   <h1>Station explorer: fire risk in each habitat</h1>
-  <p class="lead">Above: Earth, the ISS, a Moon base and a Mars base. The beacon on each habitat shows how much real NASA test data backs it. Below: what the nearest real tests say for each material. Move the sliders to try other conditions.</p>
+  <p class="lead">Above: Earth, the ISS and a Moon base. The beacon on each habitat shows how much real NASA test data backs it. Below: what the nearest real tests say for each material. Move the sliders to try other conditions.</p>
   <ul class="legend">
     <li><span class="dot green"></span> Real tests close by</li>
     <li><span class="dot yellow"></span> Interpolating between tests</li>
@@ -101,7 +101,7 @@
         const f = e.target.dataset.f; if (!f || !orbit) return;
         if (f === "home") { panel.hidden = true; shown = null; orbit.overview(); } else { orbit.focus(f); showPanel(f); }
       };
-      // deep links: /station/#iss, #moon or #mars fly straight to a habitat
+      // deep links: /station/#iss or #moon fly straight to a habitat
       const want = location.hash.slice(1);
       if (orbit && states.some(s => s.id === want)) setTimeout(() => { orbit.focus(want); showPanel(want); }, 600);
     } catch (err) {

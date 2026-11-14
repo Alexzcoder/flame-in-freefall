@@ -1,0 +1,1011 @@
+{
+ "runs": {
+  "PSI-25/P6": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT184_SAMPLE_186_TESTP6.mp4",
+   "family": "solid",
+   "ignition_s": 6,
+   "flame_end_s": 318,
+   "clip_start_s": 4,
+   "clip_length_s": 16,
+   "clip": "PSI-25_P6/clip.mp4",
+   "clip_enhanced": "PSI-25_P6/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_P6/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_P6/still_0.jpg",
+     "t_s": 9
+    },
+    {
+     "file": "PSI-25_P6/still_1.jpg",
+     "t_s": 112
+    },
+    {
+     "file": "PSI-25_P6/still_2.jpg",
+     "t_s": 214
+    },
+    {
+     "file": "PSI-25_P6/still_3.jpg",
+     "t_s": 317
+    }
+   ],
+   "enhancement": "levels stretched x1.2 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_P6/clip.mp4",
+    "thumbnail": "media/PSI-25_P6/thumb.jpg",
+    "crop": [
+     0.0,
+     0.521,
+     0.0,
+     1.0
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/O1": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT49_SAMPLE_207_TEST_O1.mp4",
+   "family": "solid",
+   "ignition_s": 4,
+   "flame_end_s": 201,
+   "clip_start_s": 2,
+   "clip_length_s": 16,
+   "clip": "PSI-25_O1/clip.mp4",
+   "clip_enhanced": "PSI-25_O1/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_O1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_O1/still_0.jpg",
+     "t_s": 7
+    },
+    {
+     "file": "PSI-25_O1/still_1.jpg",
+     "t_s": 71
+    },
+    {
+     "file": "PSI-25_O1/still_2.jpg",
+     "t_s": 136
+    },
+    {
+     "file": "PSI-25_O1/still_3.jpg",
+     "t_s": 200
+    }
+   ],
+   "enhancement": "levels stretched x1.1 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_O1/clip.mp4",
+    "thumbnail": "media/PSI-25_O1/thumb.jpg",
+    "crop": [
+     0.367,
+     1.0,
+     0.201,
+     1.0
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/F1": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT50_SAMPLE_227_TEST_F1.mp4",
+   "family": "solid",
+   "ignition_s": 25,
+   "flame_end_s": 58,
+   "clip_start_s": 23,
+   "clip_length_s": 16,
+   "clip": "PSI-25_F1/clip.mp4",
+   "clip_enhanced": "PSI-25_F1/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_F1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_F1/still_0.jpg",
+     "t_s": 28
+    },
+    {
+     "file": "PSI-25_F1/still_1.jpg",
+     "t_s": 38
+    },
+    {
+     "file": "PSI-25_F1/still_2.jpg",
+     "t_s": 47
+    },
+    {
+     "file": "PSI-25_F1/still_3.jpg",
+     "t_s": 57
+    }
+   ],
+   "enhancement": "levels stretched x1.1 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_F1/clip.mp4",
+    "thumbnail": "media/PSI-25_F1/thumb.jpg",
+    "crop": [
+     0.459,
+     1.0,
+     0.0,
+     1.0
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/T19": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT190_SAMPLE_143_TEST_T19.mp4",
+   "family": "solid",
+   "ignition_s": 11,
+   "flame_end_s": 68,
+   "clip_start_s": 9,
+   "clip_length_s": 16,
+   "clip": "PSI-25_T19/clip.mp4",
+   "clip_enhanced": "PSI-25_T19/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_T19/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_T19/still_0.jpg",
+     "t_s": 14
+    },
+    {
+     "file": "PSI-25_T19/still_1.jpg",
+     "t_s": 32
+    },
+    {
+     "file": "PSI-25_T19/still_2.jpg",
+     "t_s": 49
+    },
+    {
+     "file": "PSI-25_T19/still_3.jpg",
+     "t_s": 67
+    }
+   ],
+   "enhancement": "levels stretched x8.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_T19/clip.mp4",
+    "thumbnail": "media/PSI-25_T19/thumb.jpg",
+    "crop": [
+     0.033,
+     1.0,
+     0.0,
+     1.0
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/O2": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT49_SAMPLE_204_TEST_O2.mp4",
+   "family": "solid",
+   "ignition_s": 6,
+   "flame_end_s": 222,
+   "clip_start_s": 4,
+   "clip_length_s": 16,
+   "clip": "PSI-25_O2/clip.mp4",
+   "clip_enhanced": "PSI-25_O2/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_O2/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_O2/still_0.jpg",
+     "t_s": 9
+    },
+    {
+     "file": "PSI-25_O2/still_1.jpg",
+     "t_s": 80
+    },
+    {
+     "file": "PSI-25_O2/still_2.jpg",
+     "t_s": 150
+    },
+    {
+     "file": "PSI-25_O2/still_3.jpg",
+     "t_s": 221
+    }
+   ],
+   "enhancement": "levels stretched x1.1 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_O2/clip.mp4",
+    "thumbnail": "media/PSI-25_O2/thumb.jpg",
+    "crop": [
+     0.367,
+     1.0,
+     0.0,
+     1.0
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/O16": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT210_SAMPLE_219_TEST_O16_First_Ignition_Attempt.mp4",
+   "family": "solid",
+   "ignition_s": 17,
+   "flame_end_s": 82,
+   "clip_start_s": 15,
+   "clip_length_s": 16,
+   "clip": "PSI-25_O16/clip.mp4",
+   "clip_enhanced": "PSI-25_O16/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_O16/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_O16/still_0.jpg",
+     "t_s": 20
+    },
+    {
+     "file": "PSI-25_O16/still_1.jpg",
+     "t_s": 40
+    },
+    {
+     "file": "PSI-25_O16/still_2.jpg",
+     "t_s": 61
+    },
+    {
+     "file": "PSI-25_O16/still_3.jpg",
+     "t_s": 81
+    }
+   ],
+   "enhancement": "levels stretched x1.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_O16/clip.mp4",
+    "thumbnail": "media/PSI-25_O16/thumb.jpg",
+    "crop": [
+     0.373,
+     1.0,
+     0.0,
+     1.0
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/T12": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT178_SAMPLE_136_TEST_T12.mp4",
+   "family": "solid",
+   "ignition_s": 12,
+   "flame_end_s": 45,
+   "clip_start_s": 10,
+   "clip_length_s": 16,
+   "clip": "PSI-25_T12/clip.mp4",
+   "clip_enhanced": "PSI-25_T12/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_T12/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_T12/still_0.jpg",
+     "t_s": 15
+    },
+    {
+     "file": "PSI-25_T12/still_1.jpg",
+     "t_s": 25
+    },
+    {
+     "file": "PSI-25_T12/still_2.jpg",
+     "t_s": 34
+    },
+    {
+     "file": "PSI-25_T12/still_3.jpg",
+     "t_s": 44
+    }
+   ],
+   "enhancement": "levels stretched x1.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_T12/clip.mp4",
+    "thumbnail": "media/PSI-25_T12/thumb.jpg",
+    "crop": [
+     0.688,
+     1.0,
+     0.245,
+     1.0
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/T25": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT216_SAMPLE_138_TEST_T25.mp4",
+   "family": "solid",
+   "ignition_s": 13,
+   "flame_end_s": 46,
+   "clip_start_s": 11,
+   "clip_length_s": 16,
+   "clip": "PSI-25_T25/clip.mp4",
+   "clip_enhanced": "PSI-25_T25/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_T25/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_T25/still_0.jpg",
+     "t_s": 16
+    },
+    {
+     "file": "PSI-25_T25/still_1.jpg",
+     "t_s": 26
+    },
+    {
+     "file": "PSI-25_T25/still_2.jpg",
+     "t_s": 35
+    },
+    {
+     "file": "PSI-25_T25/still_3.jpg",
+     "t_s": 45
+    }
+   ],
+   "enhancement": "levels stretched x1.1 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_T25/clip.mp4",
+    "thumbnail": "media/PSI-25_T25/thumb.jpg",
+    "crop": [
+     0.107,
+     0.931,
+     0.0,
+     0.778
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/F4": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT175_SAMPLE_039_TEST_F4.mp4",
+   "family": "solid",
+   "ignition_s": 13,
+   "flame_end_s": 92,
+   "clip_start_s": 11,
+   "clip_length_s": 16,
+   "clip": "PSI-25_F4/clip.mp4",
+   "clip_enhanced": "PSI-25_F4/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_F4/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_F4/still_0.jpg",
+     "t_s": 16
+    },
+    {
+     "file": "PSI-25_F4/still_1.jpg",
+     "t_s": 41
+    },
+    {
+     "file": "PSI-25_F4/still_2.jpg",
+     "t_s": 66
+    },
+    {
+     "file": "PSI-25_F4/still_3.jpg",
+     "t_s": 91
+    }
+   ],
+   "enhancement": "levels stretched x1.2 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_F4/clip.mp4",
+    "thumbnail": "media/PSI-25_F4/thumb.jpg",
+    "crop": [
+     0.4,
+     1.0,
+     0.0,
+     0.908
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-25/B8": {
+   "status": "ok",
+   "source_video": "PSI-25_Raw Data_BASS_GMT188_SAMPLE_157_TESTB8.mp4",
+   "family": "solid",
+   "ignition_s": 6,
+   "flame_end_s": 102,
+   "clip_start_s": 4,
+   "clip_length_s": 16,
+   "clip": "PSI-25_B8/clip.mp4",
+   "clip_enhanced": "PSI-25_B8/clip_enhanced.mp4",
+   "thumbnail": "PSI-25_B8/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-25_B8/still_0.jpg",
+     "t_s": 9
+    },
+    {
+     "file": "PSI-25_B8/still_1.jpg",
+     "t_s": 40
+    },
+    {
+     "file": "PSI-25_B8/still_2.jpg",
+     "t_s": 70
+    },
+    {
+     "file": "PSI-25_B8/still_3.jpg",
+     "t_s": 101
+    }
+   ],
+   "enhancement": "levels stretched x1.1 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-25_B8/clip.mp4",
+    "thumbnail": "media/PSI-25_B8/thumb.jpg",
+    "crop": [
+     0.0,
+     0.372,
+     0.0,
+     1.0
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-39/f186d01": {
+   "status": "ok",
+   "source_video": "PSI-39_Raw Data_vlc-record-2017-07-05-13h25m30s-udp_F186D01.mp4",
+   "family": "droplet",
+   "ignition_s": 317,
+   "flame_end_s": 325,
+   "clip_start_s": 315,
+   "clip_length_s": 16,
+   "clip": "PSI-39_f186d01/clip.mp4",
+   "clip_enhanced": "PSI-39_f186d01/clip_enhanced.mp4",
+   "thumbnail": "PSI-39_f186d01/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-39_f186d01/still_0.jpg",
+     "t_s": 320
+    },
+    {
+     "file": "PSI-39_f186d01/still_1.jpg",
+     "t_s": 321
+    },
+    {
+     "file": "PSI-39_f186d01/still_2.jpg",
+     "t_s": 323
+    },
+    {
+     "file": "PSI-39_f186d01/still_3.jpg",
+     "t_s": 324
+    }
+   ],
+   "enhancement": "levels stretched x1.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-39_f186d01/clip.mp4",
+    "thumbnail": "media/PSI-39_f186d01/thumb.jpg",
+    "crop": [
+     0.207,
+     0.706,
+     0.252,
+     0.973
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-39/f195d07": {
+   "status": "ok",
+   "source_video": "PSI-39_Raw Data_vlc-record-2017-07-14-16h50m43s-udp_F195D07.mp4",
+   "family": "droplet",
+   "ignition_s": 229,
+   "flame_end_s": 234,
+   "clip_start_s": 227,
+   "clip_length_s": 16,
+   "clip": "PSI-39_f195d07/clip.mp4",
+   "clip_enhanced": "PSI-39_f195d07/clip_enhanced.mp4",
+   "thumbnail": "PSI-39_f195d07/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-39_f195d07/still_0.jpg",
+     "t_s": 232
+    },
+    {
+     "file": "PSI-39_f195d07/still_1.jpg",
+     "t_s": 233
+    }
+   ],
+   "enhancement": "levels stretched x2.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-39_f195d07/clip.mp4",
+    "thumbnail": "media/PSI-39_f195d07/thumb.jpg",
+    "crop": [
+     0.257,
+     0.657,
+     0.358,
+     0.758
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-39/f173e01": {
+   "status": "ok",
+   "source_video": "PSI-39_Raw Data_FLEX-1285_2017-06-22-15h11m57s_F173E01.mp4",
+   "family": "droplet",
+   "ignition_s": 300,
+   "flame_end_s": 309,
+   "clip_start_s": 298,
+   "clip_length_s": 16,
+   "clip": "PSI-39_f173e01/clip.mp4",
+   "clip_enhanced": "PSI-39_f173e01/clip_enhanced.mp4",
+   "thumbnail": "PSI-39_f173e01/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-39_f173e01/still_0.jpg",
+     "t_s": 303
+    },
+    {
+     "file": "PSI-39_f173e01/still_1.jpg",
+     "t_s": 305
+    },
+    {
+     "file": "PSI-39_f173e01/still_2.jpg",
+     "t_s": 306
+    },
+    {
+     "file": "PSI-39_f173e01/still_3.jpg",
+     "t_s": 308
+    }
+   ],
+   "enhancement": "levels stretched x1.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-39_f173e01/clip.mp4",
+    "thumbnail": "media/PSI-39_f173e01/thumb.jpg",
+    "crop": [
+     0.241,
+     0.712,
+     0.242,
+     0.98
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-39/f213d03": {
+   "status": "ok",
+   "source_video": "PSI-39_Raw Data_vlc-record-2017-08-01-14h06m34s-udp_F213D03.mp4",
+   "family": "droplet",
+   "ignition_s": 45,
+   "flame_end_s": 55,
+   "clip_start_s": 43,
+   "clip_length_s": 16,
+   "clip": "PSI-39_f213d03/clip.mp4",
+   "clip_enhanced": "PSI-39_f213d03/clip_enhanced.mp4",
+   "thumbnail": "PSI-39_f213d03/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-39_f213d03/still_0.jpg",
+     "t_s": 48
+    },
+    {
+     "file": "PSI-39_f213d03/still_1.jpg",
+     "t_s": 50
+    },
+    {
+     "file": "PSI-39_f213d03/still_2.jpg",
+     "t_s": 52
+    },
+    {
+     "file": "PSI-39_f213d03/still_3.jpg",
+     "t_s": 54
+    }
+   ],
+   "enhancement": "levels stretched x3.1 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-39_f213d03/clip.mp4",
+    "thumbnail": "media/PSI-39_f213d03/thumb.jpg",
+    "crop": null,
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-39/f191d03": {
+   "status": "ok",
+   "source_video": "PSI-39_Raw Data_vlc-record-2017-07-10-15h30m11s-udp_F191D03.mp4",
+   "family": "droplet",
+   "ignition_s": 243,
+   "flame_end_s": 249,
+   "clip_start_s": 241,
+   "clip_length_s": 16,
+   "clip": "PSI-39_f191d03/clip.mp4",
+   "clip_enhanced": "PSI-39_f191d03/clip_enhanced.mp4",
+   "thumbnail": "PSI-39_f191d03/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-39_f191d03/still_0.jpg",
+     "t_s": 246
+    },
+    {
+     "file": "PSI-39_f191d03/still_1.jpg",
+     "t_s": 247
+    },
+    {
+     "file": "PSI-39_f191d03/still_2.jpg",
+     "t_s": 248
+    }
+   ],
+   "enhancement": "levels stretched x1.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-39_f191d03/clip.mp4",
+    "thumbnail": "media/PSI-39_f191d03/thumb.jpg",
+    "crop": [
+     0.238,
+     0.688,
+     0.281,
+     0.961
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-39/f208d02": {
+   "status": "ok",
+   "source_video": "PSI-39_Raw Data_vlc-record-2017-07-27-14h59m42s-udp_F208D02.mp4",
+   "family": "droplet",
+   "ignition_s": 315,
+   "flame_end_s": 322,
+   "clip_start_s": 313,
+   "clip_length_s": 16,
+   "clip": "PSI-39_f208d02/clip.mp4",
+   "clip_enhanced": "PSI-39_f208d02/clip_enhanced.mp4",
+   "thumbnail": "PSI-39_f208d02/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-39_f208d02/still_0.jpg",
+     "t_s": 318
+    },
+    {
+     "file": "PSI-39_f208d02/still_1.jpg",
+     "t_s": 319
+    },
+    {
+     "file": "PSI-39_f208d02/still_2.jpg",
+     "t_s": 320
+    },
+    {
+     "file": "PSI-39_f208d02/still_3.jpg",
+     "t_s": 321
+    }
+   ],
+   "enhancement": "levels stretched x1.4 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-39_f208d02/clip.mp4",
+    "thumbnail": "media/PSI-39_f208d02/thumb.jpg",
+    "crop": [
+     0.245,
+     0.682,
+     0.27,
+     0.952
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-39/f233d01": {
+   "status": "ok",
+   "source_video": "PSI-39_Raw Data_vlc-record-2017-08-21-15h11m10s-udp_F233D01.mp4",
+   "family": "droplet",
+   "ignition_s": 336,
+   "flame_end_s": 426,
+   "clip_start_s": 334,
+   "clip_length_s": 16,
+   "clip": "PSI-39_f233d01/clip.mp4",
+   "clip_enhanced": "PSI-39_f233d01/clip_enhanced.mp4",
+   "thumbnail": "PSI-39_f233d01/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-39_f233d01/still_0.jpg",
+     "t_s": 339
+    },
+    {
+     "file": "PSI-39_f233d01/still_1.jpg",
+     "t_s": 368
+    },
+    {
+     "file": "PSI-39_f233d01/still_2.jpg",
+     "t_s": 396
+    },
+    {
+     "file": "PSI-39_f233d01/still_3.jpg",
+     "t_s": 425
+    }
+   ],
+   "enhancement": "levels stretched x1.1 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-39_f233d01/clip.mp4",
+    "thumbnail": "media/PSI-39_f233d01/thumb.jpg",
+    "crop": [
+     0.262,
+     0.663,
+     0.255,
+     0.954
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-159/21137D1": {
+   "status": "ok",
+   "source_video": "PSI-159_Raw Data_vlc-record-2021-05-17-17h30m17s-udp____21137D1.ts",
+   "family": "gas",
+   "ignition_s": 46,
+   "flame_end_s": 53,
+   "clip_start_s": 44,
+   "clip_length_s": 16,
+   "clip": "PSI-159_21137D1/clip.mp4",
+   "clip_enhanced": "PSI-159_21137D1/clip_enhanced.mp4",
+   "thumbnail": "PSI-159_21137D1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-159_21137D1/still_0.jpg",
+     "t_s": 49
+    },
+    {
+     "file": "PSI-159_21137D1/still_1.jpg",
+     "t_s": 50
+    },
+    {
+     "file": "PSI-159_21137D1/still_2.jpg",
+     "t_s": 51
+    },
+    {
+     "file": "PSI-159_21137D1/still_3.jpg",
+     "t_s": 52
+    }
+   ],
+   "enhancement": "levels stretched x5.6 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-159_21137D1/clip.mp4",
+    "thumbnail": "media/PSI-159_21137D1/thumb.jpg",
+    "crop": [
+     0.237,
+     0.907,
+     0.0,
+     0.82
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-159/21256H5": {
+   "status": "ok",
+   "source_video": "PSI-159_Raw Data_vlc-record-2021-09-13-22h14m43s-udp____21256H5.ts",
+   "family": "gas",
+   "ignition_s": 48,
+   "flame_end_s": 54,
+   "clip_start_s": 46,
+   "clip_length_s": 16,
+   "clip": "PSI-159_21256H5/clip.mp4",
+   "clip_enhanced": "PSI-159_21256H5/clip_enhanced.mp4",
+   "thumbnail": "PSI-159_21256H5/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-159_21256H5/still_0.jpg",
+     "t_s": 51
+    },
+    {
+     "file": "PSI-159_21256H5/still_1.jpg",
+     "t_s": 52
+    },
+    {
+     "file": "PSI-159_21256H5/still_2.jpg",
+     "t_s": 53
+    }
+   ],
+   "enhancement": "levels stretched x6.2 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-159_21256H5/clip.mp4",
+    "thumbnail": "media/PSI-159_21256H5/thumb.jpg",
+    "crop": null,
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-159/21088L1": {
+   "status": "ok",
+   "source_video": "PSI-159_Raw Data_vlc-record-2021-03-30-00h11m09s-udp____21088L1.ts",
+   "family": "gas",
+   "ignition_s": 33,
+   "flame_end_s": 41,
+   "clip_start_s": 31,
+   "clip_length_s": 16,
+   "clip": "PSI-159_21088L1/clip.mp4",
+   "clip_enhanced": "PSI-159_21088L1/clip_enhanced.mp4",
+   "thumbnail": "PSI-159_21088L1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-159_21088L1/still_0.jpg",
+     "t_s": 36
+    },
+    {
+     "file": "PSI-159_21088L1/still_1.jpg",
+     "t_s": 37
+    },
+    {
+     "file": "PSI-159_21088L1/still_2.jpg",
+     "t_s": 39
+    },
+    {
+     "file": "PSI-159_21088L1/still_3.jpg",
+     "t_s": 40
+    }
+   ],
+   "enhancement": "levels stretched x1.9 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-159_21088L1/clip.mp4",
+    "thumbnail": "media/PSI-159_21088L1/thumb.jpg",
+    "crop": [
+     0.232,
+     0.787,
+     0.065,
+     0.818
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-159/21265H1": {
+   "status": "ok",
+   "source_video": "PSI-159_Raw Data_vlc-record-2021-09-22-17h34m01s-udp____21265H1.ts",
+   "family": "gas",
+   "ignition_s": 56,
+   "flame_end_s": 61,
+   "clip_start_s": 54,
+   "clip_length_s": 16,
+   "clip": "PSI-159_21265H1/clip.mp4",
+   "clip_enhanced": "PSI-159_21265H1/clip_enhanced.mp4",
+   "thumbnail": "PSI-159_21265H1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-159_21265H1/still_0.jpg",
+     "t_s": 59
+    },
+    {
+     "file": "PSI-159_21265H1/still_1.jpg",
+     "t_s": 60
+    }
+   ],
+   "enhancement": "levels stretched x8.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": null,
+   "web_skip": "tiny flame buried in sensor noise, looks like static"
+  },
+  "PSI-159/21125J1": {
+   "status": "ok",
+   "source_video": "PSI-159_Raw Data_vlc-record-2021-05-05-21h59m41s-udp____21125J1.ts",
+   "family": "gas",
+   "ignition_s": 51,
+   "flame_end_s": 56,
+   "clip_start_s": 49,
+   "clip_length_s": 16,
+   "clip": "PSI-159_21125J1/clip.mp4",
+   "clip_enhanced": "PSI-159_21125J1/clip_enhanced.mp4",
+   "thumbnail": "PSI-159_21125J1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-159_21125J1/still_0.jpg",
+     "t_s": 54
+    },
+    {
+     "file": "PSI-159_21125J1/still_1.jpg",
+     "t_s": 55
+    }
+   ],
+   "enhancement": "levels stretched x8.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": null,
+   "web_skip": "tiny flame buried in sensor noise, looks like static"
+  },
+  "PSI-159/21106H1": {
+   "status": "ok",
+   "source_video": "PSI-159_Raw Data_vlc-record-2021-04-17-01h42m42s-udp____21106H1.ts",
+   "family": "gas",
+   "ignition_s": 28,
+   "flame_end_s": 35,
+   "clip_start_s": 26,
+   "clip_length_s": 16,
+   "clip": "PSI-159_21106H1/clip.mp4",
+   "clip_enhanced": "PSI-159_21106H1/clip_enhanced.mp4",
+   "thumbnail": "PSI-159_21106H1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-159_21106H1/still_0.jpg",
+     "t_s": 31
+    },
+    {
+     "file": "PSI-159_21106H1/still_1.jpg",
+     "t_s": 32
+    },
+    {
+     "file": "PSI-159_21106H1/still_2.jpg",
+     "t_s": 33
+    },
+    {
+     "file": "PSI-159_21106H1/still_3.jpg",
+     "t_s": 34
+    }
+   ],
+   "enhancement": "levels stretched x1.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-159_21106H1/clip.mp4",
+    "thumbnail": "media/PSI-159_21106H1/thumb.jpg",
+    "crop": [
+     0.362,
+     0.982,
+     0.187,
+     0.68
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-159/21130N1": {
+   "status": "ok",
+   "source_video": "PSI-159_Raw Data_21130N1-vlc-record-2021-05-10-23h23m18s-udp___233.1.14.13_50400-.ts",
+   "family": "gas",
+   "ignition_s": 42,
+   "flame_end_s": 47,
+   "clip_start_s": 40,
+   "clip_length_s": 16,
+   "clip": "PSI-159_21130N1/clip.mp4",
+   "clip_enhanced": "PSI-159_21130N1/clip_enhanced.mp4",
+   "thumbnail": "PSI-159_21130N1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-159_21130N1/still_0.jpg",
+     "t_s": 45
+    },
+    {
+     "file": "PSI-159_21130N1/still_1.jpg",
+     "t_s": 46
+    }
+   ],
+   "enhancement": "levels stretched x4.5 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-159_21130N1/clip.mp4",
+    "thumbnail": "media/PSI-159_21130N1/thumb.jpg",
+    "crop": [
+     0.375,
+     0.775,
+     0.214,
+     0.705
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  },
+  "PSI-159/21228H1": {
+   "status": "ok",
+   "source_video": "PSI-159_Raw Data_vlc-record-2021-08-16-20h49m18s-udp____21228H1.ts",
+   "family": "gas",
+   "ignition_s": 41,
+   "flame_end_s": 48,
+   "clip_start_s": 39,
+   "clip_length_s": 16,
+   "clip": "PSI-159_21228H1/clip.mp4",
+   "clip_enhanced": "PSI-159_21228H1/clip_enhanced.mp4",
+   "thumbnail": "PSI-159_21228H1/thumb.jpg",
+   "stills": [
+    {
+     "file": "PSI-159_21228H1/still_0.jpg",
+     "t_s": 44
+    },
+    {
+     "file": "PSI-159_21228H1/still_1.jpg",
+     "t_s": 45
+    },
+    {
+     "file": "PSI-159_21228H1/still_2.jpg",
+     "t_s": 46
+    },
+    {
+     "file": "PSI-159_21228H1/still_3.jpg",
+     "t_s": 47
+    }
+   ],
+   "enhancement": "levels stretched x5.0 for visibility (clip.mp4 is unmodified)",
+   "verified": false,
+   "web": {
+    "clip": "media/PSI-159_21228H1/clip.mp4",
+    "thumbnail": "media/PSI-159_21228H1/thumb.jpg",
+    "crop": [
+     0.344,
+     0.844,
+     0.162,
+     0.787
+    ],
+    "note": "enhanced for visibility, cropped to the flame, denoised"
+   }
+  }
+ }
+}

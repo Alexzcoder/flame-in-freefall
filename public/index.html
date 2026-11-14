@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Flame in Freefall: will a fire in your habitat behave the way you expect?</title>
 <meta name="description" content="Pick a spacecraft or habitat atmosphere and see in seconds what NASA has really tested about fire in microgravity, what it hasn't, and what the reports say.">
-<link rel="icon" href="img/ember.png">
+<link rel="icon" href="img/ember-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -13,11 +13,12 @@
 </head>
 <body class="v2">
 <header>
-  <div class="brand"><div class="logo"></div><div><b>Flame in Freefall</b><span>Fire-safety insights from NASA microgravity combustion data</span></div></div>
+  <div class="brand"><img class="logo-gif" src="img/ember-logo.gif" alt="Flame in Freefall logo: Ember the flame, falling" width="46" height="46"><div><b>Flame in Freefall</b><span>Fire-safety insights from NASA microgravity combustion data</span></div></div>
   <nav id="tabs">
     <button data-tab="overview" class="on">Overview</button>
     <button data-tab="scenario">Scenario explorer</button>
     <button data-tab="investigations">Investigations</button>
+    <button data-tab="lab">Flame lab</button>
     <button data-tab="ask">Ask Ember</button>
     <a class="navlink" href="/station/">3D station ↗</a>
   </nav>
@@ -34,7 +35,7 @@
         <h1 class="hero-h">Will a fire in your habitat behave the way you expect?</h1>
         <p class="hero-sub">See in seconds what NASA has really tested about fire in microgravity, and what it hasn't.</p>
         <div class="hero-ctas"><button class="cta" data-go="scenario">Check your habitat</button><button class="soft" data-go="ask"><img src="img/ember.gif" alt="">Ask Ember</button></div>
-        <p class="trust">Free · no sign-up · every number traced back to NASA's own files</p>
+        <p class="trust">Built for NASA Space Apps 2026 · every number traced to its NASA source, assumptions flagged</p>
       </div>
       <div class="hero-ember">
         <img src="img/ember-freefall.gif" alt="Ember, a round flame with stick arms and legs, tumbling in free fall" width="220" height="220">
@@ -55,15 +56,15 @@
     <!-- VALUE -->
     <section class="band">
       <h2>What you get</h2>
-      <div class="three">
-        <div class="card ex value"><h3>🗺️ The gap map</h3><p class="tease">Every experiment on one chart.</p>
+      <div class="three four">
+        <div class="card ex value"><h3>The gap map</h3><p class="tease">Every experiment on one chart.</p>
           <details class="more"><summary>Learn more</summary><p>Every experiment on one chart of oxygen vs pressure, with the planned habitat zone marked. You see at a glance what was never tested.</p></details>
           <button class="go" data-go="#map">See the map →</button></div>
-        <div class="card ex value"><h3>🧪 A habitat check</h3><p class="tease">Closest real experiments, plain verdict.</p>
+        <div class="card ex value"><h3>A habitat check</h3><p class="tease">Closest real experiments, plain verdict.</p>
           <details class="more"><summary>Learn more</summary><p>Choose the ISS, a Moon base, a spacesuit, an airliner… and get the closest real experiments plus a plain verdict: well covered, sparse, or no data.</p></details>
-          <button class="go" data-go="scenario">Check your habitat →</button></div>
-        <div class="card ex value"><h3>🛰️ A 3D station explorer</h3><p class="tease">Fly to the ISS or a Moon base, walk inside, start a fire.</p>
-          <details class="more"><summary>Learn more</summary><p>Fly from Earth to the ISS and a Moon base. Each habitat glows green, yellow or red by how much real test data backs it. Then walk inside, click a curtain, a cable or a window, and watch how a fire would spread, when the smoke alarm trips, and which numbers come from NASA tests versus our assumptions.</p></details>
+          <button class="go" data-go="scenario">Open the habitat check →</button></div>
+        <div class="card ex value"><h3>A 3D station explorer</h3><p class="tease">Fly to the ISS or a Moon base and look inside.</p>
+          <details class="more"><summary>Learn more</summary><p>Fly from Earth to the ISS and a Moon base. Each habitat glows green, yellow or red by how much real test data backs it. Then look inside: every object has an info marker that says whether it burns, what NASA measured for its material, and real footage of the closest NASA test.</p></details>
           <a class="go" href="/station/">Open the explorer →</a><span class="mute" style="font-size:12.5px;margin-top:4px">or fly straight to the <a href="/station/#moon">Moon base</a></span></div>
         <div class="card ex value"><h3><img src="img/ember.gif" alt="" class="inline-ember"> Ember, with sources</h3><p class="tease">Ask in plain words, get cited answers.</p>
           <details class="more"><summary>Learn more</summary><p>Ask anything in plain words. Ember answers only from NASA's runs, final reports and papers, and cites the file and page for every claim.</p></details>
@@ -87,16 +88,16 @@
         <details class="fold"><summary><h3><span class="num">2</span>See the evidence</h3></summary><p>The closest real experiments, how many there are, and whether the data covers your case.</p></details>
         <details class="fold"><summary><h3><span class="num">3</span>Ask Ember</h3></summary><p>Get the findings behind the numbers, each with the NASA report page it comes from.</p></details>
       </div>
-      <div class="hero-ctas center"><button class="cta" data-go="scenario">Check your habitat</button></div>
+      
     </section>
 
     <!-- PROBLEM -->
     <section class="band">
       <h2>The answers exist. They're just buried.</h2>
       <div class="three">
-        <details class="card ex fold"><summary><h3>📦 Scattered data</h3><span class="tease">24 investigations, about 7.8 TB</span></summary><p>NASA has run hundreds of fire experiments in orbit, spread across 24 investigations and about 7.8 TB of video, sensor logs and reports, each in its own format.</p></details>
-        <details class="card ex fold"><summary><h3>🤔 Hard to trust</h3><span class="tease">Does it apply to your conditions?</span></summary><p>So when you design a cabin, it's hard to tell whether an experiment applies to your conditions, or whether you're quietly extrapolating.</p></details>
-        <details class="card ex fold"><summary><h3>⚖️ It shouldn't be this way</h3><span class="tease">Apollo 1 and Mir both happened</span></summary><p>Crew safety shouldn't depend on data nobody can find. Fire in a spacecraft is not hypothetical: Apollo 1 (1967) and the Mir station fire (1997) both happened.</p></details>
+        <details class="card ex fold"><summary><h3>Scattered data</h3><span class="tease">24 investigations, about 7.8 TB</span></summary><p>NASA has run hundreds of fire experiments in orbit, spread across 24 investigations and about 7.8 TB of video, sensor logs and reports, each in its own format.</p></details>
+        <details class="card ex fold"><summary><h3>Hard to trust</h3><span class="tease">Does it apply to your conditions?</span></summary><p>So when you design a cabin, it's hard to tell whether an experiment applies to your conditions, or whether you're quietly extrapolating.</p></details>
+        <details class="card ex fold"><summary><h3>It shouldn't be this way</h3><span class="tease">Apollo 1 and Mir both happened</span></summary><p>Crew safety shouldn't depend on data nobody can find. Fire in a spacecraft is not hypothetical: Apollo 1 (1967) and the Mir station fire (1997) both happened.</p></details>
       </div>
     </section>
 
@@ -111,13 +112,13 @@
     <h2 class="deeper">Go deeper</h2>
     <p class="mute tiphint">Tip: words with a dotted underline explain themselves. Hover or tap them.</p>
     <div class="explain3">
-      <details class="card ex fold"><summary><h3>🔥 Why fire is different in space</h3><span class="tease">Nothing rises, so flames are small, round and slow</span></summary><p>On Earth, hot gas rises and pulls in fresh air: flames are tall and flicker. In microgravity nothing rises, so oxygen only arrives by slow diffusion or by the ventilation fans. Flames become small, round, cooler and slower, and can survive at oxygen levels or airflows where they would go out on Earth. Ground tests therefore can't fully predict a cabin fire.</p></details>
-      <details class="card ex fold"><summary><h3>🗺️ How to read the map</h3><span class="tease">One dot = one run. Empty space = never tested</span></summary><p>Each dot is one experiment run on the ISS or a Cygnus cargo ship. Horizontal = cabin pressure (log scale), vertical = oxygen. Colour = experiment family. Stars mark the ISS (sea-level air) and a planned Moon base (30 % O₂ at 10.2 psi). The dotted box is the range of planned exploration habitats (25–40 % O₂, 8–12 psi): the cabin air expected in Moon and Mars habitats. Hollow markers = pressure or O₂ assumed (cabin air, not measured). Empty space means <b>nobody has tested it</b>.</p></details>
-      <details class="card ex fold"><summary><h3>✅ How much to trust a point</h3><span class="tease">Filled = measured, hollow = assumed</span></summary><p><b>Filled dot</b>: atmosphere measured. <b>Hollow dot</b>: atmosphere not recorded, so we assumed ISS cabin air. Only <b>633 of 1,624 runs</b> record what happened (ignition, extinction, burn time). Some burn times are <b>censored</b>: the run was stopped while still burning, so the time is a lower bound. The Scenario explorer and the assistant flag all of these.</p></details>
+      <details class="card ex fold"><summary><h3>Why fire is different in space</h3><span class="tease">Nothing rises, so flames are small, round and slow</span></summary><p>On Earth, hot gas rises and pulls in fresh air: flames are tall and flicker. In microgravity nothing rises, so oxygen only arrives by slow diffusion or by the ventilation fans. Flames become small, round, cooler and slower, and can survive at oxygen levels or airflows where they would go out on Earth. Ground tests therefore can't fully predict a cabin fire.</p></details>
+      <details class="card ex fold"><summary><h3>How to read the map</h3><span class="tease">One dot = one run. Empty space = never tested</span></summary><p>Each dot is one experiment run on the ISS or a Cygnus cargo ship. Horizontal = cabin pressure (log scale), vertical = oxygen. Colour = experiment family. Stars mark the ISS (sea-level air) and a planned Moon base (30 % O₂ at 10.2 psi). The dotted box is the range of planned exploration habitats (25–40 % O₂, 8–12 psi): the cabin air expected in Moon and Mars habitats. Hollow markers = pressure or O₂ assumed (cabin air, not measured). Empty space means <b>nobody has tested it</b>.</p></details>
+      <details class="card ex fold"><summary><h3>How much to trust a point</h3><span class="tease">Filled = measured, hollow = assumed</span></summary><p><b>Filled dot</b>: atmosphere measured. <b>Hollow dot</b>: atmosphere not recorded, so we assumed ISS cabin air. Only <b>633 of 1,624 runs</b> record what happened (ignition, extinction, burn time). Some burn times are <b>censored</b>: the run was stopped while still burning, so the time is a lower bound. The Scenario explorer and the assistant flag all of these.</p></details>
     </div>
     <h3 style="margin-top:22px">What's in the data</h3>
     <div class="fam" id="families"></div>
-    <details class="card ex fold"><summary><h3>🌍 Why this matters on Earth</h3><span class="tease">Aircraft cabins, oxygen therapy, submarines: same physics</span></summary><p>The same physics governs fires in places where oxygen or pressure differ from normal air:
+    <details class="card ex fold"><summary><h3>Why this matters on Earth</h3><span class="tease">Aircraft cabins, oxygen therapy, submarines: same physics</span></summary><p>The same physics governs fires in places where oxygen or pressure differ from normal air:
       <b>aircraft cabins</b> (pressurised to ~10.9 psi), <b>hyperbaric oxygen chambers</b> and <b>home oxygen therapy</b> (oxygen-enriched air, where fabrics ignite more easily),
       <b>submarines</b> and <b>clean rooms</b> (low-flow ventilation). Microgravity removes buoyancy, so it isolates effects that are hidden on Earth: radiation losses, slow diffusion, the effect of low airflow.
       NASA's droplet and soot research also feeds cleaner, more efficient engines and burners. Try the Earth presets in the Scenario explorer.</p></details>
@@ -144,7 +145,7 @@
           <label><span data-term="fuel">Fuel</span><select id="phase"><option value="">Any</option><option value="solid" selected>Solid materials</option><option value="liquid">Liquid droplets</option><option value="gas">Gas flames</option></select></label>
         </div>
       </div>
-      <div class="card" id="verdict"></div>
+      <div><div class="card" id="verdict"></div><div class="card footage" id="footage" hidden></div></div>
     </div>
     <div class="card"><h3>Closest real experiments</h3><div id="nearest"></div></div>
     <div class="card"><h3>Most relevant investigations for this atmosphere</h3><div id="scenrank"></div></div>
@@ -164,6 +165,19 @@
   </section>
 
   <!-- ASK -->
+  <section id="sec-lab" class="tab">
+    <h1>Flame lab</h1>
+    <p class="lead">A live fluid simulation of a small fire. Change gravity, oxygen and airflow and watch the flame change shape, next to real NASA footage.</p>
+    <div class="labgrid">
+      <div class="card ctl" id="labctl"></div>
+      <div class="labcv"><canvas id="labmain" width="420" height="560"></canvas><span class="cap">Simulation</span></div>
+      <div class="card" id="labreal"><p class="mute" style="margin:0">Open this tab to start the simulation.</p></div>
+    </div>
+    <details class="quiet" style="margin-top:10px"><summary>What the simulation does</summary><p class="mute" style="max-width:820px">Air is a 2D fluid (stable-fluids solver) that carries fuel vapour, oxygen, heat and smoke. The flame burns only where fuel meets oxygen and it is hot enough. Hot gas rises in proportion to gravity, so with no gravity oxygen only arrives by diffusion or the fan. Radiation cools slow flames, which is why NASA's BASS-II saw flames go out when the airflow stopped. The shapes and trends are physical; the numbers are not calibrated to NASA tests.</p></details>
+    <h3 style="margin-top:22px">Same fire, four places</h3>
+    <div class="labstrip" id="labstrip"></div>
+  </section>
+
   <section id="sec-ask" class="tab">
     <div class="ember-head"><img src="img/ember.gif" alt="Ember" width="72" height="72"><div><h1>Ask Ember</h1><p class="mute" style="margin:0">A small flame that has read every NASA fire report in this archive.</p></div></div>
     <p class="lead">Ember answers only from the dataset, NASA final reports and paper abstracts, with sources, and says plainly when the data doesn't cover a question.</p>
@@ -181,5 +195,6 @@
   <div class="mute">Data: NASA Physical Sciences Informatics. Ember answers from that data only; check the cited sources before relying on any number.</div>
 </footer>
 <script src="app.js"></script>
+<script type="module" src="labtab.js"></script>
 </body>
 </html>

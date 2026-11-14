@@ -1,0 +1,270 @@
+{
+ "runs": {
+  "PSI-25/P6": {
+   "family": "solid",
+   "clip": "media/PSI-25_P6/clip.mp4",
+   "thumbnail": "media/PSI-25_P6/thumb.jpg",
+   "crop": [
+    0.0,
+    0.521,
+    0.0,
+    1.0
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/O1": {
+   "family": "solid",
+   "clip": "media/PSI-25_O1/clip.mp4",
+   "thumbnail": "media/PSI-25_O1/thumb.jpg",
+   "crop": [
+    0.367,
+    1.0,
+    0.201,
+    1.0
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/F1": {
+   "family": "solid",
+   "clip": "media/PSI-25_F1/clip.mp4",
+   "thumbnail": "media/PSI-25_F1/thumb.jpg",
+   "crop": [
+    0.459,
+    1.0,
+    0.0,
+    1.0
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/T19": {
+   "family": "solid",
+   "clip": "media/PSI-25_T19/clip.mp4",
+   "thumbnail": "media/PSI-25_T19/thumb.jpg",
+   "crop": [
+    0.033,
+    1.0,
+    0.0,
+    1.0
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/O2": {
+   "family": "solid",
+   "clip": "media/PSI-25_O2/clip.mp4",
+   "thumbnail": "media/PSI-25_O2/thumb.jpg",
+   "crop": [
+    0.367,
+    1.0,
+    0.0,
+    1.0
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/O16": {
+   "family": "solid",
+   "clip": "media/PSI-25_O16/clip.mp4",
+   "thumbnail": "media/PSI-25_O16/thumb.jpg",
+   "crop": [
+    0.373,
+    1.0,
+    0.0,
+    1.0
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/T12": {
+   "family": "solid",
+   "clip": "media/PSI-25_T12/clip.mp4",
+   "thumbnail": "media/PSI-25_T12/thumb.jpg",
+   "crop": [
+    0.688,
+    1.0,
+    0.245,
+    1.0
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/T25": {
+   "family": "solid",
+   "clip": "media/PSI-25_T25/clip.mp4",
+   "thumbnail": "media/PSI-25_T25/thumb.jpg",
+   "crop": [
+    0.107,
+    0.931,
+    0.0,
+    0.778
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/F4": {
+   "family": "solid",
+   "clip": "media/PSI-25_F4/clip.mp4",
+   "thumbnail": "media/PSI-25_F4/thumb.jpg",
+   "crop": [
+    0.4,
+    1.0,
+    0.0,
+    0.908
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-25/B8": {
+   "family": "solid",
+   "clip": "media/PSI-25_B8/clip.mp4",
+   "thumbnail": "media/PSI-25_B8/thumb.jpg",
+   "crop": [
+    0.0,
+    0.372,
+    0.0,
+    1.0
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-39/f186d01": {
+   "family": "droplet",
+   "clip": "media/PSI-39_f186d01/clip.mp4",
+   "thumbnail": "media/PSI-39_f186d01/thumb.jpg",
+   "crop": [
+    0.207,
+    0.706,
+    0.252,
+    0.973
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-39/f195d07": {
+   "family": "droplet",
+   "clip": "media/PSI-39_f195d07/clip.mp4",
+   "thumbnail": "media/PSI-39_f195d07/thumb.jpg",
+   "crop": [
+    0.257,
+    0.657,
+    0.358,
+    0.758
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-39/f173e01": {
+   "family": "droplet",
+   "clip": "media/PSI-39_f173e01/clip.mp4",
+   "thumbnail": "media/PSI-39_f173e01/thumb.jpg",
+   "crop": [
+    0.241,
+    0.712,
+    0.242,
+    0.98
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-39/f213d03": {
+   "family": "droplet",
+   "clip": "media/PSI-39_f213d03/clip.mp4",
+   "thumbnail": "media/PSI-39_f213d03/thumb.jpg",
+   "crop": null,
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-39/f191d03": {
+   "family": "droplet",
+   "clip": "media/PSI-39_f191d03/clip.mp4",
+   "thumbnail": "media/PSI-39_f191d03/thumb.jpg",
+   "crop": [
+    0.238,
+    0.688,
+    0.281,
+    0.961
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-39/f208d02": {
+   "family": "droplet",
+   "clip": "media/PSI-39_f208d02/clip.mp4",
+   "thumbnail": "media/PSI-39_f208d02/thumb.jpg",
+   "crop": [
+    0.245,
+    0.682,
+    0.27,
+    0.952
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-39/f233d01": {
+   "family": "droplet",
+   "clip": "media/PSI-39_f233d01/clip.mp4",
+   "thumbnail": "media/PSI-39_f233d01/thumb.jpg",
+   "crop": [
+    0.262,
+    0.663,
+    0.255,
+    0.954
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-159/21137D1": {
+   "family": "gas",
+   "clip": "media/PSI-159_21137D1/clip.mp4",
+   "thumbnail": "media/PSI-159_21137D1/thumb.jpg",
+   "crop": [
+    0.237,
+    0.907,
+    0.0,
+    0.82
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-159/21256H5": {
+   "family": "gas",
+   "clip": "media/PSI-159_21256H5/clip.mp4",
+   "thumbnail": "media/PSI-159_21256H5/thumb.jpg",
+   "crop": null,
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-159/21088L1": {
+   "family": "gas",
+   "clip": "media/PSI-159_21088L1/clip.mp4",
+   "thumbnail": "media/PSI-159_21088L1/thumb.jpg",
+   "crop": [
+    0.232,
+    0.787,
+    0.065,
+    0.818
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-159/21106H1": {
+   "family": "gas",
+   "clip": "media/PSI-159_21106H1/clip.mp4",
+   "thumbnail": "media/PSI-159_21106H1/thumb.jpg",
+   "crop": [
+    0.362,
+    0.982,
+    0.187,
+    0.68
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-159/21130N1": {
+   "family": "gas",
+   "clip": "media/PSI-159_21130N1/clip.mp4",
+   "thumbnail": "media/PSI-159_21130N1/thumb.jpg",
+   "crop": [
+    0.375,
+    0.775,
+    0.214,
+    0.705
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  },
+  "PSI-159/21228H1": {
+   "family": "gas",
+   "clip": "media/PSI-159_21228H1/clip.mp4",
+   "thumbnail": "media/PSI-159_21228H1/thumb.jpg",
+   "crop": [
+    0.344,
+    0.844,
+    0.162,
+    0.787
+   ],
+   "note": "enhanced for visibility, cropped to the flame, denoised"
+  }
+ }
+}

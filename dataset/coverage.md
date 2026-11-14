@@ -29,8 +29,8 @@ Never filled by any source table (they exist for the physics engine's prediction
 - **PSI-60 PSI-60**: no run table (modelling/analysis study or documents only)
 - **PSI-62 PSI-62**: no run table (modelling/analysis study or documents only)
 - **PSI-68 FLEX-2**: FLEX-2 run table lists condition ranges per fuel, not individual runs
-- **PSI-101 SAME-R**: SAME-R is smoke aging, outcome fields don't fit the fire schema (todo: smoke schema)
-- **PSI-102 SAME**: SAME is smoke aging, outcome fields don't fit the fire schema (todo: smoke schema)
+- **PSI-101 SAME-R**: SAME-R studied smoke from overheated materials (no flames), so its results are in the reports, not the fire run table
+- **PSI-102 SAME**: SAME studied smoke from overheated materials (no flames), so its results are in the reports, not the fire run table
 - **PSI-106 SLICE**: SLICE run table is a fuel log (date + fuel) only
 - **PSI-115 PSI-115**: no run table (modelling/analysis study or documents only)
 - **PSI-117 PSI-117**: no run table (modelling/analysis study or documents only)

@@ -5,4 +5,5 @@ data/
 .env
 .vercel
 explorer/public/
+media_out/
 .env*

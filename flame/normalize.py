@@ -446,8 +446,8 @@ SKIPPED = {
     "PSI-22": "ACME E-FIELD run table has one row per test day, not per flame",
     "PSI-23": "ACME s-Flame run table has one row per test day, not per flame",
     "PSI-106": "SLICE run table is a fuel log (date + fuel) only",
-    "PSI-102": "SAME is smoke aging, outcome fields don't fit the fire schema (todo: smoke schema)",
-    "PSI-101": "SAME-R is smoke aging, outcome fields don't fit the fire schema (todo: smoke schema)",
+    "PSI-102": "SAME studied smoke from overheated materials (no flames), so its results are in the reports, not the fire run table",
+    "PSI-101": "SAME-R studied smoke from overheated materials (no flames), so its results are in the reports, not the fire run table",
     "PSI-47": "DAFT is dust sampling for smoke detectors, not combustion runs",
     "PSI-142": "table indexes figures in papers, not runs",
 }
