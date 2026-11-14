@@ -23,8 +23,8 @@ from flame.media import ROOT
 from flame.sim import PARAMS_JSON, THETA, W, Sim, load_theta
 
 REPORT = os.path.join(ROOT, "dataset", "spread_eval.md")
-KNOBS = {"pyro": (0.2, 0.9, 0), "c_thin": (0.03, 3, 1), "c_thick": (1, 60, 1), "burn_thin": (0.02, 2, 1),
-         "burn_thick": (0.001, 0.2, 1), "k_strip": (0.5, 30, 1)}
+KNOBS = {"pyro": (0.2, 0.9, 0), "c_thin": (0.01, 3, 1), "c_thick": (1, 60, 1), "burn_thin": (0.005, 2, 1),
+         "burn_thick": (0.001, 0.2, 1), "k_strip": (0.5, 150, 1)}
 BASE = dict(gravity_g=0.0, pressure_kpa=101.325, spread=True)
 # name, conditions, target: ("speed", mm/s, tolerance factor) or ("burns", True/False), source
 TARGETS = [
@@ -153,9 +153,11 @@ def main():
     print("\n".join(lines))
     j = json.load(open(PARAMS_JSON)) if os.path.exists(PARAMS_JSON) else {"theta": dict(THETA)}
     j["theta"].update({k: round(th[k], 5) for k in KNOBS})
-    j["spread"] = {"targets_matched": hits, "targets": len(TARGETS), "loss": best[0], "mm_per_cell": 10 / (fs * tau)}
-    with open(PARAMS_JSON, "w") as f:
+    j["spread"] = {"targets_matched": int(hits), "targets": len(TARGETS), "loss": float(best[0]),
+                   "mm_per_cell": float(10 / (fs * tau))}
+    with open(PARAMS_JSON + ".part", "w") as f:  # write then swap: a crash never leaves a half-written file
         json.dump(j, f, indent=1)
+    os.replace(PARAMS_JSON + ".part", PARAMS_JSON)
 
 
 if __name__ == "__main__":

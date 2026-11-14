@@ -33,12 +33,14 @@ SECONDS = 30.0
 
 
 def fate(conds, theta):
-    """→ per condition: {'burns': still burning at the end, 'aspect', 'blue', 'alive'}."""
+    """→ per condition: {'burns': visible flame for most of the last quarter (same rule as flame/calibrate.py),
+    'aspect', 'blue', 'alive'}."""
     fr = Sim(conds, theta).run(SECONDS, 0.5).numpy()
     out = []
     for f in fr:
         m = clip_measures(f[4:], skip=0)
-        out.append({"burns": bool(m["alive"] > 0 and not m["extinguished"]), "alive": round(m["alive"], 2),
+        late = [x is not None for x in (m.get("series") or [])[-len(f) // 4:]]
+        out.append({"burns": bool(late and np.mean(late) > 0.5), "alive": round(m["alive"], 2),
                     "aspect": None if m.get("aspect") is None else round(m["aspect"], 2),
                     "blue": None if m.get("blue") is None else round(m["blue"], 2)})
     return out
@@ -89,24 +91,25 @@ def main():
             items[item] = {"material": mat, "sim_fuel": fuel, "fans_on": on, "fans_off": off,
                            "min_o2_burning_fans_on": min_o2, "notes": notes, "caveat": caveat}
         out["habitats"][hk] = {**h, "items": items}
-    # where NASA has the answer: BASS-II solids that went out on their own
-    runs = runs_by_id()
-    bass = [(rid, r) for rid, r in runs.items() if r["investigation"] == "PSI-25" and r["outcome"]["result"] == "extinction"]
-    conds = [(rid, sim_conditions(r)[0]) for rid, r in bass]
-    conds = [(rid, c) for rid, c in conds if c]
-    vr = fate([c for _, c in conds], theta) if conds else []
+    # where NASA has the answer: BASS-II flames burned at the initial airflow and went out when the crew turned the
+    # fan down; SAFFIRE flames kept burning (the solid fate cases of flame/calibrate.py, used to fit the knobs)
+    from flame.calibrate import datasets
+    cases = datasets()[2]
+    vr = fate([c["cond"] for c in cases], theta)
+    ok = [r["burns"] == c["burns"] for c, r in zip(cases, vr)]
     out["validation"] = {
-        "bass2_went_out": len(conds), "sim_also_goes_out": sum(not r["burns"] for r in vr),
-        "runs": {rid: {"o2": c["o2"], "flow_cm_s": c["flow_cm_s"], "sim_burns": r["burns"]} for (rid, c), r in zip(conds, vr)},
-        "note": "All 17 BASS-II runs with a recorded outcome went out by themselves (none burned to the end), so this "
-                "checks one side only."}
+        "cases": len(cases), "matched": int(sum(ok)),
+        "runs": {c["id"]: {"o2": c["cond"]["o2"], "flow_cm_s": c["cond"]["flow_cm_s"], "nasa_burns": c["burns"],
+                           "sim_burns": r["burns"]} for c, r in zip(cases, vr)},
+        "note": "These cases were used to fit the knobs, so this shows the model reproduces them, not that it predicts "
+                "new ones. Leave-one-out results: dataset/shape_eval.md."}
     out["model"] = {"calibrated": calibrated, "theta": theta,
                     "method": "flame/sim.py with the knobs fitted by flame/calibrate.py; 2D, small flame, 30 simulated "
                               "seconds; 'burns' = still visible at the end. Evaluation: dataset/shape_eval.md."}
     with open(OUT, "w") as f:
         json.dump(out, f, indent=1)
     v = out["validation"]
-    print(f"insights written; BASS-II check: sim goes out in {v['sim_also_goes_out']}/{v['bass2_went_out']} runs that really went out")
+    print(f"insights written; solid fate check: {v['matched']}/{v['cases']} NASA cases matched")
     for hk, h in out["habitats"].items():
         for item, x in h["items"].items():
             print(hk, item, "on:", x["fans_on"]["burns"], "off:", x["fans_off"]["burns"], "min O2:", x["min_o2_burning_fans_on"])
