@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inside the habitat · Flame in Freefall</title>
+<link rel="icon" href="../img/ember.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                 "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<style>
+:root{--bg:#0b0d12;--panel:#12151ef0;--line:#2a303c;--fg:#e4e7ee;--mute:#8a93a6;--acc:#ff7a2f;--ok:#3ecf8e;--warn:#f6c945;--bad:#ff5c8a;--blue:#5aa9ff}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 Inter,system-ui,sans-serif;overflow:hidden}
+#view{position:fixed;inset:0}
+.bar{position:fixed;left:0;right:0;top:0;z-index:5;display:flex;gap:10px;align-items:center;padding:10px 14px;background:linear-gradient(#0b0d12ee,#0b0d1200)}
+.bar a{color:var(--fg);text-decoration:none;font-weight:600;display:flex;align-items:center;gap:6px}
+.seg{display:flex;background:#12151e;border:1px solid var(--line);border-radius:10px;padding:3px;margin-left:auto}
+.seg button,.chip{font:inherit;color:var(--mute);background:none;border:0;border-radius:7px;padding:6px 12px;cursor:pointer}
+.seg button.on{background:var(--acc);color:#1a0d05;font-weight:700}
+.views{position:fixed;left:14px;top:62px;z-index:5;display:flex;flex-direction:column;gap:6px}
+.chip{background:#12151ecc;border:1px solid var(--line);color:var(--fg);text-align:left}.chip:hover{border-color:var(--acc)}
+.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:5;background:#12151ecc;border:1px solid var(--line);border-radius:20px;padding:7px 16px;color:#d3d7df;pointer-events:none;white-space:nowrap}
+#tip{position:fixed;z-index:9;pointer-events:none;background:#1f2532;border:1px solid #39414f;border-radius:8px;padding:5px 9px;font-size:12.5px;display:none}
+.panel{position:fixed;right:14px;top:62px;z-index:6;width:min(360px,calc(100vw - 28px));max-height:calc(100vh - 170px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.panel h2{font-size:17px;margin:0 0 4px}.panel .sub{color:var(--mute);font-size:12.5px;margin:0 0 10px}
+.status{display:inline-block;font-weight:700;border-radius:20px;padding:3px 12px;margin:2px 0 8px;font-size:13px}
+.s-spreads{background:#ff5c8a22;color:#ff9ab6}.s-quench,.s-no_spread,.s-blowoff{background:#3ecf8e22;color:#7ee8b8}.s-untested{background:#f6c94522;color:#f6dc8a}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.kpi{background:#181c25;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.kpi b{display:block;font-size:18px}.kpi span{color:var(--mute);font-size:12px}
+details{border-top:1px solid var(--line);padding:8px 0}summary{cursor:pointer;font-weight:600;color:#c9cdd6}
+label.sl{display:grid;grid-template-columns:80px 1fr 82px;gap:8px;align-items:center;font-size:12.5px;color:var(--mute);margin:6px 0}
+label.sl output{color:var(--fg);text-align:right}input[type=range]{accent-color:var(--acc);width:100%}
+.mats{list-style:none;padding:0;margin:6px 0}.mats li{margin:6px 0;font-size:12.5px}.mats b{color:var(--fg)}
+.tag{font-size:10.5px;font-weight:700;border-radius:4px;padding:0 5px;margin-right:4px}.t-data{background:#3ecf8e22;color:#7ee8b8}.t-assumption{background:#f6c94522;color:#f6dc8a}
+.src li{font-size:12px;margin:5px 0;color:#c9cdd6}
+.tl{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:10px;align-items:center;padding:12px 16px;background:linear-gradient(#0b0d1200,#0b0d12f2 40%)}
+.tl button{font:inherit;font-weight:700;background:var(--acc);color:#1a0d05;border:0;border-radius:9px;padding:8px 14px;cursor:pointer;min-width:44px}
+.tl button.ghost{background:#181c25;color:var(--fg);border:1px solid var(--line);font-weight:500}
+.tl input{flex:1}.tl .time{font-variant-numeric:tabular-nums;min-width:64px;text-align:right;font-weight:600}
+.tl select{background:#181c25;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:6px}
+.alarm{color:var(--bad);font-weight:700}
+@media(max-width:700px){.views{top:auto;bottom:70px;flex-direction:row;flex-wrap:wrap;right:14px}.panel{top:auto;bottom:118px;max-height:42vh}.hint{display:none}.seg button{padding:5px 8px}}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div class="bar">
+  <a href="/station/"><img src="../img/ember.png" width="24" height="24" alt=""> ← Station</a>
+  <div class="seg" id="hab"><button data-h="moon">Moon base</button><button data-h="iss">ISS module</button></div>
+</div>
+<div class="views" id="views"></div>
+<div class="hint" id="hint">Drag to look around · click any object to start a fire there</div>
+<div id="tip"></div>
+
+<aside class="panel" id="panel">
+  <h2 id="ptitle">Pick a spot</h2>
+  <p class="sub" id="psub">Click a curtain, a sleeping bag, a cable or a window.</p>
+  <div id="result"></div>
+  <details id="conds"><summary>Cabin conditions</summary>
+    <label class="sl">Oxygen<input id="o2" type="range" min="15" max="40" step="0.5"><output id="o2v"></output></label>
+    <label class="sl">Pressure<input id="p" type="range" min="30" max="110" step="0.5"><output id="pv"></output></label>
+    <label class="sl">Fan airflow<input id="vent" type="range" min="0" max="30" step="0.5"><output id="ventv"></output></label>
+    <label class="sl">Gravity<input id="g" type="range" min="0" max="1" step="0.001"><output id="gv"></output></label>
+  </details>
+  <details><summary>How this is calculated</summary>
+    <p class="sub" style="margin-top:6px">A simple spread model on 6 cm patches. <span class="tag t-data">DATA</span> = measured by NASA, <span class="tag t-assumption">ASSUMPTION</span> = our simplification. Not a validated fire simulator.</p>
+    <ul class="src" id="src"></ul>
+  </details>
+</aside>
+
+<div class="tl">
+  <button id="play" aria-label="Play">▶</button>
+  <button id="reset" class="ghost" aria-label="Restart">↺</button>
+  <input id="time" type="range" min="0" max="1200" step="1" value="0" aria-label="Simulated time">
+  <span class="time" id="tval">0:00</span>
+  <select id="speed" aria-label="Playback speed"><option value="10">×10</option><option value="60" selected>×60</option><option value="300">×300</option></select>
+</div>
+
+<script type="module">
+import { createInterior } from "./interior3d.js";
+import { simulate, materialVerdict, MATERIALS, SRC, buoyantFlow } from "./firemodel.js";
+
+// Habitat presets (same as the station explorer; airflow values are placeholders, see config.js)
+const HAB = {
+  moon: { name: "Moon base", o2: 0.30, pressure_kpa: 70.3, gravity_g: 0.166, vent_cm_s: 5 },
+  iss: { name: "ISS module", o2: 0.21, pressure_kpa: 101.3, gravity_g: 0, vent_cm_s: 10 },
+};
+const $ = id => document.getElementById(id);
+const hab = new URLSearchParams(location.search).get("hab") === "iss" ? "iss" : "moon";
+document.querySelectorAll("#hab button").forEach(b => {
+  b.classList.toggle("on", b.dataset.h === hab);
+  b.onclick = () => { location.search = "?hab=" + b.dataset.h; };
+});
+const cond = { ...HAB[hab] };
+let world, start = null, result = null, t = 0, playing = false, last = performance.now();
+
+const fmtT = s => !isFinite(s) ? "–" : s < 60 ? `${Math.round(s)} s` : `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")} min`;
+const STATE = { spreads: "🔥 Fire spreads", quench: "✓ Puts itself out", no_spread: "✓ Doesn't spread", blowoff: "✓ Blown out", untested: "? Never tested", inert: "Doesn't burn" };
+
+// sliders
+const S = { o2: ["o2", v => cond.o2 = v / 100, () => cond.o2 * 100, v => `${(+v).toFixed(1)} %`],
+  p: ["pressure_kpa", v => cond.pressure_kpa = v, () => cond.pressure_kpa, v => `${(+v).toFixed(0)} kPa`],
+  vent: ["vent_cm_s", v => cond.vent_cm_s = v, () => cond.vent_cm_s, v => `${(+v).toFixed(1)} cm/s`],
+  g: ["gravity_g", v => cond.gravity_g = v, () => cond.gravity_g, v => +v === 0 ? "0 g (orbit)" : `${(+v).toFixed(3)} g`] };
+for (const [id, [, set, get, fmt]] of Object.entries(S)) {
+  const el = $(id); el.value = get(); $(id + "v").textContent = fmt(el.value);
+  el.oninput = () => { set(+el.value); $(id + "v").textContent = fmt(el.value); if (start) run(start); else renderIdle(); };
+}
+
+function renderIdle() {
+  $("result").innerHTML = `<ul class="mats">${Object.keys(MATERIALS).filter(k => !MATERIALS[k].inert).map(k => {
+    const v = materialVerdict(k, cond); return `<li><b>${MATERIALS[k].name}</b>: ${STATE[v.state]}</li>`; }).join("")}</ul>`;
+}
+
+function run(p) {
+  start = p;
+  const c = { ...cond, detectorDist_m: world.detectorDist(p.cell) };
+  result = simulate(world.cells, world.nbrs, p.cell, c);
+  world.setSim(result, c, p.cell);
+  t = 0; $("time").value = 0; playing = result.startVerdict.state === "spreads" || result.startVerdict.state === "quench";
+  $("play").textContent = playing ? "❚❚" : "▶";
+  const v = result.startVerdict, m = MATERIALS[p.surf.mat];
+  const times = [...result.tIgn].filter(Number.isFinite);
+  const maxT = Math.min(3600, Math.max(120, ...times.map(x => x + 60)));
+  $("time").max = Math.round(maxT);
+  $("ptitle").textContent = p.surf.name;
+  $("psub").textContent = `${m.name}${m.proxy ? ` (NASA tested ${m.proxy})` : ""} · ${(cond.o2 * 100).toFixed(1)} % O₂ · ${(cond.pressure_kpa / 6.895).toFixed(1)} psi · ${cond.gravity_g ? cond.gravity_g + " g" : "0 g"}`;
+  const area = s => `${(result.areaAt(s) / 10000).toFixed(2)} m²`;
+  const U = Math.hypot(cond.vent_cm_s, buoyantFlow(cond.gravity_g));
+  $("result").innerHTML = `<span class="status s-${v.state}">${STATE[v.state]}</span>
+    <p class="sub" style="margin:0 0 6px">${v.note}${v.extrapolated ? ' <span class="tag t-assumption">EXTRAPOLATED</span>' : ""}</p>
+    ${v.state === "spreads" ? `<div class="kpis">
+      <div class="kpi"><b>${result.detectAt !== null ? fmtT(result.detectAt) : "–"}</b><span>smoke alarm</span></div>
+      <div class="kpi"><b>${area(300)}</b><span>burned after 5 min</span></div>
+      <div class="kpi"><b>${area(900)}</b><span>burned after 15 min</span></div>
+      <div class="kpi"><b>${U.toFixed(1)} cm/s</b><span>airflow at the flame${cond.gravity_g ? " (fan + buoyancy)" : " (fan only)"}</span></div></div>` : ""}
+    <details><summary>What nearby materials would do</summary><ul class="mats">${Object.entries(result.verdicts).filter(([k]) => !MATERIALS[k].inert)
+      .map(([k, x]) => `<li><b>${MATERIALS[k].name}</b>: ${STATE[x.state]}${x.extrapolated ? " (extrapolated)" : ""}<br><span style="color:var(--mute)">${x.note}</span></li>`).join("")}</ul></details>`;
+}
+
+world = createInterior($("view"), hab, {
+  onPick: p => { $("hint").style.display = "none"; run(p); },
+  onHover: (s, e) => {
+    const tip = $("tip");
+    if (!s) { tip.style.display = "none"; return; }
+    tip.style.display = "block"; tip.style.left = e.clientX + 14 + "px"; tip.style.top = e.clientY + 14 + "px";
+    tip.textContent = `${s.name} · ${MATERIALS[s.mat].name}`;
+  },
+});
+if (world) {
+  $("views").innerHTML = world.views.map(v => `<button class="chip" data-v="${v}">${v}</button>`).join("");
+  $("views").onclick = e => { const v = e.target.dataset.v; if (v) world.goTo(v); };
+}
+$("src").innerHTML = Object.values(SRC).map(s => `<li><span class="tag t-${s.kind}">${s.kind === "data" ? "DATA" : "ASSUMPTION"}</span>${s.text}</li>`).join("");
+renderIdle();
+
+$("play").onclick = () => { if (!result) return; playing = !playing; $("play").textContent = playing ? "❚❚" : "▶"; };
+$("reset").onclick = () => { t = 0; $("time").value = 0; world?.setTime(0); };
+$("time").oninput = () => { t = +$("time").value; world?.setTime(t); };
+(function tick() {
+  const now = performance.now(), dt = (now - last) / 1000; last = now;
+  if (playing && result) {
+    t = Math.min(+$("time").max, t + dt * +$("speed").value);
+    if (t >= +$("time").max) { playing = false; $("play").textContent = "▶"; }
+    $("time").value = t; world.setTime(t);
+  }
+  const alarm = result && result.detectAt !== null && t >= result.detectAt;
+  $("tval").innerHTML = alarm ? `<span class="alarm">🔔 ${fmtT(t)}</span>` : fmtT(t).replace(" min", "").replace(" s", "s");
+  requestAnimationFrame(tick);
+})();
+// test hook: ?auto=<surface name> lights that surface after load (used for screenshots)
+const auto = new URLSearchParams(location.search).get("auto");
+if (auto && world) setTimeout(() => {
+  const i = world.cells.findIndex((c, k) => world.surfaceName(k)?.startsWith(auto));
+  if (i >= 0) { run({ cell: i, surf: { name: world.surfaceName(i), mat: world.cells[i].mat } }); }
+  const tt = +(new URLSearchParams(location.search).get("t") || 0);
+  if (tt) { playing = false; $("play").textContent = "▶"; t = tt; $("time").value = tt; world.setTime(tt); }
+}, 500);
+</script>
+</body>
+</html>
