@@ -131,3 +131,17 @@ python3 -m flame.fetch --reports && python3 -m flame.docs   # 40 NASA report PDF
 python3 -m flame.papers      # abstracts: OpenAlex → Semantic Scholar → NTRS (cached in data/raw/papers)
 python3 -m flame.search      # → dataset/documents.jsonl + search self-check
 ```
+
+## Dashboard (app/ + public/)
+
+```bash
+uvicorn app.main:app --reload     # http://localhost:8000  (pip install fastapi uvicorn)
+```
+- `app/main.py`: FastAPI JSON API over `flame/` and `ranking/`: `/api/meta`, `/api/coverage`, `/api/rank`,
+  `/api/nearest`, `/api/investigations/{id}`, `/api/compare?ids=`, `/api/search?q=`, `POST /api/chat`.
+- `app/chat.py`: DeepSeek tool-calling agent (tools = search_documents, find_runs, nearest_runs, rank_investigations,
+  get_investigation, compare_investigations). It must cite run ids / report pages. Key: `DEEPSEEK_API_KEY` in `.env`
+  (local) or the Vercel project env. Model: `CHAT_MODEL` (default `deepseek-chat`).
+- `public/`: static frontend (vanilla JS + Plotly): Overview map, Scenario explorer, Investigations, Ask.
+- Deploy: Vercel project `flame-in-freefall` (FastAPI preset), live at https://flame-in-freefall-ivory.vercel.app
+  (`vercel deploy --prod --scope alexzcoders-projects` from the repo root).
