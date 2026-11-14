@@ -1,0 +1,362 @@
+{
+ "habitats": {
+  "iss": {
+   "name": "ISS module",
+   "o2": 0.21,
+   "pressure_kpa": 101.325,
+   "gravity_g": 0.0,
+   "vent_cm_s": 10,
+   "items": {
+    "crew_quarters": {
+     "material": "fabric",
+     "sim_fuel": "fabric",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.23,
+      "blue": 0.42
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.51,
+      "blue": 0.54
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
+     ],
+     "caveat": null
+    },
+    "galley": {
+     "material": "fabric",
+     "sim_fuel": "fabric",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.23,
+      "blue": 0.42
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.51,
+      "blue": 0.54
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
+     ],
+     "caveat": null
+    },
+    "glovebox": {
+     "material": "pmma_thick",
+     "sim_fuel": "pmma",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.04,
+      "blue": 0.44
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.54,
+      "blue": 0.54
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
+     ],
+     "caveat": null
+    },
+    "stowage": {
+     "material": "nomex",
+     "sim_fuel": "fabric",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.23,
+      "blue": 0.42
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.51,
+      "blue": 0.54
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
+     ],
+     "caveat": "NASA's SAFFIRE tests could not ignite it up to 22.1 % oxygen; this is what happens if it does."
+    },
+    "cables": {
+     "material": "silicone",
+     "sim_fuel": "pmma",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.04,
+      "blue": 0.44
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.54,
+      "blue": 0.54
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
+     ],
+     "caveat": "NASA's SAFFIRE tests could not ignite it up to 22.1 % oxygen; this is what happens if it does."
+    }
+   }
+  },
+  "moon": {
+   "name": "Moon base",
+   "o2": 0.3,
+   "pressure_kpa": 70.3,
+   "gravity_g": 0.166,
+   "vent_cm_s": 5,
+   "items": {
+    "crew_quarters": {
+     "material": "fabric",
+     "sim_fuel": "fabric",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 2.23,
+      "blue": 0.37
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 3.22,
+      "blue": 0.38
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+     ],
+     "caveat": null
+    },
+    "galley": {
+     "material": "fabric",
+     "sim_fuel": "fabric",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 2.23,
+      "blue": 0.37
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 3.22,
+      "blue": 0.38
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+     ],
+     "caveat": null
+    },
+    "glovebox": {
+     "material": "pmma_thick",
+     "sim_fuel": "pmma",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.67,
+      "blue": 0.36
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 2.57,
+      "blue": 0.37
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+     ],
+     "caveat": null
+    },
+    "stowage": {
+     "material": "nomex",
+     "sim_fuel": "fabric",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 2.23,
+      "blue": 0.37
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 3.22,
+      "blue": 0.38
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+     ],
+     "caveat": "NASA's SAFFIRE tests could not ignite it up to 22.1 % oxygen; this is what happens if it does."
+    },
+    "cables": {
+     "material": "silicone",
+     "sim_fuel": "pmma",
+     "fans_on": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 1.67,
+      "blue": 0.36
+     },
+     "fans_off": {
+      "burns": true,
+      "alive": 1.0,
+      "aspect": 2.57,
+      "blue": 0.37
+     },
+     "min_o2_burning_fans_on": 0.12,
+     "notes": [
+      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
+      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+     ],
+     "caveat": "NASA's SAFFIRE tests could not ignite it up to 22.1 % oxygen; this is what happens if it does."
+    }
+   }
+  }
+ },
+ "validation": {
+  "bass2_went_out": 17,
+  "sim_also_goes_out": 0,
+  "runs": {
+   "PSI-25/B14": {
+    "o2": 0.15,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/B18": {
+    "o2": 0.174,
+    "flow_cm_s": 10.07,
+    "sim_burns": true
+   },
+   "PSI-25/B19": {
+    "o2": 0.173,
+    "flow_cm_s": 10.07,
+    "sim_burns": true
+   },
+   "PSI-25/B21": {
+    "o2": 0.208,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/O4": {
+    "o2": 0.148,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/O11": {
+    "o2": 0.154,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/O14": {
+    "o2": 0.163,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/O19": {
+    "o2": 0.153,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P1": {
+    "o2": 0.177,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P5": {
+    "o2": 0.193,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P9": {
+    "o2": 0.176,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P10": {
+    "o2": 0.17,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P13a": {
+    "o2": 0.207,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P13b": {
+    "o2": 0.206,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P22a": {
+    "o2": 0.208,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P22b": {
+    "o2": 0.2,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   },
+   "PSI-25/P25": {
+    "o2": 0.209,
+    "flow_cm_s": 5.03,
+    "sim_burns": true
+   }
+  },
+  "note": "All 17 BASS-II runs with a recorded outcome went out by themselves (none burned to the end), so this checks one side only."
+ },
+ "model": {
+  "calibrated": false,
+  "theta": {
+   "k": 16.0,
+   "heat": 1.5,
+   "cool": 0.6,
+   "ign": 0.35,
+   "buoy": 26.0,
+   "dif_o2": 0.22,
+   "dif_fuel": 0.2,
+   "cond": 0.1,
+   "flow_scale": 0.9,
+   "eps0": 4.0,
+   "eps_g": 10.0,
+   "emit_scale": 1.0,
+   "inv_fuel": 1.0,
+   "inv_o2": 1.0,
+   "cam_blue": 1.0,
+   "cam_soot": 0.7,
+   "tad_exp": 0.0
+  },
+  "method": "flame/sim.py with the knobs fitted by flame/calibrate.py; 2D, small flame, 30 simulated seconds; 'burns' = still visible at the end. Evaluation: dataset/shape_eval.md."
+ }
+}

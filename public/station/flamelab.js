@@ -16,17 +16,17 @@ const SHADERS = {
   advect: `${HEAD} uniform sampler2D vel, src; uniform float dt; uniform vec4 keep;
     void main(){ vec2 v = texture(vel, uv).xy; o = texture(src, uv - dt * v * tx) * keep; }`,
   // r = temperature, g = fuel vapour, b = oxygen (1 = this cabin's O2 level), a = soot/smoke
-  react: `${HEAD} uniform sampler2D s; uniform float dt, k, heat, cool, ign, emit, o2, time, dif, round_; uniform vec4 fuelRect;
+  react: `${HEAD} uniform sampler2D s; uniform float dt, k, heat, cool, ign, emit, o2, time, dif, round_, difO, difF, cond, anchor, emit0; uniform vec4 fuelRect;
     void main(){
       vec4 c = texture(s, uv);
       vec4 n = texture(s, uv + vec2(tx.x, 0.)) + texture(s, uv - vec2(tx.x, 0.)) + texture(s, uv + vec2(0., tx.y)) + texture(s, uv - vec2(0., tx.y));
-      c.b += (n.b * 0.25 - c.b) * min(0.24, 0.22 * dif);    // oxygen diffusion: the only supply when nothing moves (slower at high pressure)
-      c.g += (n.g * 0.25 - c.g) * min(0.24, 0.20 * dif);    // fuel vapour diffuses out too: in still microgravity air the flame sits where fuel meets oxygen
-      c.r += (n.r * 0.25 - c.r) * 0.10;                     // heat conduction
+      c.b += (n.b * 0.25 - c.b) * min(0.24, difO * dif);    // oxygen diffusion: the only supply when nothing moves (slower at high pressure)
+      c.g += (n.g * 0.25 - c.g) * min(0.24, difF * dif);    // fuel vapour diffuses out too: in still microgravity air the flame sits where fuel meets oxygen
+      c.r += (n.r * 0.25 - c.r) * cond;                     // heat conduction
       vec2 ctr = 0.5 * (fuelRect.xy + fuelRect.zw), hs = 0.5 * (fuelRect.zw - fuelRect.xy);
       vec2 d = (uv - ctr) / hs;
       bool onFuel = round_ > 0.5 ? dot(d, d) < 1. : (abs(d.x) < 1. && abs(d.y) < 1.);   // droplet / porous sphere burner are round
-      if (onFuel) { c.g += dt * emit * (0.7 + 2.0 * min(c.r, 1.5)); c.r = max(c.r, time < 1.2 ? 1.2 : 0.5); }  // burning surface stays at its vaporisation temperature (anchors the flame); igniter for 1.2 s
+      if (onFuel) { c.g += dt * emit * (emit0 + 2.0 * min(c.r, 1.5)); c.r = max(c.r, time < 1.2 ? 1.2 : anchor); }  // surface keeps some heat (anchors the flame); igniter for 1.2 s
       float r = k * c.g * c.b * smoothstep(ign, ign + 0.25, c.r);   // reaction rate
       r = min(r, min(c.g, c.b) / max(dt, 1e-3));
       c.g -= r * dt; c.b -= r * dt * 0.9;
@@ -72,6 +72,14 @@ const SHADERS = {
       o = vec4(pow(col, vec3(0.85)) + vec3(0.018, 0.022, 0.035), 1.);
     }`,
 };
+
+// Physics knobs. Defaults = hand-tuned; flame/calibrate.py fits them to NASA runs and writes simparams.json,
+// which replaces them when present (same knobs as flame/sim.py THETA; see dataset/shape_eval.md for how well it fits).
+const TH = { k: 16, heat: 1.5, cool: 0.6, ign: 0.35, buoy: 26, dif_o2: 0.22, dif_fuel: 0.20, cond: 0.10, flow_scale: 0.9,
+             eps0: 4, eps_g: 10, emit_scale: 1, anchor: 0.5, emit0: 0.7 };
+const knobs = fetch(new URL("simparams.json", import.meta.url)).then(r => r.ok ? r.json() : null)
+  .then(j => { for (const key in TH) if (j?.theta?.[key] != null) TH[key] = j.theta[key]; }).catch(() => {});
+export const calibrated = knobs;
 
 export function createFlameLab(canvas, init = {}) {
   const gl = canvas.getContext("webgl2", { antialias: false, premultipliedAlpha: false });
@@ -130,14 +138,16 @@ export function createFlameLab(canvas, init = {}) {
 
   function step(dt) {
     const g = Math.max(0, P.gravity_g), o2 = P.o2 / 0.21, f = FUEL[P.fuel] || FUEL.fabric;
-    const flow = P.flow_cm_s * 0.9;   // cm/s -> cells/s (one cell ~ 1 mm, playback slowed for visibility)
+    const flow = P.flow_cm_s * TH.flow_scale;   // cm/s -> cells/s (one cell ~ 1 mm, playback slowed for visibility)
     time += dt;
     pass("advect", vel.w, { vel: vel.r, src: vel.r, dt, keep: [0.995, 0.995, 1, 1] }); vel.swap();
     pass("advect", scal.w, { vel: vel.r, src: scal.r, dt, keep: [0.995, 0.99, 1, 0.997] }); scal.swap();
     const pr = Math.max(0.2, P.pressure_kpa / 101.325);   // denser gas: faster reaction, slower diffusion
-    pass("react", scal.w, { s: scal.r, dt, k: 16.0 * Math.min(2.2, o2) * Math.sqrt(pr), heat: 1.5, cool: 0.6, ign: 0.35, emit: f.emit, o2, time, dif: 1 / Math.sqrt(pr), fuelRect: f.rect, round_: f.round || 0 }); scal.swap();
+    pass("react", scal.w, { s: scal.r, dt, k: TH.k * Math.min(2.2, o2) * Math.sqrt(pr), heat: TH.heat, cool: TH.cool, ign: TH.ign,
+      emit: f.emit * TH.emit_scale, o2, time, dif: 1 / Math.sqrt(pr), fuelRect: f.rect, round_: f.round || 0,
+      difO: TH.dif_o2, difF: TH.dif_fuel, cond: TH.cond, anchor: TH.anchor, emit0: TH.emit0 }); scal.swap();
     pass("curl", cu, { vel: vel.r });
-    pass("forces", vel.w, { vel: vel.r, s: scal.r, curl: cu, dt, buoy: 26 * g * Math.sqrt(pr), flow, eps: 4 + 10 * Math.sqrt(g) }); vel.swap();
+    pass("forces", vel.w, { vel: vel.r, s: scal.r, curl: cu, dt, buoy: TH.buoy * g * Math.sqrt(pr), flow, eps: TH.eps0 + TH.eps_g * Math.sqrt(g) }); vel.swap();
     pass("div", dv, { vel: vel.r });
     for (let i = 0; i < 24; i++) { pass("jacobi", prs.w, { pr: prs.r, dv }); prs.swap(); }
     pass("project", vel.w, { pr: prs.r, vel: vel.r }); vel.swap();
@@ -145,7 +155,7 @@ export function createFlameLab(canvas, init = {}) {
   function frame() {
     if (!running) return;
     for (let i = 0; i < 2; i++) step(1 / 60);
-    pass("show", null, { s: scal.r, blue: Math.max(0, 1 - P.gravity_g * 3), k: 16.0 });
+    pass("show", null, { s: scal.r, blue: Math.max(0, 1 - P.gravity_g * 3), k: TH.k });
     raf = requestAnimationFrame(frame);
   }
   clear();
