@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flame lab · Flame in Freefall</title>
+<link rel="icon" href="../img/ember.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.lab{display:grid;grid-template-columns:minmax(260px,420px) 1fr minmax(260px,360px);gap:16px;align-items:start}
+.cv{background:#05070d;border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+.cv canvas{width:100%;display:block;aspect-ratio:3/4}
+.cv .cap{position:absolute;left:10px;top:8px;font-size:12.5px;color:#c9cdd6;background:#0b0d12aa;border-radius:8px;padding:2px 8px}
+.ctl label{display:grid;grid-template-columns:90px 1fr 76px;gap:8px;align-items:center;font-size:13px;color:var(--muted);margin:8px 0}
+.ctl output{color:var(--text);text-align:right}.ctl input{accent-color:var(--acc)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.chips button{font:inherit;font-size:13px;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:20px;padding:5px 12px;cursor:pointer}
+.chips button.on,.chips button:hover{border-color:var(--acc)}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
+.real video{width:100%;aspect-ratio:3/4;object-fit:contain;background:#000;display:block}
+.real .lbl{font-size:12px;color:var(--muted);padding:8px 10px}.real .lbl b{color:var(--text)}
+.honest{font-size:12.5px;color:var(--muted);margin-top:10px}
+@media(max-width:1000px){.lab{grid-template-columns:1fr}.strip{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header class="top"><a href="/" class="home"><img src="../img/ember-logo.gif" alt="Flame in Freefall logo" width="38" height="38"> Flame in Freefall</a>
+  <nav><a href="/station/">Station</a><a href="/station/inside.html?hab=moon">Inside a habitat</a><a href="/#ask">Ask Ember</a></nav></header>
+<main>
+  <h1>Flame lab</h1>
+  <p class="lead">A live fluid simulation of a small fire. Change gravity, oxygen and airflow and watch the flame's shape change.</p>
+  <div class="lab">
+    <div class="card ctl">
+      <div class="chips" id="presets"></div>
+      <label>Gravity<input id="g" type="range" min="0" max="1" step="0.001"><output id="gv"></output></label>
+      <label>Oxygen<input id="o2" type="range" min="15" max="40" step="0.5"><output id="o2v"></output></label>
+      <label>Fan airflow<input id="flow" type="range" min="0" max="30" step="0.5"><output id="flowv"></output></label>
+      <div class="chips" id="fuel"><button data-f="fabric" class="on">Fabric strip</button><button data-f="pmma">Acrylic block</button><button data-f="droplet">Fuel droplet</button></div>
+      <button class="reset" id="relight">↺ Relight</button>
+      <details class="howto"><summary>What the simulation does</summary><ul class="note">
+        <li>Air is a 2D fluid (stable-fluids solver). Fuel vapour, oxygen, heat and smoke are carried by it.</li>
+        <li>The flame burns only where fuel vapour meets oxygen and it is hot enough. Burning releases heat and soot; the hot surface releases more fuel vapour.</li>
+        <li><b>Hot gas rises in proportion to gravity.</b> With no gravity nothing rises, so oxygen only arrives by diffusion or the fan.</li>
+        <li>The flame loses heat by radiation, which matters most when the flow is slow (the quenching NASA's BASS-II measured).</li>
+        <li>Illustrative: the shapes and trends are physical, the numbers are not calibrated to NASA tests. Compare with the real footage →</li>
+      </ul></details>
+    </div>
+    <div class="cv"><canvas id="main" width="420" height="560"></canvas><span class="cap" id="maincap">Simulation</span></div>
+    <div class="card real" id="real"><p class="mute" style="margin:0">Finding the nearest real NASA footage…</p></div>
+  </div>
+  <h2 style="margin-top:28px">Same fire, four places</h2>
+  <div class="strip" id="strip"></div>
+  <p class="honest">Simulations are illustrative (2D, simplified chemistry). Real footage is from NASA's PSI archive, brightened for visibility.</p>
+</main>
+<script type="module">
+import { createFlameLab } from "./flamelab.js";
+const $ = id => document.getElementById(id);
+const PRESETS = {
+  "Earth room": { gravity_g: 1, o2: 0.21, flow_cm_s: 0 },
+  "Moon base": { gravity_g: 0.166, o2: 0.30, flow_cm_s: 5 },
+  "ISS, fan on": { gravity_g: 0, o2: 0.21, flow_cm_s: 10 },
+  "ISS, fan off": { gravity_g: 0, o2: 0.21, flow_cm_s: 0 },
+};
+const warmup = +(new URLSearchParams(location.search).get("warmup") || 0);
+const qp = new URLSearchParams(location.search);
+const cur = { ...PRESETS["ISS, fan on"], fuel: "fabric", warmup };
+if (qp.has("g")) Object.assign(cur, { gravity_g: +qp.get("g"), o2: +(qp.get("o2") || 0.21), flow_cm_s: +(qp.get("flow") || 0) });
+if (["fabric", "pmma", "droplet"].includes(qp.get("fuel"))) cur.fuel = qp.get("fuel");
+const lab = createFlameLab($("main"), cur);
+// comparison strip
+$("strip").innerHTML = Object.keys(PRESETS).map((n, i) => `<div class="cv"><canvas id="s${i}" width="240" height="320"></canvas><span class="cap">${n}</span></div>`).join("");
+Object.values(PRESETS).forEach((p, i) => createFlameLab($("s" + i), { ...p, fuel: "fabric", warmup }));
+
+$("presets").innerHTML = Object.keys(PRESETS).map(n => `<button>${n}</button>`).join("");
+$("presets").onclick = e => { const p = PRESETS[e.target.textContent]; if (!p) return; Object.assign(cur, p); sync(true); };
+$("fuel").onclick = e => { const f = e.target.dataset.f; if (!f) return; cur.fuel = f; [...$("fuel").children].forEach(b => b.classList.toggle("on", b === e.target)); lab?.reset(cur); findReal(); };
+$("relight").onclick = () => lab?.reset(cur);
+const S = { g: ["gravity_g", 1, v => v == 0 ? "0 g (orbit)" : (+v).toFixed(3) + " g"], o2: ["o2", 100, v => (+v).toFixed(1) + " %"], flow: ["flow_cm_s", 1, v => (+v).toFixed(1) + " cm/s"] };
+for (const [id, [k, f, fmt]] of Object.entries(S)) $(id).oninput = () => { cur[k] = +$(id).value / f; $(id + "v").textContent = fmt($(id).value); lab?.set(cur); clearTimeout(window._t); window._t = setTimeout(findReal, 400); };
+function sync(relight) {
+  for (const [id, [k, f, fmt]] of Object.entries(S)) { $(id).value = cur[k] * f; $(id + "v").textContent = fmt($(id).value); }
+  [...$("presets").children].forEach(b => b.classList.toggle("on", JSON.stringify(PRESETS[b.textContent]) === JSON.stringify({ gravity_g: cur.gravity_g, o2: cur.o2, flow_cm_s: cur.flow_cm_s })));
+  relight ? lab?.reset(cur) : lab?.set(cur); findReal();
+}
+
+// real footage: nearest NASA runs for these conditions that have a clip (public/media/index.json)
+let media = null;
+async function findReal() {
+  media ??= await fetch("/media/index.json").then(r => r.ok ? r.json() : { runs: {} }).catch(() => ({ runs: {} }));
+  const phase = { fabric: "solid", pmma: "solid", droplet: "liquid" }[cur.fuel];
+  const q = `o2=${cur.o2}&pressure=101.325&flow=${cur.flow_cm_s}&gravity=${cur.gravity_g}&phase=${phase}&k=50`;
+  const near = await fetch(`/api/nearest?${q}`).then(r => r.json()).catch(() => null);
+  const m = near?.matches.find(x => media.runs[x.run_id]);
+  if (!m) { $("real").innerHTML = `<p class="mute" style="margin:0">No real NASA footage near these conditions. The simulation is all there is here.</p>`; return; }
+  const c = media.runs[m.run_id];
+  $("real").innerHTML = `<video src="/${c.clip}" poster="/${c.thumbnail}" muted autoplay loop playsinline></video>
+    <div class="lbl"><b>Real NASA footage, brightened for visibility</b><br>Run ${m.run_id} (${m.acronym}) · ${m.fuel} · ${m.o2_pct} % O₂ · ${m.flow_cm_s ?? "?"} cm/s · 0 g
+    <br><span class="${m.match === "near" ? "" : "warn"}" style="font-size:12px">${m.match === "near" ? "Close to your settings" : "Closest available, but " + (m.differences[0] || "conditions differ")}</span></div>`;
+}
+[...$("fuel").children].forEach(b => b.classList.toggle("on", b.dataset.f === cur.fuel));
+sync(true);
+</script>
+</body>
+</html>

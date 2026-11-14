@@ -100,7 +100,6 @@ const PRESETS = [
   {g: 'Space', name: 'ISS cabin', o2: 21, psi: 14.7, flow: 10, grav: 0, note: 'ISS and most spacecraft: sea-level air, microgravity, ventilation 5–20 cm/s.'},
   {g: 'Space', name: 'Moon base', o2: 30, psi: 10.2, flow: 10, grav: 0.166, note: 'Challenge brief: lunar habitats planned at 30 %+ O₂ and ~10.2 psi, which makes materials more flammable.'},
   {g: 'Space', name: 'Pressurized rover', o2: 30, psi: 10.2, flow: 20, grav: 0.166, note: 'Same atmosphere as the Moon base in a small cabin with stronger local airflow (team assumption).'},
-  {g: 'Space', name: 'Mars base', o2: 30, psi: 10.2, flow: 10, grav: 0.38, note: 'No official figure; assumed equal to the Moon base.'},
   {g: 'Space', name: 'NASA exploration atm.', o2: 34, psi: 8.2, flow: 10, grav: 0.166, note: 'NASA Exploration Atmospheres Working Group (2006) recommendation for lunar missions: 8.2 psi, 34 % O₂.'},
   {g: 'Space', name: 'Shuttle pre-spacewalk', o2: 26.5, psi: 10.2, flow: 10, grav: 0, note: 'Space Shuttle cabin was lowered to 10.2 psi / 26.5 % O₂ before spacewalks to shorten pre-breathing.'},
   {g: 'Space', name: 'Spacesuit', o2: 100, psi: 4.3, flow: 10, grav: 0, note: 'US spacesuit (EMU): pure oxygen at 4.3 psi.'},
@@ -144,6 +143,7 @@ async function updateScenario() {
     <td>${m.o2_pct ?? '–'} %</td><td>${m.pressure_kpa ? (m.pressure_kpa / PSI_KPA).toFixed(1) + ' psi' : '–'}${m.assumed?.length ? `<small>${tip('assumed', 'assumed')}</small>` : ''}</td>
     <td class="hide-sm">${m.flow_cm_s ?? '–'} cm/s</td><td>${outcomeText(m.outcome)}${m.match !== 'near' && m.differences.length ? `<small class="warn">${esc(m.differences.slice(0, 2).join('; '))}</small>` : ''}</td></tr>`).join('')}</table></div>`;
   $('scenrank').innerHTML = rankHTML(rk.results.slice(0, 8), false);
+  import('./footage.js').then(f => f.realFootage($('footage'), { o2, pressure: (psi * PSI_KPA).toFixed(2), flow, gravity: g, phase }));
   // Close experiments per fuel type, so "solids were only tested at ISS conditions" is visible whatever the filter
   const fams = await Promise.all(['solid', 'liquid', 'gas'].map(f => api(`/api/nearest?${q}&phase=${f}&k=1`)));
   if ($('famcov')) $('famcov').innerHTML = '<span class="mute" style="border:0;background:none;padding-left:0">Close experiments by fuel:</span>' +
@@ -176,7 +176,7 @@ function rankHTML(rows, clickable) {
 
 // ---------- investigations ----------
 async function investigationsUI() {
-  $('rscen').innerHTML = Object.entries(META.scenarios).map(([k, s]) => `<option value="${k}" ${k === 'moon_base' ? 'selected' : ''}>${esc(s.name)}</option>`).join('');
+  $('rscen').innerHTML = Object.entries(META.scenarios).filter(([k]) => k !== 'mars_base').map(([k, s]) => `<option value="${k}" ${k === 'moon_base' ? 'selected' : ''}>${esc(s.name)}</option>`).join('');
   $('rscen').onchange = $('rfocus').onchange = loadRanking;
   $('ranklist').onclick = e => { const el = e.target.closest('.rk'); if (el) detail(el.dataset.id); };
   await loadRanking();
