@@ -40,6 +40,7 @@ function show(t) {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   document.querySelectorAll('.tab').forEach(s => s.classList.toggle('on', s.id === 'sec-' + t));
   history.replaceState(null, '', '#' + t);
+  document.body.dataset.tab = t;  // lets CSS hide the Ember button on the Ask tab
   if (t === 'overview') Plotly.Plots.resize('map');
 }
 
@@ -58,10 +59,15 @@ async function overview() {
       text: p.map(d => `${d.id}<br>${d.fuel}${d.has_outcome ? '' : ' · no outcome'}${asm ? ' · assumed' : ''}`), hoverinfo: 'text',
       marker: {size: 8, color: asm ? 'rgba(0,0,0,0)' : CAT_C[cat], line: {color: CAT_C[cat], width: asm ? 1.5 : 0}, opacity: 0.85}});
   }
+  traces.unshift({type: 'scatter', mode: 'lines', name: 'Planned habitat zone', showlegend: false, fill: 'toself',
+    fillcolor: 'rgba(0,0,0,0)', line: {width: 0}, x: [8, 12, 12, 8, 8], y: [25, 25, 40, 40, 25], hoveron: 'fills',
+    text: 'Planned habitat zone: 25–40 % O₂ at 8–12 psi.<br>Covers the Moon base (30 %, 10.2 psi), NASA exploration atmosphere<br>(34 %, 8.2 psi) and Shuttle pre-spacewalk cabin (26.5 %, 10.2 psi).<br>Only FLEX fuel droplets were tested here; no solid materials.', hoverinfo: 'text'});
   traces.unshift({type: 'scatter', mode: 'markers+text', name: 'habitats', x: [14.7, 10.2], y: [21, 30], text: ['ISS', 'Moon Base'],
     textposition: 'top center', marker: {symbol: 'star', size: 18, color: '#ffd27a', line: {color: '#000', width: 1}}, hoverinfo: 'text'});
-  Plotly.newPlot('map', traces, lay({xaxis: {title: 'Pressure (psi, log scale)', range: [Math.log10(4), Math.log10(75)], type: 'log'}, yaxis: {title: 'Oxygen (%)', range: [10, 45]},
-    shapes: [{type: 'rect', x0: 8, x1: 12, y0: 25, y1: 40, fillcolor: 'rgba(255,210,122,.08)', line: {color: '#ffd27a', dash: 'dot', width: 1}}]}),
+  Plotly.newPlot('map', traces, lay({xaxis: {title: 'Pressure (psi, log scale)', range: [Math.log10(4), Math.log10(75)], type: 'log', tickvals: [4, 5, 6, 8, 10, 12, 14.7, 20, 30, 40, 60], ticktext: ['4', '5', '6', '8', '10', '12', '14.7 (sea level)', '20', '30', '40', '60']}, yaxis: {title: 'Oxygen (%)', range: [10, 45]},
+    shapes: [{type: 'rect', x0: 8, x1: 12, y0: 25, y1: 40, fillcolor: 'rgba(255,210,122,.10)', line: {color: '#ffd27a', dash: 'dot', width: 1.5}, layer: 'below'}],
+    annotations: [{x: Math.log10(8.15), y: 39.3, xanchor: 'left', yanchor: 'top', showarrow: false, align: 'left',
+      text: '<b>Planned habitat zone</b><br>25–40 % O₂ · 8–12 psi', font: {size: 11, color: '#ffd27a'}}]}),
     {displaylogo: false, responsive: true});
   const box = pts.filter(d => d.o2_pct >= 25 && d.o2_pct <= 40 && d.pressure_kpa >= 8 * PSI_KPA && d.pressure_kpa <= 12 * PSI_KPA && !d.assumed);
   const byInv = {}; box.forEach(d => byInv[d.inv] = (byInv[d.inv] || 0) + 1);
@@ -124,6 +130,7 @@ async function updateScenario() {
   const label = {well_covered: 'Well covered', sparse: 'Sparse data', no_data: 'No nearby data'}[near.coverage];
   $('verdict').innerHTML = `${tip('coverage', `<span class="badge b-${near.coverage}">${label}</span>`)}<div class="verdict-big">${near.n_close} close experiment${near.n_close === 1 ? '' : 's'}</div>
     <div class="plain"><b>What this means:</b> ${plainSummary(near, phase)}</div>
+    <div class="famcov" id="famcov"></div>
     <p>${esc(near.message)}</p>${near.warning ? `<p class="warn">⚠ ${esc(near.warning)}</p>` : ''}${near.caveat ? `<p class="mute">${esc(near.caveat)}</p>` : ''}`;
   $('nearest').innerHTML = `<div class="scroll"><table><tr><th>${tip('similarity', 'Match')}</th><th>Run</th><th>${tip('fuel', 'Fuel')}</th><th>${tip('o2', 'O₂')}</th><th>${tip('pressure', 'Pressure')}</th><th class="hide-sm">${tip('airflow', 'Flow')}</th><th>${tip('outcome', 'Outcome')}</th></tr>${near.matches.map(m => `<tr>
     <td>${tip(m.match, `<span class="badge b-${m.match}">${m.match}</span>`)} <small>${m.similarity.toFixed(2)}</small></td>
@@ -131,6 +138,10 @@ async function updateScenario() {
     <td>${m.o2_pct ?? '–'} %</td><td>${m.pressure_kpa ? (m.pressure_kpa / PSI_KPA).toFixed(1) + ' psi' : '–'}${m.assumed?.length ? `<small>${tip('assumed', 'assumed')}</small>` : ''}</td>
     <td class="hide-sm">${m.flow_cm_s ?? '–'} cm/s</td><td>${outcomeText(m.outcome)}${m.match !== 'near' && m.differences.length ? `<small class="warn">${esc(m.differences.slice(0, 2).join('; '))}</small>` : ''}</td></tr>`).join('')}</table></div>`;
   $('scenrank').innerHTML = rankHTML(rk.results.slice(0, 8), false);
+  // Close experiments per fuel type, so "solids were only tested at ISS conditions" is visible whatever the filter
+  const fams = await Promise.all(['solid', 'liquid', 'gas'].map(f => api(`/api/nearest?${q}&phase=${f}&k=1`)));
+  if ($('famcov')) $('famcov').innerHTML = '<span class="mute" style="border:0;background:none;padding-left:0">Close experiments by fuel:</span>' +
+    ['Solids', 'Droplets', 'Gas flames'].map((n, i) => `<span>${n}: <b>${fams[i].n_close}</b></span>`).join('');
 }
 function plainSummary(near, phase) {
   const what = {solid: 'solid materials', liquid: 'fuel droplets', gas: 'gas flames'}[phase] || 'any fuel';
