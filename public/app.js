@@ -79,13 +79,19 @@ async function overview() {
   $('families').innerHTML = Object.entries(FAM).map(([k, [t, d]]) => {
     const inv = META.investigations.filter(x => x.category === k);
     const runs = inv.reduce((s, x) => s + x.n_runs, 0), lab = inv.reduce((s, x) => s + x.n_with_outcome, 0);
-    return `<div class="card ex"><h3>${t}</h3><p>${d}</p><div class="chips"><span>${inv.length} investigations</span><span>${runs} runs</span><span>${lab} with outcome</span></div>
-      <div class="mute" style="font-size:12px;margin-top:6px">${inv.map(x => esc(x.acronym)).join(' · ')}</div></div>`;
+    return `<details class="card ex fold"><summary><h3>${t}</h3><span class="tease">${inv.length} investigations · ${runs} runs · ${lab} with outcome</span></summary><p>${d}</p>
+      <div class="mute" style="font-size:12px;margin-top:6px">${inv.map(x => esc(x.acronym)).join(' · ')}</div></details>`;
   }).join('');
-  $('finding').innerHTML = `<h3>Key finding</h3><p>Only <b>${box.length} runs</b> were tested near planned habitat atmospheres
-    (${Object.entries(byInv).map(([k, v]) => `${esc(k)}: ${v}`).join(', ') || 'none'}). No solid cabin material in NASA's public PSI data
-    was burned in microgravity above <b>${solidMax.toFixed(1)} % O₂</b>. Moon Base cabins are planned at 30 %+. How fabrics and plastics burn there
-    is an open question the data can bound but not answer.</p>`;
+  $('finding').innerHTML = `<h3>Key finding</h3><p>No solid cabin material in NASA's public PSI data
+    was burned in microgravity above <b>${solidMax.toFixed(1)} % O₂</b>, while Moon Base cabins are planned at 30 %+.</p>
+    <details class="more"><summary>Details</summary><p>Only <b>${box.length} runs</b> were tested near planned habitat atmospheres
+    (${Object.entries(byInv).map(([k, v]) => `${esc(k)}: ${v}`).join(', ') || 'none'}). How fabrics and plastics burn there
+    is an open question the data can bound but not answer.</p></details>`;
+  $('expandall').onclick = e => {  // experts: open (or close) every collapsed block on the home page at once
+    const open = e.target.textContent.startsWith('Expand');
+    document.querySelectorAll('#sec-overview details').forEach(d => d.open = open);
+    e.target.textContent = open ? 'Collapse all text' : 'Expand all text';
+  };
 }
 
 // ---------- scenario ----------
@@ -131,7 +137,7 @@ async function updateScenario() {
   $('verdict').innerHTML = `${tip('coverage', `<span class="badge b-${near.coverage}">${label}</span>`)}<div class="verdict-big">${near.n_close} close experiment${near.n_close === 1 ? '' : 's'}</div>
     <div class="plain"><b>What this means:</b> ${plainSummary(near, phase)}</div>
     <div class="famcov" id="famcov"></div>
-    <p>${esc(near.message)}</p>${near.warning ? `<p class="warn">⚠ ${esc(near.warning)}</p>` : ''}${near.caveat ? `<p class="mute">${esc(near.caveat)}</p>` : ''}`;
+    <details class="more"><summary>Details${near.warning ? ' and warnings ⚠' : ''}</summary><p>${esc(near.message)}</p>${near.warning ? `<p class="warn">⚠ ${esc(near.warning)}</p>` : ''}${near.caveat ? `<p class="mute">${esc(near.caveat)}</p>` : ''}</details>`;
   $('nearest').innerHTML = `<div class="scroll"><table><tr><th>${tip('similarity', 'Match')}</th><th>Run</th><th>${tip('fuel', 'Fuel')}</th><th>${tip('o2', 'O₂')}</th><th>${tip('pressure', 'Pressure')}</th><th class="hide-sm">${tip('airflow', 'Flow')}</th><th>${tip('outcome', 'Outcome')}</th></tr>${near.matches.map(m => `<tr>
     <td>${tip(m.match, `<span class="badge b-${m.match}">${m.match}</span>`)} <small>${m.similarity.toFixed(2)}</small></td>
     <td class="mono">${esc(m.run_id)}<small>${esc(m.acronym)}</small></td><td>${esc(m.fuel)}<small>${esc(m.fuel_phase)}</small></td>
@@ -164,7 +170,7 @@ function rankHTML(rows, clickable) {
   return rows.map(r => `<div class="rk" data-id="${r.id}"><div class="n">${r.rank}</div><div class="body">
     <div class="t">${esc(r.acronym)} <span class="mute mono">${r.id}</span> <span class="badge">${esc(r.category)}</span> <b style="float:right">${tip('score', r.score, 'r')}</b></div>
     <div class="s">${esc(r.title)}</div><div class="bar"><i style="width:${r.score}%"></i></div>
-    ${clickable ? '' : `<ul class="tight">${r.reasons.map(x => `<li>${esc(x)}</li>`).join('')}${r.caveats.map(x => `<li class="warn">${esc(x)}</li>`).join('')}</ul>`}
+    ${clickable ? '' : `<details class="more"><summary>Why${r.caveats.length ? ' · ' + r.caveats.length + ' caveat' + (r.caveats.length === 1 ? '' : 's') : ''}</summary><ul class="tight">${r.reasons.map(x => `<li>${esc(x)}</li>`).join('')}${r.caveats.map(x => `<li class="warn">${esc(x)}</li>`).join('')}</ul></details>`}
   </div></div>`).join('');
 }
 

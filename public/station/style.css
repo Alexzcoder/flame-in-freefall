@@ -52,3 +52,6 @@ section.chart { margin-top: 30px; }
 #error { background: #2a1018; border: 1px solid #ff5c8a55; padding: 12px; border-radius: 8px; }
 @media (max-width: 620px) { .grid { grid-template-columns: 1fr; } .slider { grid-template-columns: 70px 1fr; } .slider output { grid-column: 1 / -1; text-align: left; }
   #orbit { height: 62vh; } #panel { top:auto; bottom:56px; right:12px; } .top { padding:10px 14px; } .top nav { gap:10px; font-size:13px; } }
+#panel .inside{display:inline-block;background:var(--acc);color:#1a0d05;font-weight:700;border-radius:8px;padding:7px 12px;text-decoration:none;font-size:13px}
+#panel .more{background:var(--card2);color:var(--text);border:1px solid var(--line);font-weight:500}
+.orbit-hint{pointer-events:auto}
