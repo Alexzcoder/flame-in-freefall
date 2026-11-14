@@ -8,7 +8,8 @@ NASA Space Apps 2026 challenge **"Flame in Freefall: SI-Powered Fire Safety Insi
 We harmonise NASA PSI microgravity combustion run tables into one dataset. The physics engine, the ML models and the chatbot all build on it.
 
 ```
-dataset/flame_runs.json   ← THE dataset (committed). 1,632 runs, 24 investigations.
+dataset/flame_runs.json   ← THE dataset (committed). 1,624 runs (633 with outcomes), 24 investigations.
+dataset/coverage.md       ← auto-generated: what each investigation can be used for. Read before modelling.
 dataset/flame_runs.csv    ← same runs, flattened (one row per run, dotted column names)
 flame/schema.py           ← data contract: dataclasses + load/save. Read it, it is short.
 flame/normalize.py        ← raw PSI tables → dataset (one Normalizer class per table)
@@ -37,7 +38,7 @@ No pandas? `json.load(open("dataset/flame_runs.json"))` gives plain dicts with t
 ## Shape
 
 ```
-Dataset { schema_version: "0.1", investigations: [Investigation], runs: [Run] }
+Dataset { schema_version: "0.2", investigations: [Investigation], runs: [Run] }
 
 Run
   id             "PSI-69/20CAL08"  (= <investigation>/<test id from the source table>)
@@ -50,9 +51,13 @@ Run
     flow         velocity_cm_s, direction (concurrent|opposed|coflow|quiescent)
     ignition     power_w, duration_s
     gravity_g    0.0 for all current data (ISS / Cygnus)
+    o2_location  "ambient" | "burner_stream" (inverse flames, see below)
   outcome        observed result, i.e. what a model should predict
     ignited, result (burnout|extinction|disruption|no_ignition|terminated|other),
+    censored (True = burn_time_s is a lower bound: operator stopped it or the droplet disrupted),
     burn_time_s, spread_rate_mm_s, burning_rate_mm2_s, extinction_diameter_mm, flame_length_mm, flame_temperature_k
+  has_outcome    True if any outcome field is observed → usable as a training label
+  assumed        field paths filled by assumption, e.g. ["conditions.atmosphere.pressure_kpa"] (cabin air)
   media          PSI file names (video/zip/images) for this run; download via flame.fetch.Fetcher.presigned_url
   source         {file, row}: the exact row in the original PSI CSV
   extra          everything source-specific (raw text, Tad/Zst, cool-flame flags, comments)
@@ -62,8 +67,11 @@ Run
 
 - **Units are part of the field name.** Gas amounts are mole fractions (0.21 = air), never %. Pressure is kPa (101.325 = 1 atm; a lunar habitat at 10.2 psi ≈ 70.3 kPa).
 - **`null` = unknown, NOT zero.** Never fill nulls with 0 in a model without adding a missing-indicator column. `velocity_cm_s = 0.0` with `direction = "quiescent"` is a real zero (still air).
-- **Inverse flames** (`extra.flame_type == "inverse"`, in PSI-10 and PSI-159): oxygen flows *out of* the burner into a fuel atmosphere. There, `atmosphere.o2_frac` is the O₂ fraction of the burner stream and `fuel.fuel_frac` is the ambient fuel fraction.
-- **FLEX `burning_rate_mm2_s`** comes from a column labelled "Burning rate; mm"; we read it as the d²-law constant K.
+- **Inverse flames** (`conditions.o2_location == "burner_stream"`, 274 runs in PSI-10 and PSI-159): oxygen flows *out of* the burner into a fuel atmosphere. There, `atmosphere.o2_frac` is the O₂ fraction of the burner stream and `fuel.fuel_frac` is the ambient fuel fraction. **Filter them out** (`o2_location == "ambient"`) before plotting or ranking by O₂.
+- **Censored burn times:** `outcome.censored == True` (FLEX disruption 61, CFI-G flow-terminated 88) means the flame was still burning when the run ended. Drop these, or use a survival/Tobit-style model, when burn time is the target. Never treat them as extinction times.
+- **Assumed values:** SPICE, BASS-II and SAFFIRE tables don't record pressure (and SPICE/SAFFIRE-III not O₂). They ran in ISS-glovebox or Cygnus cabin air, so we fill 101.325 kPa / 0.21 and list the field in `run.assumed`. Exclude or flag them when cabin conditions matter.
+- **FLEX `burning_rate_mm2_s`** comes from a column labelled "Burning rate; mm". It is verified as the d²-law constant K in mm²/s: observed burn time / ((d₀² − d_ext²)/K) has a median of 1.01–1.05 across burnout, extinction and disruption runs.
+- **BASS-II flow:** `velocity_cm_s = 1.0066 × first 'Air display' value` (NASA fan calibration sheet). The display often steps down during a burn (`extra.air_display`, e.g. "5 down to ext"), so this is the *initial* flow. Outcomes (extinction, blowoff, no ignition) are parsed from the same cell for 19 runs.
 - **SPICE `extra.flame_on_s`** is operator-controlled, not a natural burn time, so it is not in `outcome`.
 - Don't edit `dataset/` by hand. Fix the matching `Normalizer` in `flame/normalize.py`, then run `python3 -m flame.normalize`.
 - Changing the schema = edit `flame/schema.py`, bump `SCHEMA_VERSION`, regenerate, and tell the team (the physics engine depends on it).
@@ -73,14 +81,15 @@ Run
 | Investigation | Family | Runs | Has conditions | Has outcomes |
 |---|---|---|---|---|
 | PSI-69 FLEX | droplet | 274 | fuel, d₀, O₂/N₂/CO₂/He, pressure | **ignited, result, burn time, burning rate K, extinction d** |
-| PSI-39 CFI | droplet | 87 | blend, O₂/N₂/He, pressure | none in table |
+| PSI-39 CFI | droplet | 79 | blend, O₂/N₂/He, pressure | none in table (8 exact duplicate rows dropped) |
 | PSI-159 CFI-G | gaseous | 333 | fuel, fuel frac, flow, O₂, pressure | **ignited, result, burn time**; cool flame in `extra` |
 | PSI-10 Flame Design | gaseous | 327 | fuel, flows, O₂, pressure; Tad/Zst in `extra` | none in table |
 | PSI-107 SPICE | gaseous jet | 469 | fuel, nozzle, fuel flow, co-flow air speed | none (smoke point is in reports) |
-| PSI-25 BASS-II | solid | 129 | material, geometry, O₂, CO₂ | none; flow needs fan calibration |
+| PSI-25 BASS-II | solid | 129 | material, geometry, O₂, CO₂, initial flow | extinction / no ignition for 19 runs |
 | PSI-98/99/100 SAFFIRE I–III | solid (large scale, Cygnus) | 13 | material, size, flow, O₂, igniter | burn time, spread (partial) |
 
-**Trainable today: FLEX (274) and CFI-G (333).** These are the only tables with outcomes.
+**Trainable today: FLEX (274) and CFI-G (333)**, plus 26 solid-fuel runs (BASS-II 19, SAFFIRE 7) with sparse outcomes. Exact numbers are in `dataset/coverage.md`.
+Use the outcome-less runs as condition-space coverage (what was tested), never as labels.
 The other 15 investigations are in `ds.investigations` with `normalized: false` and a `note` explaining why (test-day rows, ranges, smoke aging, modelling-only…).
 
 Splitting for ML: group by test day (`extra.day` for ACME, `date` for FLEX) so runs from one session don't land in both train and test.
@@ -100,6 +109,7 @@ Use `examples/runs.sample.json` for fast tests. Swap in `dataset/flame_runs.json
 
 ```bash
 python3 -m flame.fetch       # ~22 MB of metadata + run tables from psi.nasa.gov → data/raw/
-python3 -m flame.normalize   # → dataset/flame_runs.json + .csv, then runs sanity checks (counts, ranges, round trip)
+python3 -m flame.normalize   # → dataset/flame_runs.json + .csv + coverage.md, then checks: counts, ranges,
+                             #   round trip, and ~5,000 numeric values re-read from the raw CSVs
 python3 -m flame.schema      # schema self-check on the sample file
 ```

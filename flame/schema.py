@@ -8,6 +8,7 @@ Rules
 - Unknown/not measured = null. Never guess a value to fill a gap.
 - Physics engine contract: predict(run.conditions) -> Outcome, compare with run.outcome.
 - Anything source-specific that doesn't fit goes in `extra`; the original row is traceable via `source`.
+- Values filled by assumption (not measured) are listed by field path in `run.assumed`.
 """
 from __future__ import annotations
 
@@ -17,12 +18,13 @@ import typing
 from dataclasses import dataclass, field
 from typing import Literal, Optional
 
-SCHEMA_VERSION = "0.1"
+SCHEMA_VERSION = "0.2"
 
 Phase = Literal["solid", "liquid", "gas"]
 Geometry = Literal["film", "rod", "fabric", "sheet", "droplet", "spherical_burner", "jet", "flat_burner", "other"]
 FlowDirection = Literal["concurrent", "opposed", "coflow", "quiescent", "other"]
 Result = Literal["burnout", "extinction", "disruption", "no_ignition", "terminated", "other"]
+O2Location = Literal["ambient", "burner_stream"]
 
 
 @dataclass
@@ -68,6 +70,8 @@ class Conditions:
     flow: Flow = field(default_factory=Flow)
     ignition: Ignition = field(default_factory=Ignition)
     gravity_g: float = 0.0                     # 0 = microgravity (ISS/Cygnus), 1 = ground, 0.166 = Moon
+    o2_location: O2Location = "ambient"        # "burner_stream" for inverse flames: atmosphere.o2_frac is the
+                                               # O2 fraction flowing OUT of the burner, the ambient is fuel
 
 
 @dataclass
@@ -75,6 +79,8 @@ class Outcome:
     """What was observed, and what the physics engine predicts."""
     ignited: Optional[bool] = None
     result: Optional[Result] = None            # how the burn ended
+    censored: Optional[bool] = None            # True: burn_time_s is a lower bound (operator stopped it, droplet
+                                               # disrupted), not a natural extinction/burnout time
     burn_time_s: Optional[float] = None
     spread_rate_mm_s: Optional[float] = None   # solid flame spread
     burning_rate_mm2_s: Optional[float] = None # droplet d^2-law burning-rate constant K
@@ -96,6 +102,8 @@ class Run:
     conditions: Conditions
     outcome: Outcome = field(default_factory=Outcome)
     date: Optional[str] = None                 # ISO 8601 "2009-03-05"
+    has_outcome: bool = False                  # any outcome field observed -> usable as a training label
+    assumed: list[str] = field(default_factory=list)  # field paths filled by assumption, e.g. cabin pressure
     media: list[str] = field(default_factory=list)   # PSI file names of videos/images for this run
     source: Optional[Source] = None
     extra: dict = field(default_factory=dict)

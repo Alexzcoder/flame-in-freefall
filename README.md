@@ -8,7 +8,7 @@ data to pull out fire-safety insights for spacecraft and habitats.
 
 ## Dataset
 
-`dataset/flame_runs.json` has 1,632 microgravity combustion runs from 9 NASA PSI investigations (FLEX, CFI, CFI-G, Flame Design, SPICE, BASS-II, SAFFIRE I–III), harmonised into one schema, plus metadata for all 24 combustion investigations.
+`dataset/flame_runs.json` has 1,624 microgravity combustion runs (633 with outcomes) from 9 NASA PSI investigations (FLEX, CFI, CFI-G, Flame Design, SPICE, BASS-II, SAFFIRE I–III), harmonised into one schema, plus metadata for all 24 combustion investigations.
 **See [AGENTS.md](AGENTS.md) for how to load and use it.**
 
 ```bash

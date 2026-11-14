@@ -5,7 +5,7 @@
 One Normalizer subclass per run table. Each maps a raw CSV row to a Run, or None to skip it.
 Rule: values we can't read unambiguously become null (raw text kept in `extra`), never guessed.
 """
-import csv, io, json, os, re
+import csv, dataclasses, io, json, os, re
 from datetime import datetime
 
 from .schema import Atmosphere, Conditions, Dataset, Flow, Fuel, Ignition, Investigation, Outcome, Run, Source
@@ -15,6 +15,11 @@ RAW = os.path.join(ROOT, "data", "raw")
 OUT = os.path.join(ROOT, "dataset", "flame_runs.json")
 
 MMHG, ATM, BAR = 0.133322368, 101.325, 100.0  # -> kPa
+# Cabin air for experiments run in the ISS Microgravity Science Glovebox or the Cygnus cabin when the table doesn't
+# record it. Always listed in run.assumed so it is never mistaken for a measurement.
+CABIN_KPA, CABIN_O2 = 101.325, 0.21
+P_PATH, O2_PATH = "conditions.atmosphere.pressure_kpa", "conditions.atmosphere.o2_frac"
+BASS_U_PER_AIR = 1.0066  # cm/s per 'Air display' unit, PSI-25 Reference Data/Fan calibration data.xlsx
 INCH = 25.4
 MEDIA_EXT = {".mp4", ".ts", ".avi", ".mov", ".zip", ".jpg", ".jpeg", ".png", ".tif", ".tiff", ".nef"}
 
@@ -91,19 +96,24 @@ class Normalizer:
         raise NotImplementedError
 
     def runs(self, media=None):
-        out, seen = [], set()
+        out, seen = [], {}
+        self.dropped = 0
         for i, r in self.rows():
             run = self.to_run(i, r)
             if run is None:
                 continue
             run.investigation = self.acc
+            run.has_outcome = any(v is not None for k, v in dataclasses.asdict(run.outcome).items() if k != "censored")
+            if run.id in seen:
+                if seen[run.id] == run:  # exact copy of an earlier row (CFI has 8): spreadsheet duplicate, drop
+                    self.dropped += 1
+                    continue
+                run.extra["duplicate_of"] = run.id  # same id, different data (FLEX 193F001 = tests #70 and #73)
+                run.id = f"{run.id}~row{i}"
+            seen[run.id] = dataclasses.replace(run)
             run.source = Source(self.file, i)
             if media is not None:
-                run.media = media.match(self.acc, run.id.split("/", 1)[1])
-            if run.id in seen:  # e.g. FLEX 193F001 appears as test #70 and #73 with identical metadata
-                run.extra["duplicate_of"] = run.id
-                run.id = f"{run.id}~row{i}"
-            seen.add(run.id)
+                run.media = media.match(self.acc, run.id.split("~")[0].split("/", 1)[1])
             out.append(run)
         return out
 
@@ -162,7 +172,7 @@ class Flex(Normalizer):
                     pressure_kpa=rnd(mul(num(r["Ambient pressure; mmHg"]) or None, MMHG), 3)),  # 0 mmHg in source = not recorded
                 flow=Flow(velocity_cm_s=0.0, direction="quiescent")),
             outcome=Outcome(
-                ignited=True, result=self.END.get(r["Test end"]),
+                ignited=True, result=self.END.get(r["Test end"]), censored=r["Test end"] == "Disruption",
                 burn_time_s=num(r["Burn time; s"]),
                 burning_rate_mm2_s=num(r["Burning rate; mm"]),
                 extinction_diameter_mm=num(r["Visible flame extinction diameter; mm"])),
@@ -218,7 +228,7 @@ class FlameDesignInverse(Normalizer):
             conditions=Conditions(
                 fuel=Fuel(name="ethylene", phase="gas", geometry="spherical_burner", fuel_frac=rnd(num(r["XC2H4 initial"]))),
                 atmosphere=Atmosphere(o2_frac=rnd(num(r["XO2"])), pressure_kpa=rnd(mul(num(r["pmean (atm)"]), ATM), 3)),
-                flow=Flow(velocity_cm_s=0.0, direction="quiescent")),
+                flow=Flow(velocity_cm_s=0.0, direction="quiescent"), o2_location="burner_stream"),
             extra={"flame_type": "inverse", "day": r["Day"], "mO2_mg_s": num(r["mO2 (mg/s)"]), "mN2_mg_s": num(r["mN2 (mg/s)"]),
                    "zst": rnd(num(r["mean Zst"])), "tad_k": rnd(num(r["Tad (K)"]), 1),
                    "note": "inverse flame: o2_frac is the oxidizer stream from the burner, fuel_frac is the ambient fuel"})
@@ -229,9 +239,17 @@ def _cfig_fuel(s):
     return (m[2], float(m[1]) / 100) if m else (s, None)
 
 
+def _cfig_outcome(ignited, end, burn):
+    """SE = self-extinguished (natural), FT = flow terminated by operator (burn time is a lower bound)."""
+    if ignited is False:
+        return Outcome(ignited=False, result="no_ignition", burn_time_s=num(burn))
+    result = {"SE": "extinction", "FT": "terminated"}.get(end)
+    return Outcome(ignited=ignited, result=result, burn_time_s=num(burn),
+                   censored={"extinction": False, "terminated": True}.get(result))
+
+
 class CfigNormal(Normalizer):
     acc, table = "PSI-159", "CFI-G_Normal Flames"
-    END = {"SE": "extinction", "FT": "terminated"}
 
     def to_run(self, i, r):
         name, _ = _cfig_fuel(r["Fuel"])
@@ -242,8 +260,7 @@ class CfigNormal(Normalizer):
                 fuel=Fuel(name=GAS[name], phase="gas", geometry="spherical_burner", flow_mg_s=num(r["mHC (mg/s)"]), fuel_frac=num(r["Xf"])),
                 atmosphere=Atmosphere(o2_frac=rnd(num(r["XO2 before test"])), pressure_kpa=rnd(mul(num(r["approx p (bar)"]), BAR), 3)),
                 flow=Flow(velocity_cm_s=0.0, direction="quiescent")),
-            outcome=Outcome(ignited={"yes": True, "no": False}.get(r["Hot ignition"].lower()),
-                            result=self.END.get(r["Self-ext or flow term"]), burn_time_s=num(r["burn time (sec)"])),
+            outcome=_cfig_outcome({"yes": True, "no": False}.get(r["Hot ignition"].lower()), r["Self-ext or flow term"], r["burn time (sec)"]),
             extra={"flame_type": "normal", "day": r["Day"], "cool_flame": True if cool.startswith("yes") else False if cool.startswith("no") else None,
                    "cool_flame_raw": r["Cool flame?"], "tfp": r["TFP"], "zst": rnd(num(r["Zst"])), "tad_k": rnd(num(r["Tad (K)"]), 1),
                    "peak_burner_t_c": rnd(num(r["Peak burner T (C )"]), 1), "comments": r["Comments"]})
@@ -251,7 +268,6 @@ class CfigNormal(Normalizer):
 
 class CfigInverse(Normalizer):
     acc, table = "PSI-159", "CFI-G_Inverse Flames"
-    END = {"SE": "extinction", "FT": "terminated"}
 
     def to_run(self, i, r):
         hot = r["Hot ignition"].lower()
@@ -260,10 +276,8 @@ class CfigInverse(Normalizer):
             conditions=Conditions(
                 fuel=Fuel(name=GAS[r["Fuel"]], phase="gas", geometry="spherical_burner", fuel_frac=rnd(num(r["Xf before test"]))),
                 atmosphere=Atmosphere(o2_frac=num(r["XO2"]), pressure_kpa=rnd(mul(num(r["approx p (bar)"]), BAR), 3)),
-                flow=Flow(velocity_cm_s=0.0, direction="quiescent")),
-            outcome=Outcome(ignited={"yes": True, "no": False, "flash": True}.get(hot),
-                            result=self.END.get(r["Self -ext or flow term"]),
-                            burn_time_s=num(r["burn time (sec)"])),
+                flow=Flow(velocity_cm_s=0.0, direction="quiescent"), o2_location="burner_stream"),
+            outcome=_cfig_outcome({"yes": True, "no": False, "flash": True}.get(hot), r["Self -ext or flow term"], r["burn time (sec)"]),
             extra={"flame_type": "inverse", "day": r["Day"], "flash_only": hot == "flash", "o2_flow_mg_s": num(r["O2 flow rate (mg/s)"]),
                    "hc_burnrate_mg_s": num(r["HC burnrate (mg/s)"]), "tfp": r["TFP"], "zst": rnd(num(r["Zst"])), "tad_k": rnd(num(r["Tad (K)"]), 1),
                    "peak_burner_t_k": num(r["Peak burner temp (K)"]), "color": r["Color"], "comments": r["Comments"],
@@ -286,8 +300,10 @@ class Spice(Normalizer):
                 fuel=Fuel(name=m[2].lower() if m else r["Fuel"].lower(), phase="gas", geometry="jet",
                           diameter_mm=num(r["Nozzle (mm)"]), flow_mg_s=num(r["Fuel Rate (mg/s)"]),
                           fuel_frac=float(m[1]) / 100 if m and m[1] else 1.0 if m else None),
-                flow=Flow(velocity_cm_s=num(r["Air Rate (cm/s)"]), direction="coflow")),
-            extra={"gmt_day": r["GMT date"], "gmt_ignition": t0, "gmt_flame_off": t1, "flame_on_s": dur,
+                atmosphere=Atmosphere(o2_frac=CABIN_O2, pressure_kpa=CABIN_KPA),
+                flow=Flow(velocity_cm_s=v if (v := num(r["Air Rate (cm/s)"])) is None or v >= 0 else None, direction="coflow")),  # <0 = sensor offset
+            assumed=[O2_PATH, P_PATH],
+            extra={"gmt_day": r["GMT date"], "air_rate_raw": r["Air Rate (cm/s)"], "gmt_ignition": t0, "gmt_flame_off": t1, "flame_on_s": dur,
                    "fuel_rate_sccm": num(r["Fuel Rate (sccm)"]), "hc_fuel_rate_mg_s": num(r["HC Fuel Rate (mg/s)"]),
                    "note": "smoke-point study; flame_on_s is operator-controlled, not a natural burn time"})
 
@@ -312,20 +328,45 @@ def _bass2_fuel(s):
                 diameter_mm=rnd(diam, 3))
 
 
+def _bass2_air(text):
+    """'Air display' cell -> (initial velocity cm/s, Outcome). The cell logs the flow settings used during the burn,
+    e.g. '5', '10   5  4  3  2  1', '5 down to ext', '10   blowoff', 'no ign at any flow'."""
+    t = text.lower()
+    toks = re.findall(r"\d*\.?\d+", t)
+    first = float(toks[0]) if toks and re.match(r"\s*\d", t) else None
+    # ponytail: cells with fan readings in brackets ('49 44 42 (5 2 0)') or values > 40 aren't air-display units
+    u = round(first * BASS_U_PER_AIR, 2) if first is not None and first <= 40 and "(" not in t else None
+    if "no ign" in t:
+        out = Outcome(ignited=False, result="no_ignition")
+    elif re.search(r"\bext", t) or "blowoff" in t:
+        out = Outcome(ignited=True, result="extinction", censored=False)
+    elif "ign" in t:
+        out = Outcome(ignited=True)
+    else:
+        out = Outcome()
+    return u, out
+
+
 class Bass2(Normalizer):
     acc, table = "PSI-25", "BASS-II"
 
     def to_run(self, i, r):
+        u, out = _bass2_air(r["Air display"])
         return Run(
             id=f"{self.acc}/{r['Test #']}", investigation=self.acc, date=date(r["Date"], "%m/%d/%Y"),
             conditions=Conditions(
                 fuel=_bass2_fuel(r["Fuel Sample Material"]),
-                atmosphere=Atmosphere(o2_frac=frac(num(r["Calibrated initial O2 % by vol"])), co2_frac=frac(num(r["Initial CO2 % by vol"])))),
+                atmosphere=Atmosphere(o2_frac=frac(num(r["Calibrated initial O2 % by vol"])), co2_frac=frac(num(r["Initial CO2 % by vol"])),
+                                      pressure_kpa=CABIN_KPA),
+                flow=Flow(velocity_cm_s=u)),
+            outcome=out, assumed=[P_PATH],
             extra={"pi": r["PI"], "sample": r["Sample #"], "material_raw": r["Fuel Sample Material"],
                    "flow_restrictor": r["Flow restrictor"], "fan_display": r["Fan display"], "air_display": r["Air display"],
+                   "extinction_mode": "blowoff" if "blowoff" in r["Air display"].lower() else None,
                    "o2_frac_final": frac(num(r["Calibrated final O2 % by vol"])), "co2_frac_final": frac(num(r["Final CO2 % by vol"])),
                    "co_ppm_initial": num(r["Initial CO (ppm)"]), "co_ppm_final": num(r["Final CO (ppm)"]),
-                   "note": "flow velocity needs the fan calibration sheet (Reference Data); outcomes are in videos/reports, not this table"})
+                   "note": "velocity_cm_s = 1.0066 x first 'Air display' value (fan calibration sheet); the display often "
+                           "steps down during a burn, see air_display. Flow direction depends on sample mount: not in table."})
 
 
 CM = {"cm": 10.0, "mm": 1.0}
@@ -343,10 +384,10 @@ class Saffire1(Normalizer):
             conditions=Conditions(
                 fuel=Fuel(name="sibal", phase="solid", geometry="fabric", thickness_mm=mul(num(r["Sample Thickness (cm)"]), 10),
                           length_mm=mul(num(r["Sample Length (cm)"]), 10), width_mm=mul(num(r["Sample Width (cm)"]), 10)),
-                atmosphere=Atmosphere(o2_frac=frac(mid(r["Percent O2"]))),
+                atmosphere=Atmosphere(o2_frac=frac(mid(r["Percent O2"])), pressure_kpa=CABIN_KPA),
                 flow=Flow(velocity_cm_s=num(r["Air Flow (cm/s)"]), direction=r["Flow Direction"].lower()),
                 ignition=Ignition(power_w=num(r["Ignition Power (W)"]), duration_s=num(r["Ignition Time (s)"]))),
-            outcome=Outcome(ignited=True if bt else None, burn_time_s=bt),
+            outcome=Outcome(ignited=True if bt else None, burn_time_s=bt), assumed=[P_PATH],
             extra={"o2_raw": r["Percent O2"], "cameras": [r["Camera 1"], r["Camera 2"]]})
 
 
@@ -365,10 +406,10 @@ class Saffire2(Normalizer):
                 fuel=Fuel(name=self.MAT.get(r["Material"], "unknown"), phase="solid", geometry="sheet",
                           thickness_mm=with_unit(r["Samle Thickness"], CM), length_mm=with_unit(r["Sample Length"], CM),
                           width_mm=with_unit(r["Sample Width (cm)"], CM)),
-                atmosphere=Atmosphere(o2_frac=frac(mid(r["Percent O2 (Note 1)"]))),
+                atmosphere=Atmosphere(o2_frac=frac(mid(r["Percent O2 (Note 1)"])), pressure_kpa=CABIN_KPA),
                 flow=Flow(velocity_cm_s=with_unit(r["Air Flow (cm/s)"], {"cm/s": 1.0}), direction=r["Flow Direction"].lower()),
                 ignition=Ignition(power_w=with_unit(r["Ignition Power (W)"], {"W": 1.0}), duration_s=with_unit(r["Ignition Time (s)"], {"s": 1.0}))),
-            outcome=Outcome(ignited=True if bt else None, burn_time_s=bt, spread_rate_mm_s=spread),
+            outcome=Outcome(ignited=True if bt else None, burn_time_s=bt, spread_rate_mm_s=spread), assumed=[P_PATH],
             extra={"material_raw": r["Material"], "thickness_raw": r["Samle Thickness"], "burn_time_raw": r["Burn Time (s)"],
                    "ug_burn_length_raw": r["?-g Burn Length"], "ug_spread_raw": r["?-g Spread Length"],
                    "1g_burn_length_raw": r["1-g Burn Length"], "1g_spread_rate_raw": r["1-g Spread Rate"],
@@ -384,8 +425,9 @@ class Saffire3(Normalizer):
             conditions=Conditions(
                 fuel=Fuel(name="sibal", phase="solid", geometry="fabric", thickness_mm=with_unit(r["Sample Thickness"], CM),
                           length_mm=with_unit(r["Sample Length"], CM), width_mm=with_unit(r["Sample Width"], CM)),
+                atmosphere=Atmosphere(o2_frac=CABIN_O2, pressure_kpa=CABIN_KPA),
                 flow=Flow(velocity_cm_s=with_unit(r["Air Flow"], {"cm/s": 1.0}), direction=r["Direction"].lower())),
-            extra={"cameras": [r["Camera 1"], r["Camera 2"]]})
+            assumed=[O2_PATH, P_PATH], extra={"cameras": [r["Camera 1"], r["Camera 2"]]})
 
 
 NORMALIZERS = [Flex(), Cfi(), FlameDesignNormal(), FlameDesignInverse(), CfigNormal(), CfigInverse(), Spice(),
@@ -435,6 +477,76 @@ def build():
     return ds
 
 
+SOURCE_CHECKS = {  # (raw column, run field path, factor): re-read independently with pandas and compared
+    "PSI-69": [("Ambient pressure; mmHg", P_PATH, MMHG), ("O initial ambient composition; mole fraction", O2_PATH, 1),
+               ("Droplet initial diameter; mm", "conditions.fuel.diameter_mm", 1), ("Burn time; s", "outcome.burn_time_s", 1),
+               ("Burning rate; mm", "outcome.burning_rate_mm2_s", 1),
+               ("Visible flame extinction diameter; mm", "outcome.extinction_diameter_mm", 1)],
+    "PSI-39": [("Oxygen", O2_PATH, 1), ("Helium", "conditions.atmosphere.he_frac", 1)],
+    "PSI-10": [("XO2 (init)", O2_PATH, 1), ("XO2", O2_PATH, 1), ("pmean (atm)", P_PATH, ATM), ("mfuel (mg/s)", "conditions.fuel.flow_mg_s", 1)],
+    "PSI-159": [("XO2 before test", O2_PATH, 1), ("XO2", O2_PATH, 1), ("approx p (bar)", P_PATH, BAR),
+                ("mHC (mg/s)", "conditions.fuel.flow_mg_s", 1), ("burn time (sec)", "outcome.burn_time_s", 1)],
+    "PSI-107": [("Air Rate (cm/s)", "conditions.flow.velocity_cm_s", 1), ("Fuel Rate (mg/s)", "conditions.fuel.flow_mg_s", 1),
+                ("Nozzle (mm)", "conditions.fuel.diameter_mm", 1)],
+    "PSI-25": [("Calibrated initial O2 % by vol", O2_PATH, 0.01)],
+}
+
+
+def check_against_source(ds):
+    """Every checked numeric field must equal its raw source cell x unit factor (0/negative -> null allowed)."""
+    import pandas as pd
+    frames, n = {}, 0
+    for run in ds.runs:
+        f = run.source.file
+        if f not in frames:
+            path = os.path.join(RAW, "run_tables", f)
+            for enc in ("utf-8-sig", "cp1252"):
+                try:
+                    frames[f] = pd.read_csv(path, encoding=enc, dtype=str, skip_blank_lines=False)
+                    break
+                except UnicodeDecodeError:
+                    pass
+            frames[f].columns = [re.sub(r"\s+", " ", c).strip() for c in frames[f].columns]
+        row = frames[f].iloc[run.source.row - 1]
+        flat = pd.json_normalize(dataclasses.asdict(run)).iloc[0]
+        for col, path, k in SOURCE_CHECKS.get(run.investigation, []):
+            if col not in row.index:
+                continue
+            raw = pd.to_numeric(row[col], errors="coerce")
+            val = flat[path]
+            if pd.isna(raw):
+                continue  # non-numeric source text: covered by parser unit checks
+            if val is None or pd.isna(val):
+                assert raw <= 0, (run.id, col, row[col])  # only zero/negative sentinels may become null
+                continue
+            assert abs(val - raw * k) <= 1e-3 * max(1, abs(raw * k)), (run.id, col, row[col], val)
+            n += 1
+    return n
+
+
+def coverage(ds):
+    """Markdown coverage report: what each investigation can be used for."""
+    df = ds.to_frame()
+    cols = {"O₂": O2_PATH, "pressure": P_PATH, "flow": "conditions.flow.velocity_cm_s", "ignited": "outcome.ignited",
+            "result": "outcome.result", "burn time": "outcome.burn_time_s", "burning rate K": "outcome.burning_rate_mm2_s",
+            "ext. diameter": "outcome.extinction_diameter_mm", "spread rate": "outcome.spread_rate_mm_s"}
+    inv = {i.id: i for i in ds.investigations}
+    lines = ["# Dataset coverage", "", "Generated by `python3 -m flame.normalize`. Don't edit by hand.", "",
+             f"{len(df)} runs, **{int(df.has_outcome.sum())} with an outcome (usable as labels)**. "
+             "Percentages are the share of runs with the field filled; (a) = some values assumed, see `run.assumed`.", "",
+             "| Investigation | Family | Runs | Has outcome | Censored | " + " | ".join(cols) + " |",
+             "|---|---|---|---|---|" + "---|" * len(cols)]
+    for acc, g in df.groupby("investigation", sort=False):
+        asm = set(p for a in g.assumed for p in a)
+        cells = [f"{g[c].notna().mean():.0%}" + (" (a)" if c in asm else "") if g[c].notna().any() else "" for c in cols.values()]
+        lines.append(f"| {acc} {inv[acc].acronym} | {inv[acc].category} | {len(g)} | {int(g.has_outcome.sum())} | "
+                     f"{int((g['outcome.censored'] == True).sum())} | " + " | ".join(cells) + " |")
+    lines += ["", "Never filled by any source table (they exist for the physics engine's predictions): "
+              "`temperature_k`, `ignition` (except SAFFIRE), `flame_length_mm`, `flame_temperature_k`.", "",
+              "## Not normalized", ""] + [f"- **{i.id} {i.acronym}**: {i.note}" for i in ds.investigations if not i.normalized]
+    return "\n".join(lines) + "\n"
+
+
 def check(ds):
     ids = [r.id for r in ds.runs]
     assert len(ids) == len(set(ids)), "duplicate run ids: " + str({i for i in ids if ids.count(i) > 1})
@@ -444,8 +556,11 @@ def check(ds):
         a, f = r.conditions.atmosphere, r.conditions.fuel
         assert a.o2_frac is None or 0 < a.o2_frac <= 1, (r.id, a.o2_frac)
         assert a.pressure_kpa is None or 20 < a.pressure_kpa < 600, (r.id, a.pressure_kpa)
+        assert r.conditions.flow.velocity_cm_s is None or 0 <= r.conditions.flow.velocity_cm_s < 100, (r.id, r.conditions.flow)
+        assert r.outcome.censored is None or r.outcome.result is not None, r.id
+        assert (r.outcome.ignited is False) == (r.outcome.result == "no_ignition"), r.id
         assert f.thickness_mm is None or 0 < f.thickness_mm < 50, (r.id, f.thickness_mm)
-    expect = {"PSI-69": 274, "PSI-39": 87, "PSI-10": 327, "PSI-159": 333, "PSI-107": 469, "PSI-25": 129,
+    expect = {"PSI-69": 274, "PSI-39": 79, "PSI-10": 327, "PSI-159": 333, "PSI-107": 469, "PSI-25": 129,
               "PSI-98": 2, "PSI-99": 9, "PSI-100": 2}
     assert per == expect, per
     assert Dataset.from_json(OUT) == ds, "JSON round trip changed data"
@@ -462,6 +577,9 @@ def check(ds):
 if __name__ == "__main__":
     ds = build()
     per = check(ds)
+    n_src = check_against_source(ds)
+    open(os.path.join(os.path.dirname(OUT), "coverage.md"), "w").write(coverage(ds))
+    print(f"source agreement: {n_src} numeric values re-read from the raw CSVs, all match")
     df = ds.to_frame()
     print(f"wrote {OUT}: {len(ds.runs)} runs from {len(per)} investigations ({len(ds.investigations)} investigations listed)")
     for acc, n in per.items():

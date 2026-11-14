@@ -1,5 +1,5 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "investigations": [
     {"id": "PSI-69", "acronym": "FLEX", "title": "Flame Extinguishment Experiment", "category": "droplet", "hardware": "CIR/MDCA", "doi": "10.60555/mbq8-0451"},
     {"id": "PSI-25", "acronym": "BASS-II", "title": "Burning and Suppression of Solids - II", "category": "solid", "hardware": "MSG", "doi": "10.60555/4qc4-de67"},
@@ -16,7 +16,8 @@
         "flow": {"velocity_cm_s": 0.0, "direction": "quiescent"},
         "gravity_g": 0.0
       },
-      "outcome": {"ignited": true, "result": "disruption", "burn_time_s": 4.3, "burning_rate_mm2_s": 0.52, "extinction_diameter_mm": 0.89},
+      "has_outcome": true,
+      "outcome": {"ignited": true, "result": "disruption", "censored": true, "burn_time_s": 4.3, "burning_rate_mm2_s": 0.52, "extinction_diameter_mm": 0.89},
       "source": {"file": "PSI-69_Experimental table_FLEX.csv", "row": 1},
       "extra": {"flex_test_no": 1, "note": "source column 'Burning rate; mm' read as d^2-law K in mm^2/s"}
     },
@@ -28,7 +29,8 @@
         "flow": {"velocity_cm_s": 0.0, "direction": "quiescent"},
         "gravity_g": 0.0
       },
-      "outcome": {"ignited": true, "result": "extinction", "burn_time_s": 23.2, "burning_rate_mm2_s": 0.45},
+      "has_outcome": true,
+      "outcome": {"ignited": true, "result": "extinction", "censored": false, "burn_time_s": 23.2, "burning_rate_mm2_s": 0.45},
       "source": {"file": "PSI-69_Experimental table_FLEX.csv", "row": 60},
       "extra": {"flex_test_no": 60}
     },
@@ -56,6 +58,7 @@
         "gravity_g": 0.0
       },
       "outcome": {"ignited": true, "burn_time_s": 420.0},
+      "has_outcome": true,
       "source": {"file": "PSI-98_Experimental table_SAFFIRE-1.csv", "row": 1},
       "extra": {"o2_range_pct": "21.5 - 21.7", "cameras": ["S1C1", "S1C2"]}
     },
@@ -80,7 +83,8 @@
         "flow": {"velocity_cm_s": 0.0, "direction": "quiescent"},
         "gravity_g": 0.0
       },
-      "outcome": {"ignited": true, "result": "extinction", "burn_time_s": 50.0},
+      "outcome": {"ignited": true, "result": "extinction", "censored": false, "burn_time_s": 50.0},
+      "has_outcome": true,
       "source": {"file": "PSI-159_Experimental table_CFI-G_Normal Flames.csv", "row": 1},
       "extra": {"flame_type": "normal", "o2_frac_after": 0.3898, "tad_k": 2719.3, "zst": 0.1027, "peak_burner_t_c": 290.6, "end": "SE (self-extinguished)"}
     }
