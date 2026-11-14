@@ -25,6 +25,15 @@ const TIPS = {
   pillars: 'Prevention: stop fires starting and spreading. Detection: notice them early (smoke). Suppression: put them out.',
   outcome: 'What happened in the experiment: did it ignite, how it ended (burned out, went out, stopped), how long it burned.',
 };
+const FUEL_NAMES = {pmma: 'Acrylic (PMMA)', sibal: 'Cotton/fiberglass fabric', nomex: 'Nomex fabric', silicone: 'Silicone',
+  'candle wax': 'Candle wax', 'pmma+nomex': 'Acrylic + Nomex', unknown: 'Unrecorded material', methanol: 'Methanol', heptane: 'Heptane',
+  'n-dodecane': 'Dodecane', 'n-dodecane/iso-dodecane': 'Dodecane blend', ethylene: 'Ethylene', ethane: 'Ethane', propane: 'Propane',
+  propylene: 'Propylene', butane: 'Butane', methane: 'Methane'};
+const fuelName = f => FUEL_NAMES[f] || (f ? f[0].toUpperCase() + f.slice(1) : '–');
+const OUTCOME_NAMES = {ignited: 'whether it ignited', result: 'how it ended', burn_time_s: 'burn time', spread_rate_mm_s: 'spread rate',
+  burning_rate_mm2_s: 'burning rate', extinction_diameter_mm: 'size at extinction', flame_length_mm: 'flame length', flame_temperature_k: 'flame temperature'};
+const fmtFlow = v => v == null ? '–' : (v >= 1 ? Math.round(v) : +v.toFixed(1)) + ' cm/s';
+let scenarioName = 'Moon base';
 const tip = (k, label, cls = '') => `<span class="term ${cls}" tabindex="0" data-tip="${esc(TIPS[k])}">${label}</span>`;
 function decorateTerms(root = document) {
   root.querySelectorAll('[data-term]').forEach(el => { el.classList.add('term'); el.tabIndex = 0; el.dataset.tip = TIPS[el.dataset.term]; el.removeAttribute('data-term'); });
@@ -51,31 +60,33 @@ async function overview() {
   $('tiles').innerHTML = tile(META.n_runs.toLocaleString(), 'experiment runs') + tile(META.n_with_outcome, 'with measured outcomes')
     + tile(META.n_investigations, 'NASA investigations') + tile(META.n_documents.toLocaleString(), 'report pages & papers searchable');
   const traces = [];
-  for (const cat of Object.keys(CAT_C)) for (const asm of [false, true]) {
+  for (const cat of ['droplet', 'gaseous', 'smoke', 'other', 'solid']) for (const asm of [false, true]) {   // solids last = on top
     const p = pts.filter(x => x.category === cat && x.assumed === asm);
     if (!p.length) continue;
     traces.push({type: 'scatter', mode: 'markers', name: `${cat}${asm ? ' (assumed p/O₂)' : ''}`,
       x: p.map(d => d.pressure_kpa / PSI_KPA), y: p.map(d => d.o2_pct),
       text: p.map(d => `${d.id}<br>${d.fuel}${d.has_outcome ? '' : ' · no outcome'}${asm ? ' · assumed' : ''}`), hoverinfo: 'text',
-      marker: {size: 8, color: asm ? 'rgba(0,0,0,0)' : CAT_C[cat], line: {color: CAT_C[cat], width: asm ? 1.5 : 0}, opacity: 0.85}});
+      marker: {size: cat === 'solid' ? 12 : 7, color: asm ? (cat === 'solid' ? 'rgba(255,122,47,.25)' : 'rgba(0,0,0,0)') : CAT_C[cat], line: {color: CAT_C[cat], width: asm ? (cat === 'solid' ? 2.2 : 1.5) : 0}, opacity: cat === 'solid' ? 1 : 0.75}});
   }
   traces.unshift({type: 'scatter', mode: 'lines', name: 'Planned habitat zone', showlegend: false, fill: 'toself',
     fillcolor: 'rgba(0,0,0,0)', line: {width: 0}, x: [8, 12, 12, 8, 8], y: [25, 25, 40, 40, 25], hoveron: 'fills',
     text: 'Planned habitat zone: 25–40 % O₂ at 8–12 psi.<br>Covers the Moon base (30 %, 10.2 psi), NASA exploration atmosphere<br>(34 %, 8.2 psi) and Shuttle pre-spacewalk cabin (26.5 %, 10.2 psi).<br>Only FLEX fuel droplets were tested here; no solid materials.', hoverinfo: 'text'});
   traces.unshift({type: 'scatter', mode: 'markers+text', name: 'habitats', x: [14.7, 10.2], y: [21, 30], text: ['ISS', 'Moon Base'],
-    textposition: 'top center', marker: {symbol: 'star', size: 18, color: '#ffd27a', line: {color: '#000', width: 1}}, hoverinfo: 'text'});
-  Plotly.newPlot('map', traces, lay({xaxis: {title: 'Pressure (psi, log scale)', range: [Math.log10(4), Math.log10(75)], type: 'log', tickvals: [4, 5, 6, 8, 10, 12, 14.7, 20, 30, 40, 60], ticktext: ['4', '5', '6', '8', '10', '12', '14.7 (sea level)', '20', '30', '40', '60']}, yaxis: {title: 'Oxygen (%)', range: [10, 45]},
-    shapes: [{type: 'rect', x0: 8, x1: 12, y0: 25, y1: 40, fillcolor: 'rgba(255,210,122,.10)', line: {color: '#ffd27a', dash: 'dot', width: 1.5}, layer: 'below'}],
+    textposition: 'top left', textfont: {color: '#ffd27a', size: 13}, marker: {symbol: 'star', size: 18, color: '#ffd27a', line: {color: '#000', width: 1}}, hoverinfo: 'text'});
+  Plotly.newPlot('map', traces, lay({xaxis: {title: 'Pressure (psi, log scale)', range: [Math.log10(4), Math.log10(75)], type: 'log', tickvals: [4, 5, 6, 8, 10, 12, 14.7, 20, 30, 40, 60], ticktext: ['4', '5', '6', '8', '10', '12', '14.7 (sea level)', '20', '30', '40', '60']}, yaxis: {title: 'Oxygen (%)', range: [10, 45], tickvals: [15, 20, 25, 30, 35, 40, 45]},
+    shapes: [{type: 'line', x0: 4, x1: 75, y0: 22.2, y1: 22.2, line: {color: '#ff7a2f', width: 1.2, dash: 'dash'}, layer: 'above'},
+      {type: 'rect', x0: 8, x1: 12, y0: 25, y1: 40, fillcolor: 'rgba(255,210,122,.10)', line: {color: '#ffd27a', dash: 'dot', width: 1.5}, layer: 'below'}],
     annotations: [{x: Math.log10(8.15), y: 39.3, xanchor: 'left', yanchor: 'top', showarrow: false, align: 'left',
-      text: '<b>Planned habitat zone</b><br>25–40 % O₂ · 8–12 psi', font: {size: 11, color: '#ffd27a'}}]}),
+      text: '<b>Planned</b><br><b>habitats</b>', font: {size: 10.5, color: '#ffd27a'}},
+      {x: Math.log10(70), y: 22.2, xanchor: 'right', yanchor: 'bottom', showarrow: false, text: 'highest solid-material test: 22.2 % O₂', font: {size: 11.5, color: '#ff9a5c'}}]}),
     {displaylogo: false, responsive: true});
   const box = pts.filter(d => d.o2_pct >= 25 && d.o2_pct <= 40 && d.pressure_kpa >= 8 * PSI_KPA && d.pressure_kpa <= 12 * PSI_KPA && !d.assumed);
   const byInv = {}; box.forEach(d => byInv[d.inv] = (byInv[d.inv] || 0) + 1);
   const solidMax = Math.max(...pts.filter(d => d.category === 'solid').map(d => d.o2_pct));
-  const FAM = {droplet: ['💧 Fuel droplets', 'A fuel drop burns as a perfect sphere. Measures burning rate and the size at which the flame goes out. Used to test suppressants (CO₂, helium).'],
-    gaseous: ['🔵 Gas flames', 'Gas fed through a porous sphere or a jet. Studies soot, cool flames and extinction limits: the basic chemistry of flames.'],
-    solid: ['🟧 Solid materials', 'Acrylic, fabrics, silicone burned in airflow, up to SAFFIRE\'s metre-scale fires in an empty cargo ship. Closest to a real cabin fire.'],
-    smoke: ['🌫️ Smoke & dust', 'Smoke from overheated materials, to design detectors that work in microgravity. Mostly in reports, not run tables.']};
+  const FAM = {droplet: ['Fuel droplets', 'A fuel drop burns as a perfect sphere. Measures burning rate and the size at which the flame goes out. Used to test suppressants (CO₂, helium).'],
+    gaseous: ['Gas flames', 'Gas fed through a porous sphere or a jet. Studies soot, cool flames and extinction limits: the basic chemistry of flames.'],
+    solid: ['Solid materials', 'Acrylic, fabrics, silicone burned in airflow, up to SAFFIRE\'s metre-scale fires in an empty cargo ship. Closest to a real cabin fire.'],
+    smoke: ['Smoke & dust', 'Smoke from overheated materials, to design detectors that work in microgravity. Mostly in reports, not run tables.']};
   $('families').innerHTML = Object.entries(FAM).map(([k, [t, d]]) => {
     const inv = META.investigations.filter(x => x.category === k);
     const runs = inv.reduce((s, x) => s + x.n_runs, 0), lab = inv.reduce((s, x) => s + x.n_with_outcome, 0);
@@ -115,15 +126,16 @@ function scenarioUI() {
   $('presets').onclick = e => {
     const p = PRESETS[e.target.dataset.i]; if (!p) return;
     $('o2').value = p.o2; $('p').value = p.psi; $('flow').value = p.flow; $('g').value = String(p.grav);
-    $('presetnote').textContent = p.note;
+    $('presetnote').textContent = p.note; scenarioName = p.name;
     $('presets').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === e.target));
     updateScenario();
   };
   ['o2', 'p', 'flow', 'g', 'phase'].forEach(id => $(id).addEventListener('input', () => {
-    $('presetnote').textContent = ''; $('presets').querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    $('presetnote').textContent = ''; scenarioName = 'Your settings'; $('presets').querySelectorAll('button').forEach(b => b.classList.remove('on'));
   }));
   ['o2', 'p', 'flow', 'g', 'phase'].forEach(id => $(id).addEventListener('input', debounce(updateScenario, 250)));
-  updateScenario();
+  const moonBtn = [...$('presets').querySelectorAll('button')].find(b => PRESETS[b.dataset.i]?.name === 'Moon base');
+  moonBtn ? moonBtn.click() : updateScenario();   // start in a consistent state: Moon base selected, sliders and gravity matching
 }
 function debounce(f, ms) { let t; return () => { clearTimeout(t); t = setTimeout(f, ms); }; }
 async function updateScenario() {
@@ -131,18 +143,21 @@ async function updateScenario() {
   $('o2v').textContent = `${$('o2').value} %`; $('pv').textContent = `${psi.toFixed(1)} psi · ${(psi * PSI_KPA).toFixed(0)} kPa`;
   $('fv').textContent = `${flow} cm/s`;
   const q = `o2=${o2}&pressure=${(psi * PSI_KPA).toFixed(2)}&flow=${flow}&gravity=${g}`;
-  const [near, rk] = await Promise.all([api(`/api/nearest?${q}&phase=${phase}&k=8`), api(`/api/rank?scenario=custom&${q}`)]);
+  const [near, rk] = await Promise.all([api(`/api/nearest?${q}&phase=${phase}&k=8`), api(`/api/rank?scenario=custom&${q}&name=${encodeURIComponent(scenarioName)}`)]);
   const label = {well_covered: 'Well covered', sparse: 'Sparse data', no_data: 'No nearby data'}[near.coverage];
   $('verdict').innerHTML = `${tip('coverage', `<span class="badge b-${near.coverage}">${label}</span>`)}<div class="verdict-big">${near.n_close} close experiment${near.n_close === 1 ? '' : 's'}</div>
     <div class="plain"><b>What this means:</b> ${plainSummary(near, phase)}</div>
     <div class="famcov" id="famcov"></div>
-    <details class="more${near.warning ? ' haswarn' : ''}"><summary>Details${near.warning ? ' and warnings' : ''}</summary><p>${esc(near.message)}</p>${near.warning ? `<p class="warn">⚠ ${esc(near.warning)}</p>` : ''}${near.caveat ? `<p class="mute">${esc(near.caveat)}</p>` : ''}</details>`;
-  $('nearest').innerHTML = `<div class="scroll"><table><tr><th>${tip('similarity', 'Match')}</th><th>Run</th><th>${tip('fuel', 'Fuel')}</th><th>${tip('o2', 'O₂')}</th><th>${tip('pressure', 'Pressure')}</th><th class="hide-sm">${tip('airflow', 'Flow')}</th><th>${tip('outcome', 'Outcome')}</th></tr>${near.matches.map(m => `<tr>
-    <td>${tip(m.match, `<span class="badge b-${m.match}">${m.match}</span>`)} <small>${m.similarity.toFixed(2)}</small></td>
-    <td class="mono">${esc(m.run_id)}<small>${esc(m.acronym)}</small></td><td>${esc(m.fuel)}<small>${esc(m.fuel_phase)}</small></td>
+    ${g > 0 ? `<p class="gnote">⚠ Every NASA run here was in microgravity (0 g). The data cannot show how ${g < 0.5 ? 'lunar' : 'Earth'} gravity changes this fire; treat it as a bound.</p>` : ''}`;
+  const top = near.matches.slice(0, 3), more = near.matches.length - top.length;
+  $('nearest').innerHTML = `${top[0] && top[0].match !== 'near' && top[0].differences.length ? `<p class="warn" style="margin:0 0 8px">Compared with your settings, the closest tests had ${esc(top[0].differences.slice(0, 2).join(' and ').replace(/than this run/g, 'than your setting'))}.</p>` : ''}
+    <div class="scroll"><table><tr><th>${tip('similarity', 'Match')}</th><th>Run</th><th>${tip('fuel', 'Material')}</th><th>${tip('o2', 'O₂')}</th><th>${tip('pressure', 'Pressure')}</th><th class="hide-sm">${tip('airflow', 'Flow')}</th><th>${tip('outcome', 'Outcome')}</th></tr>${top.map(m => `<tr>
+    <td>${tip(m.match, `<span class="badge b-${m.match}">${m.match}</span>`)}</td>
+    <td class="mono">${esc(m.run_id)}<small>${esc(m.acronym)}</small></td><td>${esc(fuelName(m.fuel))}</td>
     <td>${m.o2_pct ?? '–'} %</td><td>${m.pressure_kpa ? (m.pressure_kpa / PSI_KPA).toFixed(1) + ' psi' : '–'}${m.assumed?.length ? `<small>${tip('assumed', 'assumed')}</small>` : ''}</td>
-    <td class="hide-sm">${m.flow_cm_s ?? '–'} cm/s</td><td>${outcomeText(m.outcome)}${m.match !== 'near' && m.differences.length ? `<small class="warn">${esc(m.differences.slice(0, 2).join('; '))}</small>` : ''}</td></tr>`).join('')}</table></div>`;
-  $('scenrank').innerHTML = rankHTML(rk.results.slice(0, 8), false);
+    <td class="hide-sm">${fmtFlow(m.flow_cm_s)}</td><td>${outcomeText(m.outcome)}</td></tr>`).join('')}</table></div>
+    ${more > 0 ? `<p class="mute" style="font-size:12.5px;margin:8px 0 0">+ ${more} more similar runs not shown.</p>` : ''}`;
+  $('scenrank').innerHTML = `<p class="mute" style="margin:0 0 6px;font-size:12.5px">Ranked for: <b style="color:var(--fg)">${esc(scenarioName)}</b> (${(o2 * 100).toFixed(0)} % O₂, ${psi.toFixed(1)} psi). Scores combine closeness of conditions, recorded outcomes, fuel type and fire-safety focus.</p>` + rankHTML(rk.results.slice(0, 8), false);
   import('./footage.js').then(f => f.realFootage($('footage'), { o2, pressure: (psi * PSI_KPA).toFixed(2), flow, gravity: g, phase }));
   // Close experiments per fuel type, so "solids were only tested at ISS conditions" is visible whatever the filter
   const fams = await Promise.all(['solid', 'liquid', 'gas'].map(f => api(`/api/nearest?${q}&phase=${f}&k=1`)));
@@ -168,7 +183,7 @@ function outcomeText(o) {
 }
 function rankHTML(rows, clickable) {
   return rows.map(r => `<div class="rk" data-id="${r.id}"><div class="n">${r.rank}</div><div class="body">
-    <div class="t">${esc(r.acronym)} <span class="mute mono">${r.id}</span> <span class="badge">${esc(r.category)}</span> <b style="float:right">${tip('score', r.score, 'r')}</b></div>
+    <div class="t">${esc(r.acronym)} <span class="mute mono">${r.id}</span> <span class="badge">${esc(r.category)}</span> <b style="float:right">${tip('score', Math.round(r.score), 'r')}</b></div>
     <div class="s">${esc(r.title)}</div><div class="bar"><i style="width:${r.score}%"></i></div>
     ${clickable ? '' : `<details class="why"><summary>Why${r.caveats.length ? ' · ' + r.caveats.length + ' caveat' + (r.caveats.length === 1 ? '' : 's') : ''}</summary><ul class="tight">${r.reasons.map(x => `<li>${esc(x)}</li>`).join('')}${r.caveats.map(x => `<li class="warn">${esc(x)}</li>`).join('')}</ul></details>`}
   </div></div>`).join('');
@@ -183,7 +198,7 @@ async function investigationsUI() {
 }
 async function loadRanking() {
   const rk = await api(`/api/rank?scenario=${$('rscen').value}&focus=${$('rfocus').value}`);
-  $('ranklist').innerHTML = rankHTML(rk.results, true);
+  $('ranklist').innerHTML = `<p class="mute" style="margin:0 0 6px;font-size:12.5px">Ranked for <b style="color:var(--fg)">${esc(rk.scenario.name)}</b>${$('rfocus').value ? ', ' + esc($('rfocus').value) : ''}. Hover a score to see how it is calculated.</p>` + rankHTML(rk.results, true);
   const first = $('ranklist').querySelector('.rk'); if (first) detail(first.dataset.id, rk);
 }
 async function detail(id, rk) {
@@ -195,11 +210,11 @@ async function detail(id, rk) {
     <div class="chips">${p.pillars.map(x => `<span>${x}</span>`).join('')}<span>${esc(p.category)}</span></div>
     <div class="kv"><div>Hardware</div><div>${esc(p.hardware || '–')}</div>
       <div>Runs</div><div>${p.n_runs} (${p.n_with_outcome} with outcome)${p.normalized ? '' : ` <span class="warn">${esc(p.note)}</span>`}</div>
-      <div>Fuels</div><div>${esc(p.fuels.join(', ') || '–')}</div>
+      <div>Fuels</div><div>${esc(p.fuels.map(fuelName).join(', ') || '–')}</div>
       <div>${tip('o2', 'Oxygen tested')}</div><div>${rng(p.o2_frac_range, v => (v * 100).toFixed(1), '%')}</div>
       <div>${tip('pressure', 'Pressure tested')}</div><div>${rng(p.pressure_kpa_range, v => (v / PSI_KPA).toFixed(1), 'psi')}</div>
       <div>${tip('airflow', 'Airflow tested')}</div><div>${p.flow_cm_s_range && p.flow_cm_s_range[1] === 0 ? 'still air (0 cm/s)' : rng(p.flow_cm_s_range, v => v, 'cm/s')}</div>
-      <div>${tip('outcome', 'Measured outcomes')}</div><div>${esc(p.outcome_fields.join(', ') || 'none in run table')}</div>
+      <div>${tip('outcome', 'Measured outcomes')}</div><div>${esc(p.outcome_fields.map(f => OUTCOME_NAMES[f] || f).join(', ') || 'none recorded')}</div>
       <div>DOI</div><div>${p.doi ? `<a target="_blank" href="https://doi.org/${esc(p.doi)}">${esc(p.doi)}</a>` : '–'}</div></div>
     <details open><summary><b>Objective</b></summary><p>${esc(p.objective || '–')}</p></details>
     <details><summary><b>Publications (${p.publications.length})</b></summary>${p.publications.map(x => `<details><summary>${esc(x.title)} <span class="mute">${x.year || ''}</span></summary>

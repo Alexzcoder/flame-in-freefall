@@ -39,14 +39,14 @@ def data():
     return ds, P.build(ds), by_inv, Index()
 
 
-def scenario_from(scenario, o2, pressure, flow, gravity):
+def scenario_from(scenario, o2, pressure, flow, gravity, name=None):
     if scenario != "custom":
         if scenario not in SCENARIOS:
             raise HTTPException(400, f"unknown scenario {scenario!r}; use {list(SCENARIOS)} or custom")
         return SCENARIOS[scenario]
     if o2 is None or pressure is None:
         raise HTTPException(400, "custom scenario needs o2 and pressure")
-    return custom(o2, pressure, gravity_g=gravity, flow_cm_s=flow)
+    return custom(o2, pressure, gravity_g=gravity, flow_cm_s=flow, name=(name or "Your settings")[:60])
 
 
 @app.get("/api/meta")
@@ -83,11 +83,11 @@ def coverage():
 
 @app.get("/api/rank")
 def api_rank(scenario: str = "moon_base", focus: str | None = None, o2: float | None = None,
-             pressure: float | None = None, flow: float = 10.0, gravity: float = 0.0):
+             pressure: float | None = None, flow: float = 10.0, gravity: float = 0.0, name: str | None = None):
     ds, profs, _, _ = data()
     if focus not in (None, "", "prevention", "detection", "suppression"):
         raise HTTPException(400, "focus must be prevention | detection | suppression")
-    return rank(ds, scenario_from(scenario, o2, pressure, flow, gravity), focus or None, profs)
+    return rank(ds, scenario_from(scenario, o2, pressure, flow, gravity, name), focus or None, profs)
 
 
 @app.get("/api/nearest")

@@ -203,3 +203,9 @@ body[data-tab=ask] .ember-fab{display:none}
 .footage .vl,#labreal .vl{font-size:12px;color:var(--mute);margin-top:6px}.footage .vl b,#labreal .vl b{color:var(--fg)}
 #verdict+.footage{margin-top:14px}
 @media(max-width:1000px){.labgrid{grid-template-columns:1fr}.labstrip{grid-template-columns:repeat(2,1fr)}}
+/* review fixes */
+.three.four{grid-template-columns:repeat(4,1fr)}@media(max-width:1100px){.three.four{grid-template-columns:repeat(2,1fr)}}@media(max-width:620px){.three.four{grid-template-columns:1fr}}
+.ember-fab{padding:4px 12px 4px 4px;font-size:13px}.ember-fab img{width:36px;height:36px}
+main{padding-bottom:110px}
+.gnote{background:#2a2210;border:1px solid #f6c94555;color:#f3d98b;border-radius:8px;padding:8px 10px;font-size:13px;margin:10px 0 0}
+.footage video,#labreal video{max-height:300px}
