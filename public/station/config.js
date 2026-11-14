@@ -23,4 +23,14 @@ export const HABITATS = [
     airflow_verified: false,
     materials: ["pmma", "sibal"],
   },
+  {
+    id: "mars",
+    name: "Mars base",
+    gravity_g: 0.38,
+    o2_frac: 0.30,       // no official figure: assumed equal to the Moon base (same as ranking/scenarios.py)
+    pressure_kpa: 70.3,
+    airflow_cm_s: 5,
+    airflow_verified: false,
+    materials: ["pmma", "sibal"],
+  },
 ];

@@ -19,38 +19,20 @@
 <header class="top"><a href="/" class="home"><img src="../img/ember.png" alt="" width="28" height="28"> Flame in Freefall</a>
   <nav><a href="/">Overview</a><a href="/#scenario">Habitat check</a><a href="/#ask">Ask Ember</a></nav></header>
 <section class="orbit-wrap">
-  <div id="orbit"><div class="orbit-hint">🛰️ Drag to look around · scroll to zoom · <b>click the ISS or the Moon base</b></div>
+  <div id="orbit"><div class="flyto" id="flyto"><span>Fly to</span><button data-f="iss">🛰️ ISS</button><button data-f="moon">🌙 Moon base</button><button data-f="mars">🔴 Mars base</button><button data-f="home">🌍 Overview</button></div>
+    <div class="orbit-hint">🛰️ Drag to look around · scroll to zoom · <b>click a habitat</b> · or <a href="inside.html?hab=moon" style="color:#ffb08a;pointer-events:auto">walk inside the Moon base →</a></div>
     <aside id="panel" hidden></aside></div>
 </section>
 <main>
   <h1>Station explorer: fire risk in each habitat</h1>
-  <p class="lead">Above: Earth, the ISS and a Moon base. The beacon on each habitat shows how much real NASA test data backs it. Below: what the nearest real tests say for each material. Move the sliders to try other conditions.</p>
+  <p class="lead">Above: Earth, the ISS, a Moon base and a Mars base. The beacon on each habitat shows how much real NASA test data backs it. Below: what the nearest real tests say for each material. Move the sliders to try other conditions.</p>
   <ul class="legend">
     <li><span class="dot green"></span> Real tests close by</li>
     <li><span class="dot yellow"></span> Interpolating between tests</li>
     <li><span class="dot red"></span> No reliable data: extrapolation</li>
   </ul>
 
-  <p id="status">Loading data…</p>
-  <div id="error" hidden></div>
-  <div id="app" class="grid"></div>
-
-  <section class="chart">
-    <h2>The habitats in 3D</h2>
-    <p class="note">Drag to rotate, scroll to zoom. Each cube is a material in that habitat, coloured by how much real test data backs it
-      (same colours as above). It updates live with the sliders. Illustration only, not to scale.</p>
-    <div id="scene"></div>
-  </section>
-
-  <section class="chart">
-    <h2>What has actually been tested?</h2>
-    <p class="note">One dot per test run (all NASA PSI investigations in this dataset). Hollow dots: pressure was assumed, not measured.
-      The stars are the habitats above; they move with the sliders.</p>
-    <div id="chart"></div>
-  </section>
-
-  <section class="chart">
-    <h2>How to read this</h2>
+  <details class="howto"><summary>How the risk and confidence are calculated</summary>
     <ul class="note">
       <li><strong>Distance</strong> compares a habitat with a real test: 1 unit is about 5 points of oxygen or a doubling of airflow.
         Pressure is not used for solid fuels, because those tests have no measured pressure.</li>
@@ -61,7 +43,11 @@
       <li>Habitat <strong>airflow values are placeholders</strong>, not verified ventilation speeds.</li>
       <li>Not a physics simulation: it only reads back what the tests showed.</li>
     </ul>
-  </section>
+  </details>
+  <p id="status">Loading data…</p>
+  <div id="error" hidden></div>
+  <div id="app" class="grid"></div>
+
 </main>
 
 <script type="module">
@@ -69,7 +55,6 @@
   import { loadData } from "./app.js";
   import { assess } from "./app.js";
   import { mountHabitat } from "./ui.js";
-  import { drawChart, moveHabitats } from "./chart.js";
 
   const status = document.getElementById("status");
   try {
@@ -77,17 +62,13 @@
     const solids = labelled.filter(r => r.conditions.fuel.phase === "solid").length;
     status.textContent = `Based on ${tested.length} real test runs (${labelled.length} with a recorded outcome, ${solids} of them solid fuels).`;
 
-    const chart = document.getElementById("chart");
     const root = document.getElementById("app");
     const states = [];
-    let scene3d = null;
     const RANK = { green: 0, yellow: 1, red: 2 };
     const worst = s => s.materials.map(m => assess(s, m, labelled).confidence).sort((a, b) => RANK[b] - RANK[a])[0];
     let orbit = null, shown = null;
     const refresh = () => {
       if (states.length < HABITATS.length) return;   // still mounting
-      moveHabitats(chart, states);
-      scene3d?.update(states.map(s => s.materials.map(m => assess(s, m, labelled).confidence)));
       orbit?.update(Object.fromEntries(states.map(s => [s.id, worst(s)])));
       if (shown) showPanel(shown);
     };
@@ -102,7 +83,7 @@
           ${a.risk ? `risk ${a.risk}` : "no reliable estimate"} <small>${a.reason}</small></li>`; }).join("");
       panel.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${s.name}</h3>
         <p class="atm">${(s.o2_frac * 100).toFixed(0)} % O₂ · ${(s.pressure_kpa / 6.895).toFixed(1)} psi · ${s.gravity_g ? s.gravity_g + " g" : "microgravity"}</p>
-        <ul>${rows}</ul><div class="btns"><button class="more">See the nearest tests ↓</button><button class="back">Back to Earth view</button></div>`;
+        <ul>${rows}</ul><div class="btns"><a class="inside" href="inside.html?hab=${id}">🔥 Go inside: start a fire</a><button class="more">See the nearest tests ↓</button><button class="back">Back to Earth view</button></div>`;
       panel.hidden = false;
       panel.querySelector(".x").onclick = panel.querySelector(".back").onclick = () => { panel.hidden = true; shown = null; orbit?.overview(); };
       panel.querySelector(".more").onclick = () => document.getElementById("hab-" + id)?.scrollIntoView({ behavior: "smooth" });
@@ -110,26 +91,21 @@
     for (const h of HABITATS) {
       states.push(mountHabitat(root, h, labelled, refresh));
     }
-    drawChart(chart, tested, investigations, states);
 
     // The 3D views load Three.js from a CDN. If that fails, the rest of the page must still work.
     try {
       const { createOrbit3D } = await import("./orbit3d.js");
       orbit = createOrbit3D(document.getElementById("orbit"), { onSelect: showPanel });
       refresh();
-      // deep links: /station/#iss or /station/#moon fly straight to a habitat
+      document.getElementById("flyto").onclick = e => {
+        const f = e.target.dataset.f; if (!f || !orbit) return;
+        if (f === "home") { panel.hidden = true; shown = null; orbit.overview(); } else { orbit.focus(f); showPanel(f); }
+      };
+      // deep links: /station/#iss, #moon or #mars fly straight to a habitat
       const want = location.hash.slice(1);
       if (orbit && states.some(s => s.id === want)) setTimeout(() => { orbit.focus(want); showPanel(want); }, 600);
     } catch (err) {
       document.getElementById("orbit").textContent = "The orbit view could not be loaded: " + err.message;
-      console.error(err);
-    }
-    try {
-      const { createStation3D } = await import("./station3d.js");
-      scene3d = createStation3D(document.getElementById("scene"), HABITATS);
-      refresh();
-    } catch (err) {
-      document.getElementById("scene").textContent = "The 3D view could not be loaded: " + err.message;
       console.error(err);
     }
 
