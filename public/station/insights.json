@@ -13,19 +13,19 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 1.23,
-      "blue": 0.42
+      "aspect": 2.42,
+      "blue": 0.43
      },
      "fans_off": {
-      "burns": true,
-      "alive": 1.0,
-      "aspect": 1.51,
-      "blue": 0.54
+      "burns": false,
+      "alive": 0.07,
+      "aspect": null,
+      "blue": null
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.14,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
+      "Turning the fans off starves this flame of oxygen: it goes out by itself in the simulation.",
+      "Keeps burning down to about 14 % oxygen with the fans on (7 points below this habitat's 21 %).",
       "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
      ],
      "caveat": null
@@ -36,19 +36,19 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 1.23,
-      "blue": 0.42
+      "aspect": 2.42,
+      "blue": 0.43
      },
      "fans_off": {
-      "burns": true,
-      "alive": 1.0,
-      "aspect": 1.51,
-      "blue": 0.54
+      "burns": false,
+      "alive": 0.07,
+      "aspect": null,
+      "blue": null
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.14,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
+      "Turning the fans off starves this flame of oxygen: it goes out by itself in the simulation.",
+      "Keeps burning down to about 14 % oxygen with the fans on (7 points below this habitat's 21 %).",
       "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
      ],
      "caveat": null
@@ -59,20 +59,20 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 1.04,
-      "blue": 0.44
+      "aspect": 6.9,
+      "blue": 0.38
      },
      "fans_off": {
-      "burns": true,
-      "alive": 1.0,
-      "aspect": 1.54,
-      "blue": 0.54
+      "burns": false,
+      "alive": 0.07,
+      "aspect": null,
+      "blue": null
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.14,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
-      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
+      "Turning the fans off starves this flame of oxygen: it goes out by itself in the simulation.",
+      "Keeps burning down to about 14 % oxygen with the fans on (7 points below this habitat's 21 %).",
+      "The airflow stretches it downstream, so it spreads toward where the air goes."
      ],
      "caveat": null
     },
@@ -82,19 +82,19 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 1.23,
-      "blue": 0.42
+      "aspect": 2.42,
+      "blue": 0.43
      },
      "fans_off": {
-      "burns": true,
-      "alive": 1.0,
-      "aspect": 1.51,
-      "blue": 0.54
+      "burns": false,
+      "alive": 0.07,
+      "aspect": null,
+      "blue": null
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.14,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
+      "Turning the fans off starves this flame of oxygen: it goes out by itself in the simulation.",
+      "Keeps burning down to about 14 % oxygen with the fans on (7 points below this habitat's 21 %).",
       "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
      ],
      "caveat": "NASA's SAFFIRE tests could not ignite it up to 22.1 % oxygen; this is what happens if it does."
@@ -105,20 +105,20 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 1.04,
-      "blue": 0.44
+      "aspect": 6.9,
+      "blue": 0.38
      },
      "fans_off": {
-      "burns": true,
-      "alive": 1.0,
-      "aspect": 1.54,
-      "blue": 0.54
+      "burns": false,
+      "alive": 0.07,
+      "aspect": null,
+      "blue": null
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.14,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (9 points below this habitat's 21 %).",
-      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
+      "Turning the fans off starves this flame of oxygen: it goes out by itself in the simulation.",
+      "Keeps burning down to about 14 % oxygen with the fans on (7 points below this habitat's 21 %).",
+      "The airflow stretches it downstream, so it spreads toward where the air goes."
      ],
      "caveat": "NASA's SAFFIRE tests could not ignite it up to 22.1 % oxygen; this is what happens if it does."
     }
@@ -137,19 +137,20 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 2.23,
-      "blue": 0.37
+      "aspect": 2.3,
+      "blue": 0.5
      },
      "fans_off": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 3.22,
-      "blue": 0.38
+      "aspect": 2.1,
+      "blue": 0.49
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.16,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+      "Turning the fans off is not enough here: the flame keeps burning without airflow. Gravity makes the hot gas rise and pulls in fresh air by itself (physics: NASA has no fire tests at lunar gravity).",
+      "Keeps burning down to about 16 % oxygen with the fans on (14 points below this habitat's 30 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
      ],
      "caveat": null
     },
@@ -159,19 +160,20 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 2.23,
-      "blue": 0.37
+      "aspect": 2.3,
+      "blue": 0.5
      },
      "fans_off": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 3.22,
-      "blue": 0.38
+      "aspect": 2.1,
+      "blue": 0.49
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.16,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+      "Turning the fans off is not enough here: the flame keeps burning without airflow. Gravity makes the hot gas rise and pulls in fresh air by itself (physics: NASA has no fire tests at lunar gravity).",
+      "Keeps burning down to about 16 % oxygen with the fans on (14 points below this habitat's 30 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
      ],
      "caveat": null
     },
@@ -181,19 +183,20 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 1.67,
-      "blue": 0.36
+      "aspect": 2.12,
+      "blue": 0.5
      },
      "fans_off": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 2.57,
-      "blue": 0.37
+      "aspect": 1.83,
+      "blue": 0.49
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.16,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+      "Turning the fans off is not enough here: the flame keeps burning without airflow. Gravity makes the hot gas rise and pulls in fresh air by itself (physics: NASA has no fire tests at lunar gravity).",
+      "Keeps burning down to about 16 % oxygen with the fans on (14 points below this habitat's 30 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
      ],
      "caveat": null
     },
@@ -203,19 +206,20 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 2.23,
-      "blue": 0.37
+      "aspect": 2.3,
+      "blue": 0.5
      },
      "fans_off": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 3.22,
-      "blue": 0.38
+      "aspect": 2.1,
+      "blue": 0.49
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.16,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+      "Turning the fans off is not enough here: the flame keeps burning without airflow. Gravity makes the hot gas rise and pulls in fresh air by itself (physics: NASA has no fire tests at lunar gravity).",
+      "Keeps burning down to about 16 % oxygen with the fans on (14 points below this habitat's 30 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
      ],
      "caveat": "NASA's SAFFIRE tests could not ignite it up to 22.1 % oxygen; this is what happens if it does."
     },
@@ -225,19 +229,20 @@
      "fans_on": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 1.67,
-      "blue": 0.36
+      "aspect": 2.12,
+      "blue": 0.5
      },
      "fans_off": {
       "burns": true,
       "alive": 1.0,
-      "aspect": 2.57,
-      "blue": 0.37
+      "aspect": 1.83,
+      "blue": 0.49
      },
-     "min_o2_burning_fans_on": 0.12,
+     "min_o2_burning_fans_on": 0.16,
      "notes": [
-      "Turning the fans off is not enough here: the flame keeps burning without airflow.",
-      "Keeps burning down to about 12 % oxygen with the fans on (18 points below this habitat's 30 %)."
+      "Turning the fans off is not enough here: the flame keeps burning without airflow. Gravity makes the hot gas rise and pulls in fresh air by itself (physics: NASA has no fire tests at lunar gravity).",
+      "Keeps burning down to about 16 % oxygen with the fans on (14 points below this habitat's 30 %).",
+      "Mostly blue, soot-free light: dim and easy to miss, and little smoke for detectors."
      ],
      "caveat": "NASA's SAFFIRE tests could not ignite it up to 22.1 % oxygen; this is what happens if it does."
     }
@@ -245,117 +250,226 @@
   }
  },
  "validation": {
-  "bass2_went_out": 17,
-  "sim_also_goes_out": 0,
+  "cases": 31,
+  "matched": 31,
   "runs": {
    "PSI-25/B14": {
     "o2": 0.15,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
    },
-   "PSI-25/B18": {
-    "o2": 0.174,
-    "flow_cm_s": 10.07,
-    "sim_burns": true
-   },
-   "PSI-25/B19": {
-    "o2": 0.173,
-    "flow_cm_s": 10.07,
-    "sim_burns": true
+   "PSI-25/B14@low": {
+    "o2": 0.15,
+    "flow_cm_s": 2.0132,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/B21": {
     "o2": 0.208,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/B21@low": {
+    "o2": 0.208,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/O4": {
     "o2": 0.148,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
    },
-   "PSI-25/O11": {
-    "o2": 0.154,
-    "flow_cm_s": 5.03,
-    "sim_burns": true
+   "PSI-25/O4@low": {
+    "o2": 0.148,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/O14": {
     "o2": 0.163,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/O14@low": {
+    "o2": 0.163,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/O19": {
     "o2": 0.153,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/O19@low": {
+    "o2": 0.153,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/P1": {
     "o2": 0.177,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/P1@low": {
+    "o2": 0.177,
+    "flow_cm_s": 2.0132,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/P5": {
     "o2": 0.193,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/P5@low": {
+    "o2": 0.193,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/P9": {
     "o2": 0.176,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
    },
-   "PSI-25/P10": {
-    "o2": 0.17,
-    "flow_cm_s": 5.03,
-    "sim_burns": true
+   "PSI-25/P9@low": {
+    "o2": 0.176,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/P13a": {
     "o2": 0.207,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/P13a@low": {
+    "o2": 0.207,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/P13b": {
     "o2": 0.206,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/P13b@low": {
+    "o2": 0.206,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/P22a": {
     "o2": 0.208,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/P22a@low": {
+    "o2": 0.208,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/P22b": {
     "o2": 0.2,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
     "sim_burns": true
+   },
+   "PSI-25/P22b@low": {
+    "o2": 0.2,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
    },
    "PSI-25/P25": {
     "o2": 0.209,
     "flow_cm_s": 5.03,
+    "nasa_burns": true,
+    "sim_burns": true
+   },
+   "PSI-25/P25@low": {
+    "o2": 0.209,
+    "flow_cm_s": 0.0,
+    "nasa_burns": false,
+    "sim_burns": false
+   },
+   "PSI-98/S1": {
+    "o2": 0.216,
+    "flow_cm_s": 20.0,
+    "nasa_burns": true,
+    "sim_burns": true
+   },
+   "PSI-98/S2": {
+    "o2": 0.215,
+    "flow_cm_s": 20.0,
+    "nasa_burns": true,
+    "sim_burns": true
+   },
+   "PSI-99/2-5": {
+    "o2": 0.221,
+    "flow_cm_s": 20.0,
+    "nasa_burns": true,
+    "sim_burns": true
+   },
+   "PSI-99/2-7": {
+    "o2": 0.221,
+    "flow_cm_s": 20.0,
+    "nasa_burns": true,
+    "sim_burns": true
+   },
+   "PSI-99/2-8": {
+    "o2": 0.2205,
+    "flow_cm_s": 20.0,
+    "nasa_burns": true,
     "sim_burns": true
    }
   },
-  "note": "All 17 BASS-II runs with a recorded outcome went out by themselves (none burned to the end), so this checks one side only."
+  "note": "These cases were used to fit the knobs, so this shows the model reproduces them, not that it predicts new ones. Leave-one-out results: dataset/shape_eval.md."
  },
  "model": {
-  "calibrated": false,
+  "calibrated": true,
   "theta": {
-   "k": 16.0,
-   "heat": 1.5,
-   "cool": 0.6,
-   "ign": 0.35,
+   "k": 45.43455,
+   "heat": 1.88389,
+   "cool": 1.64899,
+   "ign": 0.49593,
    "buoy": 26.0,
-   "dif_o2": 0.22,
-   "dif_fuel": 0.2,
-   "cond": 0.1,
-   "flow_scale": 0.9,
+   "dif_o2": 0.0697,
+   "dif_fuel": 0.23989,
+   "cond": 0.12992,
+   "flow_scale": 1.19958,
    "eps0": 4.0,
    "eps_g": 10.0,
-   "emit_scale": 1.0,
-   "inv_fuel": 1.0,
-   "inv_o2": 1.0,
+   "emit_scale": 2.44111,
+   "inv_fuel": 2.88265,
+   "inv_o2": 0.67721,
    "cam_blue": 1.0,
    "cam_soot": 0.7,
-   "tad_exp": 0.0
+   "tad_exp": 1.1911,
+   "anchor": 0.37192,
+   "emit0": 0.66613,
+   "pyro": 0.25532,
+   "c_thin": 1.16444,
+   "c_thick": 14.35729,
+   "burn_thin": 0.01382,
+   "burn_thick": 0.01372,
+   "k_strip": 41.14906
   },
   "method": "flame/sim.py with the knobs fitted by flame/calibrate.py; 2D, small flame, 30 simulated seconds; 'burns' = still visible at the end. Evaluation: dataset/shape_eval.md."
  }

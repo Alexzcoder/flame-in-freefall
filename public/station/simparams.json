@@ -18,7 +18,13 @@
   "cam_soot": 0.7,
   "tad_exp": 1.1911,
   "anchor": 0.37192,
-  "emit0": 0.66613
+  "emit0": 0.66613,
+  "pyro": 0.25532,
+  "c_thin": 1.16444,
+  "c_thick": 14.35729,
+  "burn_thin": 0.01382,
+  "burn_thick": 0.01372,
+  "k_strip": 41.14906
  },
  "tau_real_s_per_sim_s": 4.540844575842341,
  "fit": {
@@ -159,5 +165,11 @@
  },
  "generations": 36,
  "population": 16,
- "note": "Fitted by flame/calibrate.py to CFI-G outcomes (gas) and BASS-II flame aspect (solid). Test days held out; see dataset/shape_eval.md."
+ "note": "Fitted by flame/calibrate.py to CFI-G outcomes (gas) and BASS-II flame aspect (solid). Test days held out; see dataset/shape_eval.md.",
+ "spread": {
+  "targets_matched": 6,
+  "targets": 7,
+  "loss": 0.054970026372181825,
+  "mm_per_cell": 1.835837118394291
+ }
 }

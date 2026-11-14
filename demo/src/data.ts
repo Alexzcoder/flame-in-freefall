@@ -2,8 +2,7 @@
 export const DATA = {
   runs: "1,624",
   videos: "384",
-  solidFate: "31 / 31",          // tuned physics, solid burn-or-out cases (fit); see LOO below
-  solidFateLoo: "– / 31",        // leave-one-out, dataset/loo_eval.md (fill in)
+  solidFate: "30 / 31",          // solid burn-or-out cases predicted with each case left out (dataset/loo_eval.md)
   gasTime: "×1.42",              // data model: typical error of gas flame-out time (dataset/predict_eval.md)
   gasGuess: "×2.67",
 };

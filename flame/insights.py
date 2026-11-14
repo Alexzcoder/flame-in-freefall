@@ -35,12 +35,12 @@ SECONDS = 30.0
 def fate(conds, theta):
     """→ per condition: {'burns': visible flame for most of the last quarter (same rule as flame/calibrate.py),
     'aspect', 'blue', 'alive'}."""
-    fr = Sim(conds, theta).run(SECONDS, 0.5).numpy()
+    from flame.calibrate import simulate
+    alive, frames = simulate([{"cond": c, "frames": True} for c in conds], [theta], SECONDS)
     out = []
-    for f in fr:
-        m = clip_measures(f[4:], skip=0)
-        late = [x is not None for x in (m.get("series") or [])[-len(f) // 4:]]
-        out.append({"burns": bool(late and np.mean(late) > 0.5), "alive": round(m["alive"], 2),
+    for k, a in enumerate(alive[0]):
+        m = clip_measures(frames[(0, k)][4:], skip=0)  # shape, from the first 20 s
+        out.append({"burns": bool(a[-len(a) // 4:].mean() > 0.5), "alive": round(float(a.mean()), 2),
                     "aspect": None if m.get("aspect") is None else round(m["aspect"], 2),
                     "blue": None if m.get("blue") is None else round(m["blue"], 2)})
     return out
@@ -77,7 +77,9 @@ def main():
             if on["burns"] and not off["burns"]:
                 notes.append("Turning the fans off starves this flame of oxygen: it goes out by itself in the simulation.")
             elif on["burns"] and off["burns"]:
-                notes.append("Turning the fans off is not enough here: the flame keeps burning without airflow.")
+                notes.append("Turning the fans off is not enough here: the flame keeps burning without airflow."
+                             + (" Gravity makes the hot gas rise and pulls in fresh air by itself (physics: NASA has no "
+                                "fire tests at lunar gravity)." if h["gravity_g"] > 0 else ""))
             elif not on["burns"]:
                 notes.append("At this habitat's air a small flame of this material dies out in the simulation.")
             if min_o2 is not None:

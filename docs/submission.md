@@ -47,10 +47,17 @@ answers questions citing NASA runs and report pages.
 - Physics: a 2D flame simulation (fluid flow + one-step combustion + fuel spread) running in the browser (WebGL) and on
   a GPU (PyTorch). Its knobs are fitted to NASA runs: CFI-G gas-flame extinction times (331 runs), BASS-II flame
   shapes measured from 384 NASA videos, BASS-II/SAFFIRE burn-or-extinguish outcomes, and BASS-II/SAFFIRE spread rates.
-  Whole test days are held out to score it. RESULTS: fill from dataset/shape_eval.md, dataset/spread_eval.md.
+  Whole test days are held out to score it. Results: solid fires burn or go out as NASA saw in 30 of 31 cases
+  predicted with each case left out; spread fitted to 6 of 7 NASA targets (fabric 2.38 vs. 2.1-2.6 mm/s). Gas-flame
+  outcomes from the simulation do not beat guessing on held-out days, so gas and droplet numbers come from the data
+  models. Full scores: https://flame-in-freefall-ivory.vercel.app/checked.html
 - Data-only models: gradient-boosted trees with test-day cross-validation and calibrated 80 % ranges, e.g. gas-flame
   extinction time within ×1.42 (vs ×2.67 guessing), droplet burning rate 0.040 mm²/s error (vs 0.095).
 - A neural-network emulator of the calibrated simulation predicts a flame instantly in the browser.
+
+**Finding worth knowing.** In the ISS, switching the fans off starves a small fabric fire (as NASA's BASS-II saw). In a
+Moon base it does not in our model: lunar gravity makes hot gas rise and draws in fresh air by itself. (Physics, not
+data: no lunar-gravity fire tests exist.)
 
 **Benefits / impact.** Habitat designers and safety engineers see at a glance where the evidence ends (e.g. solids
 above 22 % O₂), instead of extrapolating silently. Every prediction says whether it is inside the tested conditions.

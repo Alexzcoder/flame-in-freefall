@@ -39,14 +39,14 @@ Assumed values (e.g. cabin pressure when not recorded) and censored burn times a
 from 384 NASA videos, and solid burn-or-out cases. Scored on test days the tuning never saw.</p>
 <div class="scroll"><table><tr><th>Physics</th><th>Gas flame outcome, balanced accuracy (test days)</th><th>Gas flame-out time error (test days)</th><th>Solid burns or goes out (all cases)</th></tr><tr><td>Original (hand-tuned)</td><td>0.11</td><td>×2.49</td><td>18 of 31</td></tr><tr><td>Tuned on NASA runs</td><td>0.33</td><td>×1.54</td><td>31 of 31</td></tr></table></div>
 <div class="card"><b>What tuning bought:</b> solid fires now survive or go out the way NASA saw (burning at the initial
-airflow, out when the fan is turned down). Predicted without seeing the case (leave-one-out): <b>pending</b>
+airflow, out when the fan is turned down). Predicted without seeing the case (leave-one-out): <b>30 of 31</b>
 <span class="k cv">LEAVE-ONE-OUT</span><br><b>What it did not:</b> gas-flame outcomes are no better than guessing on test
 days, so gas-flame and droplet numbers on this site come from the data models above. Flame shapes did not hold up on
 held-out runs, so the flames you see in the simulator are illustrative.</div>
 
 <h2>4. Flame spread <span class="k fit">FIT</span> <span class="k cv">LEAVE-ONE-OUT</span></h2>
 <div class="card">Seven NASA targets (BASS-II Summary Report NASA/TM-20210011385; SAFFIRE-II): spread speeds and the
-airflow below which a flame goes out. Fit: <b>5 of 7</b> matched. Predicted with each target left out: <b>pending</b>.</div>
+airflow below which a flame goes out. Fit: <b>6 of 7</b> matched. Predicted with each target left out: <b>2 of 7</b>.</div>
 
 <h2>5. The instant predictor (neural network)</h2>
 <div class="card">A small neural network trained on 20,000 runs of the tuned simulation, so the site can answer instantly.

@@ -45,7 +45,7 @@ const Stats: React.FC = () => {
   const f = useCurrentFrame();
   const cards = [
     [DATA.videos, "NASA flame videos measured"],
-    [DATA.solidFate, "solid fires: burns or goes out, as NASA saw"],
+    [DATA.solidFate, "solid fires: burns or goes out, predicted unseen"],
     [DATA.gasTime, `gas flame-out time error (guessing: ${DATA.gasGuess})`],
   ];
   return (
