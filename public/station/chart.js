@@ -36,10 +36,11 @@ export function drawChart(div, tested, investigations, habitats) {
 
   traces.push(habitatTrace(habitats));
   const layout = {
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)", font: { color: "#c9cdd6", family: "Inter, sans-serif" },
     height: 540,
     margin: { l: 70, r: 20, t: 20, b: 60 },
-    xaxis: { title: "Oxygen (% of atmosphere)", range: [0, 100], zeroline: false },
-    yaxis: { title: "Pressure (kPa)  ·  101.3 kPa = 1 atm", range: [0, 330], zeroline: false },
+    xaxis: { title: "Oxygen (% of atmosphere)", range: [0, 100], zeroline: false, gridcolor: "#232834" },
+    yaxis: { title: "Pressure (kPa)  ·  101.3 kPa = 1 atm", range: [0, 330], zeroline: false, gridcolor: "#232834" },
     hovermode: "closest",
     legend: { orientation: "h", y: -0.2 },
     shapes: [{ type: "line", x0: 0, x1: 100, y0: 101.325, y1: 101.325, line: { color: "#888", dash: "dot", width: 1 } }],

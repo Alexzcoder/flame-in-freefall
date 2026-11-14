@@ -11,7 +11,7 @@ export const HABITATS = [
     pressure_kpa: 101.325,
     airflow_cm_s: 10,
     airflow_verified: false,
-    materials: ["pmma", "sibal", "cotton"],
+    materials: ["pmma", "sibal"],   // the only solids with usable outcomes (pmma 18, sibal 3); "cotton" = sibal
   },
   {
     id: "moon",
@@ -21,6 +21,6 @@ export const HABITATS = [
     pressure_kpa: 70.3, // 10.2 psi
     airflow_cm_s: 5,
     airflow_verified: false,
-    materials: ["pmma"],
+    materials: ["pmma", "sibal"],
   },
 ];

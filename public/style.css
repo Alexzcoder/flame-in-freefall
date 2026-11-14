@@ -148,3 +148,7 @@ footer .links{display:flex;gap:16px;flex-wrap:wrap}
 @media(max-width:700px){.hero-h{font-size:28px}.hero-sub{font-size:15px}.nav-cta{display:none}.v2 nav{margin-left:0}
   .ember-fab span{display:none}.ember-fab{padding:5px;right:14px;bottom:14px}.band h2,.deeper{font-size:20px}}
 body[data-tab=ask] .ember-fab{display:none}
+.navlink{color:var(--mute);font-weight:500;padding:8px 14px;border-radius:8px;text-decoration:none;white-space:nowrap}.navlink:hover{color:var(--fg)}
+a.value{text-decoration:none}
+.famcov{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.famcov span{font-size:12px;border:1px solid var(--line);border-radius:20px;padding:2px 10px;background:var(--panel2)}.famcov b{color:var(--fg)}
+@media(max-width:700px){.navlink{display:none}}

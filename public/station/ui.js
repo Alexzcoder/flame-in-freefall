@@ -11,7 +11,7 @@ const el = (tag, props = {}, ...kids) => {
   return n;
 };
 
-const MATERIAL_NAMES = { pmma: "PMMA", sibal: "Sibal fabric", cotton: "Cotton" };
+const MATERIAL_NAMES = { pmma: "PMMA (acrylic)", sibal: "Sibal (cotton/fiberglass fabric)" };
 const materialName = m => MATERIAL_NAMES[m] ?? m.charAt(0).toUpperCase() + m.slice(1);
 
 const CONFIDENCE_TEXT = { green: "High confidence", yellow: "Medium confidence", red: "Low confidence" };
@@ -117,7 +117,7 @@ export function mountHabitat(root, base, labelled, onChange) {
     render();
   });
 
-  const card = el("section", { class: "card" },
+  const card = el("section", { class: "card", id: "hab-" + base.id },
     el("h2", {}, base.name),
     base.airflow_verified ? null : el("p", { class: "warn" }, "⚠ Airflow is an unverified placeholder, not a measured value."),
     el("div", { class: "sliders" }, o2.node, pressure.node, airflow.node, gravity.node, reset),
