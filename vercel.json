@@ -1,1 +1,16 @@
-{ "framework": "fastapi" }
+{
+  "framework": "fastapi",
+  "redirects": [
+    {
+      "source": "/v2/",
+      "destination": "/v2",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/v2",
+      "destination": "/v2.html"
+    }
+  ]
+}

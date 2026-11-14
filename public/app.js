@@ -40,6 +40,7 @@ function show(t) {
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
   document.querySelectorAll('.tab').forEach(s => s.classList.toggle('on', s.id === 'sec-' + t));
   history.replaceState(null, '', '#' + t);
+  document.body.dataset.tab = t;  // lets CSS hide the Ember button on the Ask tab
   if (t === 'overview') Plotly.Plots.resize('map');
 }
 

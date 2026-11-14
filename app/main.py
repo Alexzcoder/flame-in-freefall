@@ -143,5 +143,12 @@ def api_chat(body: ChatIn, request: Request):
     return answer([{"role": m["role"], "content": m["content"][:4000]} for m in msgs])
 
 
-if os.path.isdir(os.path.join(ROOT, "public")):  # local dev; on Vercel public/ is served by the CDN, not the function
+if os.path.isdir(os.path.join(ROOT, "public")):
+    from fastapi.responses import FileResponse
+
+    @app.get("/v2", include_in_schema=False)
+    def v2_page():  # local dev; on Vercel /v2 is a rewrite in vercel.json
+        return FileResponse(os.path.join(ROOT, "public", "v2.html"))
+
+    # on Vercel public/ is served by the CDN, not the function, so this mount is local-only too
     app.mount("/", StaticFiles(directory=os.path.join(ROOT, "public"), html=True), name="static")
