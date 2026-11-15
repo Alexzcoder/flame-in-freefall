@@ -37,7 +37,12 @@
 .strip .it{cursor:pointer;background:#12151e;border:1px solid var(--line);border-radius:10px;padding:8px 14px 10px;min-width:120px;text-align:center;font-weight:600;font-size:13px;position:relative;overflow:hidden}
 .strip .it::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--c)}
 .strip .it.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 8px 24px #0008;transform:translateY(-3px)}
-.strip .arrow{font:inherit;font-size:20px;background:none;border:0;color:var(--fg);cursor:pointer;padding:6px 10px}
+.side{position:fixed;top:50%;transform:translateY(-50%);z-index:5;width:64px;height:64px;border-radius:50%;border:1px solid var(--line);
+  background:#12151ecc;color:var(--fg);font-size:34px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 30px #0008;transition:transform .15s,border-color .15s}
+.side:hover{border-color:var(--acc);transform:translateY(-50%) scale(1.08)}
+.side.l{left:380px}.side.r{right:24px}
+@media(max-width:760px){.side{width:48px;height:48px;font-size:26px}.side.l{left:12px}.side.r{right:12px}}
 .air{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);z-index:4;font-size:12.5px;color:#9ccaff;background:#12151ecc;border:1px solid #2a303c;border-radius:20px;padding:4px 12px;white-space:nowrap}
 .bar .back{font-weight:600;color:var(--fg);background:#12151e;border:1px solid var(--line);border-radius:9px;padding:6px 12px;font-size:13px}
 .hint{position:fixed;right:16px;top:60px;z-index:4;color:var(--mute);font-size:12px;text-align:right}
@@ -53,7 +58,7 @@
   <div class="seg" id="hab"><button data-h="iss">ISS module</button><button data-h="moon">Moon base</button></div>
 </div>
 <div class="title"><div class="name" id="name"></div><div class="band" id="band"></div><div class="line" id="line"></div></div>
-<div class="hint">Drag to inspect · click the object to light it there<br>← → to switch objects</div>
+<div class="hint">Drag to inspect · click the object to light it there<br>← → to switch objects · Esc for the whole habitat</div>
 <aside class="card" id="card"></aside>
 <div class="ctl">
   <div class="clock" id="clock">Ready</div>
@@ -64,6 +69,8 @@
 <div class="msg" id="msg"></div>
 <div class="air" id="air"></div>
 <nav class="strip" id="strip"></nav>
+<button class="side l" id="prev" aria-label="Previous object">‹</button>
+<button class="side r" id="next" aria-label="Next object">›</button>
 
 <script type="module">
 import * as THREE from "three";
@@ -254,10 +261,7 @@ function renderUI() {
   ];
   $("card").innerHTML = rows.map(([k, v]) => `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("") +
     `<p class="note">${f.it.text}</p><p class="note"><span class="tag">MODELS</span>Fire behaviour from the NASA-calibrated simulation; spread speed fitted to 6 of 7 NASA targets; safe distance is an engineering estimate. <a href="../checked.html" style="color:#5aa9ff">How we checked</a></p>`;
-  $("strip").innerHTML = `<button class="arrow" id="prev" aria-label="Previous">‹</button>` +
-    LIST.map((id, i) => `<div class="it ${i === idx ? "on" : ""}" data-i="${i}" style="--c:${facts(id).band[1]}">${ITEMS[id].name}</div>`).join("") +
-    `<button class="arrow" id="next" aria-label="Next">›</button>`;
-  $("prev").onclick = () => go(idx - 1); $("next").onclick = () => go(idx + 1);
+  $("strip").innerHTML = LIST.map((id, i) => `<div class="it ${i === idx ? "on" : ""}" data-i="${i}" style="--c:${facts(id).band[1]}">${ITEMS[id].name}</div>`).join("");
   $("strip").querySelectorAll(".it").forEach(el => el.onclick = () => go(+el.dataset.i));
   document.querySelectorAll("#hab button").forEach(b => b.classList.toggle("on", b.dataset.h === hab));
   $("back").href = `inside.html?hab=${hab}`; $("back").textContent = `← Whole ${hab === "iss" ? "ISS module" : "Moon base"}`;
@@ -279,7 +283,12 @@ async function go(i) {
 }
 document.querySelectorAll("#hab button").forEach(b => b.onclick = () => { hab = b.dataset.h; go(idx); });
 $("ignite").onclick = () => ignite(); $("reset").onclick = reset; $("fans").onclick = () => setFans(!S.fans);
-addEventListener("keydown", e => { if (e.key === "ArrowRight") go(idx + 1); if (e.key === "ArrowLeft") go(idx - 1); });
+$("prev").onclick = () => go(idx - 1); $("next").onclick = () => go(idx + 1);
+addEventListener("keydown", e => {
+  if (e.key === "ArrowRight") go(idx + 1);
+  if (e.key === "ArrowLeft") go(idx - 1);
+  if (e.key === "Escape") location.href = `inside.html?hab=${hab}`;   // back to the whole habitat
+});
 const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(); let down = null;
 renderer.domElement.addEventListener("pointerdown", e => down = [e.clientX, e.clientY]);
 renderer.domElement.addEventListener("pointerup", e => {   // a click (not a drag) on the object lights it there
