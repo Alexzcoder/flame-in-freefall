@@ -7,7 +7,7 @@ export const DATA = {
   gasGuess: "×2.67",
 };
 
-// Voice-over (ElevenLabs, voice "Jesse - Animation Character, Friendly", take A, public/voice.mp3), one caption per scene.
+// Voice-over (ElevenLabs, voice "Eve - Narrative & Audiobooks", public/voice_eve.mp3), one subtitle per scene.
 // Scene boundaries sit in the pauses found with ffmpeg silencedetect.
 export const CAPTIONS = [
   "Hi, I'm Ember! Moon bases will breathe 30% oxygen.",

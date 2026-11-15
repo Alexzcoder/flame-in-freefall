@@ -4,7 +4,7 @@ import React from "react";
 import {
   AbsoluteFill, Easing, Img, interpolate, OffthreadVideo, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig,
 } from "remotion";
-import { CAPTIONS, DATA } from "./data";
+import { DATA } from "./data";
 import MOUTH from "./mouth.json";
 import RUNS from "./runs.json";
 
@@ -15,7 +15,7 @@ const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 const ease = Easing.out(Easing.cubic);
 
 // scene timing = the pauses in the voice-over (ffmpeg silencedetect)
-const T = { hook: [0, 4.6], gap: [4.6, 9.1], product: [9.1, 13.6], train: [13.6, 18.2], iss: [18.2, 23.0], moon: [23.0, 25.0], end: [25.0, 30.0] } as const;
+const T = { hook: [0, 4.45], gap: [4.45, 8.8], product: [8.8, 13.05], train: [13.05, 17.3], iss: [17.3, 21.75], moon: [21.75, 23.55], end: [23.55, 29.9] } as const;  // Eve take
 
 // ---------- background: deep space, slowly drifting twinkling stars ----------
 const rnd = (i: number) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -34,18 +34,7 @@ const Stars: React.FC = () => {
   );
 };
 
-// ---------- subtitles (required in English) ----------
-const Caption: React.FC<{ text: string }> = ({ text }) => {
-  const f = useCurrentFrame();
-  const y = interpolate(f, [0, 10], [24, 0], { ...clamp, easing: ease });
-  return (
-    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 60 }}>
-      <div style={{ fontFamily: FONT, fontSize: 44, fontWeight: 700, color: "white", background: "rgba(8,10,16,0.82)",
-        padding: "14px 30px", borderRadius: 16, maxWidth: 1500, textAlign: "center", transform: `translateY(${y}px)`,
-        opacity: interpolate(f, [0, 6], [0, 1], clamp), border: "1px solid rgba(255,255,255,0.1)" }}>{text}</div>
-    </AbsoluteFill>
-  );
-};
+// subtitles are not burned in: out/flame-in-freefall-demo.srt goes to YouTube as the English caption track
 
 // ---------- 1. hook: kinetic type ----------
 const Hook: React.FC = () => {
@@ -197,8 +186,6 @@ const Training: React.FC = () => {
 };
 
 // ---------- 5/6. the burn, as a frame sequence from the Inspect & ignite page ----------
-const seq = (prefix: string, n: number, f: number, perFrame: number) =>
-  staticFile(`burn/${prefix}${String(Math.min(n - 1, Math.floor(f / perFrame))).padStart(2, "0")}.jpg`);
 const Badge: React.FC<{ text: string; color: string; at: number }> = ({ text, color, at }) => {
   const f = useCurrentFrame(), { fps } = useVideoConfig();
   const k = spring({ frame: f - at, fps, config: { damping: 12 } });
@@ -208,14 +195,17 @@ const Badge: React.FC<{ text: string; color: string; at: number }> = ({ text, co
 const Fire: React.FC<{ part: "iss" | "moon" }> = ({ part }) => {
   const f = useCurrentFrame(), { fps } = useVideoConfig();
   const k = spring({ frame: f, fps, config: { damping: 20 } });
-  const issSplit = 72;  // frames of "fans on" before the fans are cut
-  const src = part === "moon" ? seq("c", 12, f, 5) : f < issSplit ? seq("a", 17, f, 4) : seq("b", 11, f - issSplit, 6);
+  // frames captured at 20 fps from the Inspect & ignite page (deterministic capture mode); ISS: one continuous fire,
+  // fans cut at sim second 3.6 = captured frame 41 = video frame 61
+  // fire_i.mp4 / fire_m.mp4: the captured frames blended to 30 fps (one continuous, repeatable burn); fans cut at
+  // captured frame 41 = video frame 61
+  const issSplit = 61;
   const glow = part === "iss" && f >= issSplit ? interpolate(f, [issSplit, issSplit + 50], [0.5, 0], clamp) : 0.5;
   return (
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", paddingBottom: 110 }}>
       <div style={{ width: 1200, height: 800, borderRadius: 26, overflow: "hidden", border: "1px solid #2b3245", transform: `scale(${0.9 + 0.1 * k})`,
         boxShadow: `0 40px 120px rgba(0,0,0,0.6), 0 0 140px rgba(255,90,30,${glow})` }}>
-        <Img src={src} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <OffthreadVideo src={staticFile(part === "moon" ? "fire_m.mp4" : "fire_i.mp4")} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
       {part === "iss" ? <>
         <Sequence durationInFrames={issSplit} layout="none"><Badge text="ISS · fans on: it spreads" color="#ffb27a" at={4} /></Sequence>
@@ -246,12 +236,12 @@ const End: React.FC = () => {
 
 // ---------- Ember: walks between spots, faces what it talks about, bounces with the voice ----------
 const STOPS: { at: number; end: number; pos: [number, number]; face?: number }[] = [
-  { at: 0, end: 4.6, pos: [1560, 520], face: 1100 },
-  { at: 4.6, end: 9.1, pos: [MOON[0] + 560, MOON[1] + 30], face: MOON[0] },
-  { at: 9.1, end: 13.6, pos: [200, 760], face: 1200 },
-  { at: 13.6, end: 18.2, pos: [1790, 620], face: 1000 },
-  { at: 18.2, end: 25.0, pos: [1660, 640], face: 900 },
-  { at: 25.0, end: 30.0, pos: [960, 300] },
+  { at: 0, end: 4.45, pos: [1560, 520], face: 1100 },
+  { at: 4.45, end: 8.8, pos: [MOON[0] + 560, MOON[1] + 30], face: MOON[0] },
+  { at: 8.8, end: 13.05, pos: [200, 760], face: 1200 },
+  { at: 13.05, end: 17.3, pos: [1790, 620], face: 1000 },
+  { at: 17.3, end: 23.55, pos: [1660, 640], face: 900 },
+  { at: 23.55, end: 30.0, pos: [960, 300] },
 ];
 const SIZE = 240, MOVE = 0.9;
 const posAt = (s: number): [number, number] => {
@@ -283,7 +273,6 @@ const Ember: React.FC = () => {
 export const Demo: React.FC = () => {
   const { fps } = useVideoConfig();
   const seqOf = (k: keyof typeof T) => ({ from: Math.round(T[k][0] * fps), durationInFrames: Math.round((T[k][1] - T[k][0]) * fps) });
-  const caps = [T.hook, T.gap, T.product, T.train, T.iss, T.moon, T.end];
   return (
     <AbsoluteFill style={{ backgroundColor: "#04050a" }}>
       <Stars />
@@ -295,12 +284,7 @@ export const Demo: React.FC = () => {
       <Sequence name="Fire Moon" {...seqOf("moon")}><Fire part="moon" /></Sequence>
       <Sequence name="End" {...seqOf("end")}><End /></Sequence>
       <Ember />
-      {caps.map((c, i) => (
-        <Sequence key={i} name={`Caption ${i + 1}`} from={Math.round(c[0] * fps)} durationInFrames={Math.round((c[1] - c[0]) * fps)}>
-          <Caption text={CAPTIONS[i]} />
-        </Sequence>
-      ))}
-      <Audio src={staticFile("voice.mp3")} />
+      <Audio src={staticFile("voice_eve.mp3")} />
     </AbsoluteFill>
   );
 };
