@@ -12,6 +12,8 @@ body{background:radial-gradient(ellipse at 30% 30%,#141c31 0%,#07090f 60%)}
 .top{display:flex;align-items:center;gap:14px;padding:14px 26px}
 .top a{display:flex;align-items:center;gap:10px;color:var(--fg);text-decoration:none;font-weight:700}
 .top img{width:36px;height:36px}
+.chaps{display:flex;gap:8px;margin-left:24px}.chaps span{font-size:12.5px;font-weight:800;letter-spacing:.14em;padding:5px 12px;border-radius:20px;border:1px solid var(--line);color:var(--mute)}
+.chaps span.on{background:var(--acc);border-color:var(--acc);color:#1a0d05}
 .dots{display:flex;gap:6px;margin-left:auto}.dots button{width:30px;height:6px;border-radius:3px;border:0;background:#2a3142;cursor:pointer;padding:0}
 .dots button.on{background:var(--acc)}
 .btn{font:inherit;font-size:14px;font-weight:600;background:#151a25;color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:7px 13px;cursor:pointer}
@@ -37,6 +39,7 @@ body{background:radial-gradient(ellipse at 30% 30%,#141c31 0%,#07090f 60%)}
 </style></head><body>
 <div class="deck">
   <div class="top"><a href="/"><img src="img/ember-logo.gif" alt="">Flame in Freefall</a>
+    <div class="chaps" id="chaps"><span>PROBLEM</span><span>SOLUTION</span><span>DEMO</span><span>IMPACT</span></div>
     <div class="dots" id="dots"></div>
     <button class="btn" id="play">▶ Auto</button><button class="btn" id="fs" title="Fullscreen (F)">⛶ Fullscreen</button></div>
   <div class="slide"><svg id="stage" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg><div class="txt" id="txt"></div></div>
@@ -141,6 +144,51 @@ function s4(g) {
   const a = T(g, X + 14, Y + 30, `${fmt(hi, 2)} at the start`, {'font-size': 18, 'font-weight': 800, fill: '#ff9a52'}); fade(a, 1.0);
   fade(T(g, X + W - 6, Y + H - 16, `${fmt(lo, 2)} after ${c.length} rounds`, {'text-anchor': 'end', 'font-size': 18, 'font-weight': 800, fill: '#7ee8b8'}), 3.0);
 }
+// ---------- neural network: how we trained it ----------
+function sNN(g) {
+  const nn = M.nn;
+  // 1. the training data: real simulated fires
+  const mo = img(g, 'pitch/nn_mosaic.jpg', 20, 40, 400, 222, 12); mo.style.clipPath = 'inset(0 100% 0 0)';
+  mo.style.transition = 'clip-path 1.6s ease .2s'; requestAnimationFrame(() => requestAnimationFrame(() => mo.style.clipPath = 'inset(0 0 0 0)'));
+  const nt = T(g, 20, 290, '0 simulated fires', {'font-size': 18, 'font-weight': 800, fill: '#ffb27a'}); count(nt, nn.sims, 0, 1600, 200, '', ' simulated fires');
+  // 2. the network: inputs → 3 layers → outputs, signals flowing
+  const IN = ['gravity', 'oxygen', 'pressure', 'airflow', 'fuel'], OUT = ['flame image', 'goes out?', 'shape'];
+  const L = [IN.map((_, i) => [520, 60 + i * 48]), ...[0, 1, 2].map(k => Array.from({length: 6}, (_, i) => [610 + k * 85, 55 + i * 42])), OUT.map((_, i) => [890, 90 + i * 70])];
+  const net = S('g', {}, g); fade(net, 1.4);
+  for (let k = 0; k < L.length - 1; k++) L[k].forEach(a => L[k + 1].forEach(b => S('line', {x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: '#2a3348', 'stroke-width': 1}, net)));
+  L.forEach((col, k) => col.forEach(([x, y]) => S('circle', {cx: x, cy: y, r: k === 0 || k === L.length - 1 ? 9 : 7, fill: k === 0 ? '#5aa9ff' : k === L.length - 1 ? '#3ecf8e' : '#ff7a2f'}, net)));
+  IN.forEach((t, i) => T(net, 505, 65 + i * 48, t, {'text-anchor': 'end', 'font-size': 15, fill: '#9ccaff'}));
+  OUT.forEach((t, i) => T(net, 906, 95 + i * 70, t, {'font-size': 15, fill: '#7ee8b8'}));
+  T(net, 695, 318, `${nn.layers} layers × ${nn.hidden} neurons · ensemble of ${nn.members}`, {'text-anchor': 'middle', 'font-size': 14, fill: '#8d97ab'});
+  const pulse = () => { const tok = PL.token; for (let n = 0; n < 6; n++) { const path = [0, 1, 2, 3, 4].map(k => L[k][Math.floor(Math.random() * L[k].length)]);
+    const dot = S('circle', {r: 4, fill: '#ffd25e', cx: path[0][0], cy: path[0][1], opacity: 0}, net); tween(1100, e => { const seg = Math.min(3.999, e * 4), k = Math.floor(seg), f = seg - k;
+      dot.setAttribute('opacity', 1); dot.setAttribute('cx', path[k][0] + (path[k + 1][0] - path[k][0]) * f); dot.setAttribute('cy', path[k][1] + (path[k + 1][1] - path[k][1]) * f); if (e >= 1) dot.remove(); }, n * 150); }
+    later(1100, () => { if (tok === PL.token) pulse(); }); };
+  later(1800, pulse);
+  // 3. the test: fires the network never saw
+  const pr = img(g, 'pitch/nn_pairs.jpg', 40, 345, 520, 270, 10); fade(pr, 2.6);
+  fade(T(g, 30, 335, 'Simulation (top) vs. network (bottom), on fires it never saw', {'font-size': 15, 'font-weight': 700, fill: '#fff'}), 2.6);
+  const box = S('g', {}, g); fade(box, 3.2);
+  S('rect', {x: 600, y: 360, width: 380, height: 230, rx: 16, fill: '#0f1a15', stroke: '#3ecf8e88'}, box);
+  const a1 = T(box, 625, 420, '0 %', {'font-size': 46, 'font-weight': 900, fill: '#7ee8b8'}); count(a1, M.emulator.ignited * 100, 1, 1200, 3300, '', ' %');
+  T(box, 625, 448, 'right on "does it light?"', {'font-size': 16, fill: '#cdd3df'});
+  const a2 = T(box, 625, 510, '0 %', {'font-size': 46, 'font-weight': 900, fill: '#7ee8b8'}); count(a2, M.emulator.extinguished * 100, 1, 1200, 3500, '', ' %');
+  T(box, 625, 538, 'right on "does it go out?"', {'font-size': 16, fill: '#cdd3df'});
+  T(box, 625, 570, `${fmt(nn.test)} held-out simulations`, {'font-size': 14, fill: '#8d97ab'});
+}
+// ---------- demo: the flame lab ----------
+function sLab(g) {
+  const fo = S('foreignObject', {x: 20, y: 60, width: 960, height: 307}, g);
+  fo.innerHTML = '<video xmlns="http://www.w3.org/1999/xhtml" src="pitch/flamelab4.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;border-radius:14px;border:1px solid #2b3245"></video>';
+  fade(fo, .2);
+  ['Earth · 1 g', 'Moon base · 30 % O₂', 'ISS · fans on', 'ISS · fans off'].forEach((t, i) => fade(T(g, 36 + i * 240, 92, t, {'font-size': 17, 'font-weight': 800, fill: '#ffd9b8'}), .5 + i * .15));
+  fade(T(g, 500, 40, 'Flame lab: the same fire, four places', {'text-anchor': 'middle', 'font-size': 24, 'font-weight': 800, fill: '#fff'}), .1);
+  [['Earth', 'hot gas rises: a tall, flickering plume', '#ff9a52'], ['Moon', 'weak gravity: a short, squat flame', '#ffd25e'],
+   ['ISS, fans on', 'the airflow stretches it downstream', '#9ccaff'], ['ISS, fans off', 'no airflow: a dim ring, starving', '#7ee8b8']].forEach(([a, b, c], i) => {
+    const y = 420 + i * 46, gg = S('g', {}, g); fade(gg, 1.2 + i * .3);
+    S('circle', {cx: 40, cy: y - 6, r: 7, fill: c}, gg); T(gg, 58, y, a, {'font-size': 19, 'font-weight': 800, fill: c}); T(gg, 230, y, b, {'font-size': 19, fill: '#cdd3df'});
+  });
+}
 // ---------- 5 · how far to trust it ----------
 function s5(g) {
   const rows = [
@@ -218,28 +266,34 @@ function s8(g) {
 }
 
 const SLIDES = [
-  {kick: 'The question', title: 'Will a fire in your habitat behave the way you expect?', draw: s1,
+  {chap: 'PROBLEM', kick: 'The question', title: 'Will a fire in your habitat behave the way you expect?', draw: s1,
    text: () => `Moon bases are planned at <b>30 % oxygen</b> and 10.2 psi, to save weight and make spacewalks easier. With more oxygen, materials <b>light easier and burn faster</b>. And in low gravity, flames don't rise: they behave differently from anything we know on Earth.`,
    know: () => 'Challenge brief and NASA Exploration Atmospheres Working Group (30–34 % O₂ at 8.2–10.2 psi).'},
-  {kick: 'The gap', title: `Nobody has burned a solid above ${'{solid}'} % oxygen in microgravity`, draw: s2,
+  {chap: 'PROBLEM', kick: 'The gap', title: `Nobody has burned a solid above ${'{solid}'} % oxygen in microgravity`, draw: s2,
    text: () => `Every dot is one of NASA's real microgravity fire tests. <b>Orange = solid materials</b>, the things a cabin is made of. They all sit at or below <b>${M.solid_max} %</b>. The Moon base is in the empty zone above.`,
    know: () => `${fmt(M.points.length)} runs plotted from NASA's PSI archive; inverse flames left out (their oxygen is not the cabin's).`},
-  {kick: 'What we built', title: "NASA's scattered fire data, made answerable", draw: s3,
+  {chap: 'SOLUTION', kick: 'What we built', title: "NASA's scattered fire data, made answerable", draw: s3,
    text: () => `We pulled <b>${M.investigations} NASA investigations</b> into one checked dataset of <b>${fmt(M.runs)} runs</b>, indexed <b>${fmt(M.documents)} report pages and papers</b>, and built a website on top: the gap map, a scenario explorer, 3D habitats and Ember, an assistant that cites its sources.`,
    know: () => `Every value is traced to its source file and row in NASA's archive; assumed values (like unrecorded cabin pressure) are flagged on every run.`},
-  {kick: 'The physics engine', title: 'A flame simulation tuned to real NASA fires', draw: s4,
+  {chap: 'SOLUTION', kick: 'The physics engine', title: 'A flame simulation tuned to real NASA fires', draw: s4,
    text: () => `A 2D fluid and combustion simulation runs live in the browser. We measured flame shapes in <b>${M.videos_measured} NASA videos</b> and fitted its physics to <b>331 gas-flame outcomes</b>, BASS-II videos and solid burn-or-out cases, on the GPU.`,
    know: () => `Whole NASA test days were held out from tuning; a neural network copies the tuned simulation (${fmt(M.emulator.extinguished * 100, 1)} % agreement on whether a flame goes out) so the site answers instantly.`},
-  {kick: 'How far to trust it', title: 'Every number says how it was tested', draw: s5,
+  {chap: 'SOLUTION', kick: 'The neural network', title: 'Then we taught a neural network to copy it, instantly', draw: sNN,
+   text: () => `We ran the tuned simulation <b>${fmt(M.nn.sims)} times</b> across gravity, oxygen, pressure, airflow and fuel, then trained a small neural network on the results. Now the site predicts a flame's image, shape and whether it goes out <b>in milliseconds</b>, right in your browser.`,
+   know: () => `Tested on ${fmt(M.nn.test)} simulations it never saw. It copies the simulation, errors included: it is only as right as the physics behind it.`},
+  {chap: 'SOLUTION', kick: 'How far to trust it', title: 'Every number says how it was tested', draw: s5,
    text: () => `Where NASA measured outcomes, our models clearly beat guessing, scored on <b>test days they never saw</b>. Where they don't, we say so, and switch to whatever is more accurate.`,
    know: () => 'Cross-validated by NASA test day, leave-one-out for the small sets; full reports on the site (“How we checked”).'},
-  {kick: 'Fire in the habitat', title: 'Cut the fans on the ISS and the fire starves. Not on the Moon.', draw: s6,
+  {chap: 'DEMO', kick: 'Flame lab', title: 'Change the gravity, watch the flame change', draw: sLab,
+   text: () => `The flame lab runs the physics live in your browser. Set gravity, oxygen and airflow, and the flame takes its shape <b>from the physics</b>: tall on Earth, squat on the Moon, stretched by the ISS fans, starving without them.`,
+   know: () => 'Real NASA footage of the closest experiment plays next to it on the site, so you can compare.'},
+  {chap: 'DEMO', kick: 'Fire in the habitat', title: 'Cut the fans on the ISS and the fire starves. Not on the Moon.', draw: s6,
    text: () => `In microgravity, oxygen only reaches a flame through the airflow: <b>turn off the fans and it goes out</b>, exactly as NASA's BASS-II saw. At lunar gravity, hot gas rises and pulls in fresh air by itself, so <b>the same fire keeps burning</b>.`,
    know: () => 'ISS result matches NASA data; the Moon result is physics only: no fire has ever been tested at lunar gravity.'},
-  {kick: 'Ember', title: 'Ask in plain words. Get NASA, with the page number.', draw: s7,
+  {chap: 'DEMO', kick: 'Ember', title: 'Ask in plain words. Get NASA, with the page number.', draw: s7,
    text: () => `Ember answers only from NASA's run tables, final reports and papers, and <b>cites the file and page</b> for every claim, so an engineer can check it in seconds.`,
    know: () => `Retrieval over ${fmt(M.documents)} documents, including ${fmt(M.report_pages)} NASA report pages; answers must quote their source.`},
-  {kick: 'What it changes', title: 'See where the evidence ends before something burns', draw: s8,
+  {chap: 'IMPACT', kick: 'What it changes', title: 'See where the evidence ends before something burns', draw: s8,
    text: () => `Designers stop extrapolating silently. NASA sees exactly <b>where the next experiment is needed</b>. And the same physics applies to <b>oxygen-rich places on Earth</b>.`,
    know: () => 'Open dataset, open models, every limitation stated.'},
 ];
@@ -251,6 +305,7 @@ function go(i) {
   t.innerHTML = `<div class="kick">${sl.kick}</div><h1>${sl.title.replace('{solid}', M.solid_max)}</h1><p>${sl.text()}</p><div class="know"><div class="tag">How we know</div>${sl.know()}</div>`;
   requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('in')));
   document.querySelectorAll('#dots button').forEach((b, j) => b.classList.toggle('on', j === i));
+  document.querySelectorAll('#chaps span').forEach(c => c.classList.toggle('on', c.textContent === sl.chap));
   document.getElementById('bar').style.width = (100 * (i + 1) / SLIDES.length) + '%';
   document.getElementById('num').textContent = `${i + 1} / ${SLIDES.length}`;
   history.replaceState(null, '', '#' + (i + 1));

@@ -17,6 +17,58 @@ def J(rel):
     return json.load(open(os.path.join(ROOT, rel)))
 
 
+def nn_assets(em):
+    """Neural-network slide: a mosaic of real training simulations, and network predictions for held-out fires
+    computed with the exported weights (public/models/flame_emulator.json, the file the website runs)."""
+    import base64
+    import numpy as np
+    import torch
+    from PIL import Image
+    d = np.load(os.path.join(ROOT, "data", "emulator", "sims.npz"))
+    X, IMG, S = d["X"].astype(np.float32), d["img"].astype(np.float32), d["S"]
+    conds = json.loads(str(d["conds"]))
+    n = len(X)
+    test = torch.randperm(n, generator=torch.Generator().manual_seed(0))[:n // 10].numpy()  # emulator.py's held-out set
+    lit = np.nonzero(S[:, 0] > 0.5)[0]
+    bright = lit[np.argsort(-IMG[lit].max(axis=(1, 2, 3)))]
+    rng = np.random.default_rng(1)
+    pick = rng.choice(bright[:4000], 60, replace=False)
+    up = lambda im, k: Image.fromarray((np.clip(im * 1.6, 0, 1) * 255).astype(np.uint8)).resize((24 * k, 32 * k), Image.BICUBIC)
+    mos = Image.new("RGB", (12 * 96, 5 * 128))
+    for i, j in enumerate(pick):
+        mos.paste(up(IMG[j], 4), ((i % 12) * 96, (i // 12) * 128))
+    mos.save(os.path.join(OUT, "nn_mosaic.jpg"), quality=88)
+    # forward pass of the exported ensemble in numpy (float16 weights, like the browser)
+    f16 = lambda b: np.frombuffer(base64.b64decode(b), "<f2").astype(np.float32)
+    mean, basis = f16(em["img_mean"]), f16(em["img_basis"]).reshape(em["pcs"], -1)
+    mu, sd = np.array(em["mu"], np.float32), np.array(em["sd"], np.float32)
+    def predict(x):
+        h0, out = (x - mu) / sd, 0
+        for L in em["members"]:
+            h = h0
+            for k in range(3):
+                l = L[k]; h = f16(l["w"]).reshape(l["out"], l["in"]) @ h + f16(l["b"]); h = h / (1 + np.exp(-h))
+            coef = f16(L[3]["w"]).reshape(L[3]["out"], -1) @ h + f16(L[3]["b"])
+            out = out + np.clip(mean + coef @ basis, 0, 1) / len(em["members"])
+        return out.reshape(32, 24, 3)
+    want = []
+    for fuel in ("fabric", "pmma", "droplet", "burner"):
+        cand = [j for j in test if conds[j]["fuel"] == fuel and S[j, 0] > 0.5 and IMG[j].max() > 0.35]
+        want.append(sorted(cand, key=lambda j: -IMG[j].max())[len(cand) // 4])
+    cand = [j for j in test if conds[j]["gravity_g"] > 0.9 and S[j, 0] > 0.5 and IMG[j].max() > 0.35]
+    want.append(sorted(cand, key=lambda j: -IMG[j].max())[len(cand) // 4])
+    pairs = Image.new("RGB", (5 * 150, 2 * 200 + 10), (7, 9, 15))
+    labels = []
+    for i, j in enumerate(want):
+        pairs.paste(up(IMG[j], 5), (i * 150 + 15, 0))
+        pairs.paste(up(predict(X[j]), 5), (i * 150 + 15, 210))
+        c = conds[j]
+        labels.append(f"{c['fuel']} · {c['gravity_g']:.2g} g · {c['o2'] * 100:.0f}% O₂")
+    pairs.save(os.path.join(OUT, "nn_pairs.jpg"), quality=92)
+    return {"sims": int(n), "test": int(len(test)), "inputs": em["inputs"], "hidden": em["members"][0][0]["out"],
+            "layers": 3, "pcs": em["pcs"], "members": len(em["members"]), "pair_labels": labels}
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     ds = J("dataset/flame_runs.json")
@@ -79,6 +131,10 @@ def main():
     os.remove(tmp)
     for src, dst in (("i030", "burn_iss.jpg"), ("i070", "burn_iss_out.jpg"), ("m030", "burn_moon.jpg")):
         open(os.path.join(OUT, dst), "wb").write(demo_file(f"burn/{src}.jpg"))
+    open(os.path.join(OUT, "flamelab4.mp4"), "wb").write(demo_file("flamelab4.mp4"))
+    data["nn"] = nn_assets(em)
+    with open(os.path.join(OUT, "data.json"), "w") as f:
+        f.write(json.dumps(data, allow_nan=False))
     assert math.isclose(solid_max, 22.2) and data["runs"] == 1624, (solid_max, data["runs"])
     print(f"pitch data: {data['runs']} runs, {len(pts)} points, solid max {solid_max}, fate LOO {fate_loo}, "
           f"tuning {curve[0]} → {curve[-1]} over {len(curve)} rounds, citation {hit['cite']}")
