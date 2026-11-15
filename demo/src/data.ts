@@ -7,14 +7,16 @@ export const DATA = {
   gasGuess: "×2.67",
 };
 
-// Voice-over (ElevenLabs, voice "Eve - Narrative & Audiobooks", public/voice_eve.mp3), one subtitle per scene.
-// Scene boundaries sit in the pauses found with ffmpeg silencedetect.
+// Voice-over (ElevenLabs "Eve - Narrative & Audiobooks", public/voice_v2.mp3), Problem / Solution / Demo; one subtitle
+// per scene (written to out/flame-in-freefall-demo.srt for YouTube, not burned into the video).
 export const CAPTIONS = [
   "Hi, I'm Ember! Moon bases will breathe 30% oxygen.",
   "But NASA has never burned a solid in microgravity above 22%.",
-  "Flame in Freefall shows what's really been tested, for any cabin air.",
-  "Our flame model is tuned on 384 NASA fire videos.",
-  "Light anything: on the ISS, cutting the fans starves the fire.",
+  "Flame in Freefall turns NASA's scattered fire data into checked, cited answers.",
+  "Set any cabin air.",
+  "Watch the flame change,",
+  "checked against NASA fire videos.",
+  "Light anything: on the ISS, cutting the fans starves it.",
   "On the Moon, it doesn't.",
   "Every answer traces back to NASA.",
 ];

@@ -10,12 +10,15 @@ import RUNS from "./runs.json";
 
 export const DURATION_S = 30;
 const FONT = "Inter, system-ui, sans-serif";
-const ORANGE = "#ff7a2f", BLUE = "#5aa9ff", VIOLET = "#b07cff", RED = "#ff5c6a";
+const ORANGE = "#ff7a2f", BLUE = "#5aa9ff", VIOLET = "#b07cff", RED = "#ff5c6a", GREEN = "#3ecf8e";
 const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 const ease = Easing.out(Easing.cubic);
 
 // scene timing = the pauses in the voice-over (ffmpeg silencedetect)
-const T = { hook: [0, 4.45], gap: [4.45, 8.8], product: [8.8, 13.05], train: [13.05, 17.3], iss: [17.3, 21.75], moon: [21.75, 23.55], end: [23.55, 29.9] } as const;  // Eve take
+// voice_v2 (Eve, Problem / Solution / Demo script): scene edges sit in its pauses (ffmpeg silencedetect)
+const T = { hook: [0, 4.55], gap: [4.55, 8.85], solution: [8.85, 14.0], product: [14.0, 15.6], lab: [15.6, 17.4],
+  train: [17.4, 19.0], iss: [19.0, 23.15], moon: [23.15, 24.9], end: [24.9, 29.9] } as const;
+const CHAPTERS: [string, number, number][] = [["PROBLEM", 0, 8.85], ["SOLUTION", 8.85, 14.0], ["DEMO", 14.0, 24.9]];
 
 // ---------- background: deep space, slowly drifting twinkling stars ----------
 const rnd = (i: number) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
@@ -72,7 +75,7 @@ const GapChart: React.FC = () => {
   const pts = RUNS as [number, number, string][];
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
-      <div style={{ position: "absolute", left: CH.x, top: 60, fontSize: 40, fontWeight: 800, color: "white", opacity: axes }}>
+      <div style={{ position: "absolute", left: CH.x, top: 88, fontSize: 38, fontWeight: 800, color: "white", opacity: axes }}>
         Every NASA microgravity fire test, by oxygen and pressure</div>
       <svg width="1920" height="1080">
         {/* zone above the highest solid test */}
@@ -84,7 +87,7 @@ const GapChart: React.FC = () => {
         {[15, 20, 25, 30, 35, 40].map((o) => <g key={o} opacity={axes}><line x1={CH.x} x2={CH.x + CH.w} y1={py(o)} y2={py(o)} stroke="#2a3348" strokeWidth="1" />
           <text x={CH.x - 16} y={py(o) + 10} textAnchor="end" fill="#8a96b0" fontSize="26">{o}%</text></g>)}
         {[4, 8, 14.7, 30, 60].map((p) => <text key={p} x={px(p)} y={CH.y + CH.h + 40} textAnchor="middle" fill="#8a96b0" fontSize="26" opacity={axes}>{p} psi</text>)}
-        <text x={CH.x - 110} y={CH.y - 20} fill="#8a96b0" fontSize="26" opacity={axes}>oxygen</text>
+        <text x={CH.x - 16} y={CH.y + CH.h / 2} fill="#8a96b0" fontSize="26" opacity={axes} textAnchor="middle" transform={`rotate(-90 ${CH.x - 95} ${CH.y + CH.h / 2})`}>oxygen</text>
         {/* runs pop in, left to right */}
         {pts.map(([p, o, fam], i) => {
           if (p < 3 || p > 60 || o < 10 || o > 45) return null;
@@ -115,9 +118,9 @@ const GapChart: React.FC = () => {
 const Product: React.FC = () => {
   const f = useCurrentFrame(), { fps } = useVideoConfig();
   const inn = spring({ frame: f, fps, config: { damping: 18 } });
-  const push = interpolate(f, [40, 100], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) });
+  const push = interpolate(f, [4, 36], [0, 1], { ...clamp, easing: Easing.inOut(Easing.cubic) });
   const W = 1240 * 1.05, H = 800 * 1.05;
-  const ring = interpolate(f, [92, 108], [0, 1], clamp);
+  const ring = interpolate(f, [30, 40], [0, 1], clamp);
   return (
     <AbsoluteFill style={{ fontFamily: FONT, perspective: 1800, alignItems: "center", justifyContent: "center", paddingBottom: 60 }}>
       <div style={{ width: W, height: H + 46, borderRadius: 18, overflow: "hidden", background: "#0f131c", border: "1px solid #2b3245",
@@ -159,7 +162,7 @@ const Training: React.FC = () => {
   ];
   return (
     <AbsoluteFill style={{ fontFamily: FONT }}>
-      <div style={{ position: "absolute", top: 50, width: "100%", display: "flex", justifyContent: "center", gap: 40 }}>
+      <div style={{ position: "absolute", top: 110, width: "100%", display: "flex", justifyContent: "center", gap: 40 }}>
         <div style={{ ...panel(a), position: "relative" }}>
           <OffthreadVideo src={staticFile("nasa_b8.mp4")} startFrom={60} muted style={{ width: "100%", height: "100%", objectFit: "contain" }} />
           {label("REAL · NASA BASS-II run B8 (ISS)", "#9ccaff")}
@@ -169,7 +172,9 @@ const Training: React.FC = () => {
           {label("OUR SIMULATION · same conditions", "#ffb27a")}
         </div>
       </div>
-      <div style={{ position: "absolute", top: 560, width: "100%", display: "flex", justifyContent: "center", gap: 30 }}>
+      <div style={{ position: "absolute", top: 640, width: "100%", textAlign: "center", fontSize: 46, fontWeight: 800, color: "white",
+        opacity: interpolate(f, [8, 20], [0, 1], clamp) }}>Checked against real NASA fires</div>
+      <div style={{ display: "none" }}>
         {cards.map(([n, t], i) => {
           const k = spring({ frame: f - 34 - i * 8, fps, config: { damping: 14 } });
           return (
@@ -234,14 +239,79 @@ const End: React.FC = () => {
   );
 };
 
+// ---------- chapter bar: PROBLEM · SOLUTION · DEMO ----------
+const Chapter: React.FC = () => {
+  const f = useCurrentFrame(), { fps } = useVideoConfig(), s = f / fps;
+  if (s >= CHAPTERS[CHAPTERS.length - 1][2]) return null;
+  return (
+    <div style={{ position: "absolute", right: 50, top: 22, display: "flex", gap: 12, fontFamily: FONT }}>
+      {CHAPTERS.map(([name, a, b]) => {
+        const on = s >= a && s < b, k = interpolate(s, [a, a + 0.4], [0, 1], clamp);
+        return <div key={name} style={{ fontSize: 22, fontWeight: 900, letterSpacing: "0.16em", padding: "8px 18px", borderRadius: 30,
+          color: on ? "#1a0d05" : "#7d879c", background: on ? ORANGE : "rgba(16,20,30,0.75)", border: `1px solid ${on ? ORANGE : "#2b3245"}`,
+          transform: `scale(${on ? 1 + 0.06 * (1 - k) : 1})`, boxShadow: on ? `0 0 30px ${ORANGE}66` : "none" }}>{name}</div>;
+      })}
+    </div>
+  );
+};
+
+// ---------- SOLUTION: NASA's scattered data → one checked dataset → answers ----------
+const Solution: React.FC = () => {
+  const f = useCurrentFrame(), { fps } = useVideoConfig();
+  const pop = (d: number) => spring({ frame: f - d, fps, config: { damping: 14 } });
+  const num = (to: number, d: number) => Math.round(interpolate(f, [d, d + 30], [0, to], { ...clamp, easing: ease })).toLocaleString("en-GB");
+  const Box: React.FC<{ x: number; y: number; w: number; d: number; col: string; children: React.ReactNode }> = ({ x, y, w, d, col, children }) => {
+    const k = pop(d);
+    return <div style={{ position: "absolute", left: x, top: y, width: w, padding: "22px 24px", borderRadius: 20, background: "rgba(16,20,30,0.92)",
+      border: `2px solid ${col}`, fontFamily: FONT, textAlign: "center", opacity: k, transform: `scale(${0.85 + 0.15 * k})` }}>{children}</div>;
+  };
+  const big = (c: string): React.CSSProperties => ({ fontSize: 64, fontWeight: 900, color: c, lineHeight: 1 });
+  const sub: React.CSSProperties = { fontSize: 28, color: "#c9d2e4", marginTop: 8 };
+  const dash = (d: number) => interpolate(f, [d, d + 18], [0, 1], clamp);
+  return (
+    <AbsoluteFill>
+      <svg width="1920" height="1080" style={{ position: "absolute" }}>
+        {[[520, 470, 700, 330, 18], [520, 520, 700, 650, 22], [1100, 330, 1290, 300, 50], [1100, 330, 1290, 470, 54], [1100, 650, 1290, 640, 58], [1100, 650, 1290, 800, 62]].map(([x1, y1, x2, y2, d], i) =>
+          <path key={i} d={`M${x1} ${y1} C ${(x1 + x2) / 2} ${y1} ${(x1 + x2) / 2} ${y2} ${x2} ${y2}`} fill="none" stroke={ORANGE} strokeWidth="4"
+            strokeDasharray="10 12" strokeDashoffset={-f * 2} opacity={dash(d) * 0.85} />)}
+      </svg>
+      <Box x={120} y={380} w={400} d={2} col={BLUE}><div style={big("#9ccaff")}>{num(24, 4)}</div><div style={sub}>NASA fire investigations, scattered</div></Box>
+      <Box x={700} y={230} w={400} d={16} col={ORANGE}><div style={big("#ffa25a")}>{num(1624, 18)}</div><div style={sub}>runs in one checked dataset</div></Box>
+      <Box x={700} y={560} w={400} d={22} col={ORANGE}><div style={big("#ffa25a")}>{num(1882, 24)}</div><div style={sub}>report pages & papers, searchable</div></Box>
+      {[["Gap map", 240, 48], ["Flame lab", 410, 52], ["3D habitats", 580, 56], ["Ember, cited", 750, 60]].map(([t, y, d]) => (
+        <Box key={t as string} x={1290} y={(y as number) - 50} w={420} d={d as number} col={GREEN}><div style={{ fontSize: 36, fontWeight: 800, color: "#7ee8b8" }}>{t}</div></Box>
+      ))}
+    </AbsoluteFill>
+  );
+};
+
+// ---------- DEMO · Flame lab: the same fire in four places (website simulation, flamelab4.mp4) ----------
+const FlameLab: React.FC = () => {
+  const f = useCurrentFrame(), { fps } = useVideoConfig();
+  const k = spring({ frame: f, fps, config: { damping: 16 } });
+  const labels = ["Earth · 1 g", "Moon base · 30 % O₂", "ISS · fans on", "ISS · fans off"];
+  return (
+    <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", fontFamily: FONT, paddingBottom: 60 }}>
+      <div style={{ fontSize: 46, fontWeight: 800, color: "white", marginBottom: 26, opacity: k }}>Flame lab: the same fire, four places</div>
+      <div style={{ position: "relative", width: 1700, height: 544, borderRadius: 22, overflow: "hidden", border: "1px solid #2b3245",
+        boxShadow: "0 40px 120px rgba(0,0,0,0.6)", opacity: k, transform: `scale(${0.92 + 0.08 * k})` }}>
+        <OffthreadVideo src={staticFile("flamelab4.mp4")} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        {labels.map((t, i) => <div key={t} style={{ position: "absolute", left: 20 + i * 425, top: 18, fontSize: 26, fontWeight: 800, color: "#ffd9b8",
+          background: "rgba(6,8,14,0.8)", padding: "6px 14px", borderRadius: 10 }}>{t}</div>)}
+      </div>
+    </AbsoluteFill>
+  );
+};
+
 // ---------- Ember: walks between spots, faces what it talks about, bounces with the voice ----------
 const STOPS: { at: number; end: number; pos: [number, number]; face?: number }[] = [
-  { at: 0, end: 4.45, pos: [1560, 520], face: 1100 },
-  { at: 4.45, end: 8.8, pos: [MOON[0] + 560, MOON[1] + 30], face: MOON[0] },
-  { at: 8.8, end: 13.05, pos: [200, 760], face: 1200 },
-  { at: 13.05, end: 17.3, pos: [1790, 620], face: 1000 },
-  { at: 17.3, end: 23.55, pos: [1660, 640], face: 900 },
-  { at: 23.55, end: 30.0, pos: [960, 300] },
+  { at: 0, end: 4.55, pos: [1560, 520], face: 1100 },
+  { at: 4.55, end: 8.85, pos: [MOON[0] + 560, MOON[1] + 30], face: MOON[0] },
+  { at: 8.85, end: 14.0, pos: [960, 860], face: 960 },
+  { at: 14.0, end: 15.6, pos: [200, 780], face: 1200 },
+  { at: 15.6, end: 19.0, pos: [1790, 820], face: 1000 },
+  { at: 19.0, end: 24.9, pos: [1660, 640], face: 900 },
+  { at: 24.9, end: 30.0, pos: [960, 300] },
 ];
 const SIZE = 240, MOVE = 0.9;
 const posAt = (s: number): [number, number] => {
@@ -278,13 +348,16 @@ export const Demo: React.FC = () => {
       <Stars />
       <Sequence name="Hook" {...seqOf("hook")}><Hook /></Sequence>
       <Sequence name="Gap map" {...seqOf("gap")}><GapChart /></Sequence>
+      <Sequence name="Solution" {...seqOf("solution")}><Solution /></Sequence>
       <Sequence name="Product" {...seqOf("product")}><Product /></Sequence>
+      <Sequence name="Flame lab" {...seqOf("lab")}><FlameLab /></Sequence>
       <Sequence name="Training" {...seqOf("train")}><Training /></Sequence>
       <Sequence name="Fire ISS" {...seqOf("iss")}><Fire part="iss" /></Sequence>
       <Sequence name="Fire Moon" {...seqOf("moon")}><Fire part="moon" /></Sequence>
       <Sequence name="End" {...seqOf("end")}><End /></Sequence>
+      <Chapter />
       <Ember />
-      <Audio src={staticFile("voice_eve.mp3")} />
+      <Audio src={staticFile("voice_v2.mp3")} />
       {/* original background music (tools/music.py), ducked under the voice: louder in the pauses */}
       <Audio src={staticFile("music.wav")} volume={(f) => {
         const m = MOUTH as number[];
