@@ -11,8 +11,9 @@ weighs as much as the others).
 
 - [ ] Team registered, challenge "Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity Combustion Data" selected (team owner submits)
 - [ ] PR with the overnight model work reviewed and merged, production deployed, live site checked
-- [ ] Demo video ≤ 30 s, English subtitles burned in, uploaded unlisted (YouTube), link opens without login
-- [ ] Final project link: live site https://flame-in-freefall-ivory.vercel.app (public)
+- [x] Demo video ≤ 30 s (29.9 s), English subtitles (VTT track): **https://flame-in-freefall-ivory.vercel.app/demo.html**
+      → paste this into "Project Demonstration" (public, no login)
+- [ ] "Project" field: **https://flame-in-freefall-ivory.vercel.app** (public; GitHub stays private unless the team decides otherwise)
 - [ ] **OPEN DECISION (waiting on Alex): make the GitHub repo public or link the site only.** Git history checked
       2026-11-14: no API keys committed (only the `sk-...` placeholder in an example).
 - [ ] Title, summary, details, NASA data, references, AI disclosure pasted from below
