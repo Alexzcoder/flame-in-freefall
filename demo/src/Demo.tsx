@@ -285,6 +285,13 @@ export const Demo: React.FC = () => {
       <Sequence name="End" {...seqOf("end")}><End /></Sequence>
       <Ember />
       <Audio src={staticFile("voice_eve.mp3")} />
+      {/* original background music (tools/music.py), ducked under the voice: louder in the pauses */}
+      <Audio src={staticFile("music.wav")} volume={(f) => {
+        const m = MOUTH as number[];
+        let speak = 0;
+        for (let k = f - 10; k <= f + 10; k++) speak = Math.max(speak, m[k] ?? 0);
+        return speak > 0.15 ? 0.11 : 0.28;
+      }} />
     </AbsoluteFill>
   );
 };
