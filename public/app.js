@@ -99,7 +99,7 @@ async function overview() {
     (${Object.entries(byInv).map(([k, v]) => `${esc(k)}: ${v}`).join(', ') || 'none'}). How fabrics and plastics burn there
     is an open question the data can bound but not answer.</p></details>`;
   $('expandall').onclick = e => {  // experts: open (or close) every collapsed block on the home page at once
-    const open = e.target.textContent.startsWith('Expand');
+    const open = /^expand/i.test(e.target.textContent.trim());  // label is lowercase ("expand all")
     document.querySelectorAll('#sec-overview details').forEach(d => d.open = open);
     e.target.textContent = open ? 'collapse all' : 'expand all';
   };
