@@ -46,7 +46,7 @@ video{width:100%;aspect-ratio:4/3;object-fit:contain;background:#000;border-radi
   <div class="seg" id="hab"><button data-h="iss">ISS module</button><button data-h="moon">Moon base</button></div>
 </div>
 <div class="hint" id="hint">Drag to look around · hover the markers · click one for details</div>
-<div class="legend"><span><i style="background:#ff7a2f"></i>Burns: NASA data</span><span><i style="background:#3ecf8e"></i>Fire safety</span><span><i style="background:#5aa9ff"></i>Systems</span><button id="home">⟲ View all</button><a href="flame.html" style="text-decoration:none"><button>🔥 Flame lab</button></a></div>
+<div class="legend"><span><i style="background:#ff7a2f"></i>Burns: NASA data</span><span><i style="background:#3ecf8e"></i>Fire safety</span><span><i style="background:#5aa9ff"></i>Systems</span><button id="home">⟲ View all</button><a href="flame.html" style="text-decoration:none"><button>Flame lab</button></a><a id="inspectLink" href="inspect.html" style="text-decoration:none"><button style="background:#ff7a2f;color:#1a0d05;border-color:#ff7a2f;font-weight:700">🔥 Inspect &amp; ignite</button></a></div>
 <div id="tip"></div>
 <aside class="panel" id="panel"></aside>
 <script type="module">
@@ -59,6 +59,7 @@ document.querySelectorAll("#hab button").forEach(b => { b.classList.toggle("on",
 const CATNAME = { burn: ["Burns", "#ff7a2f"], safety: ["Fire safety", "#3ecf8e"], system: ["System", "#5aa9ff"] };
 const STATE = { spreads: "🔥 A flame would spread", quench: "✓ A flame would go out by itself", no_spread: "✓ Doesn't spread", blowoff: "✓ Blown out", untested: "? Never tested at this oxygen level" };
 let media = null, insights;
+document.getElementById("inspectLink").href = `inspect.html?hab=${new URLSearchParams(location.search).get("hab") === "iss" ? "iss" : "moon"}`;
 const insightsP = fetch("insights.json").then(r => r.ok ? r.json() : null).catch(() => null);
 const riskP = fetch("risk.json").then(r => r.ok ? r.json() : null).catch(() => null);
 
@@ -85,6 +86,7 @@ async function show(it) {
       ${s ? `<div class="src" style="margin-top:6px"><span class="tag t-${s.kind}">${s.kind === "data" ? "DATA" : "ASSUMPTION"}</span>${s.text}</div>` : ""}</div>
       <div id="sim"></div>
       <div id="real"></div>
+      <a class="go" style="margin-right:6px" href="inspect.html?hab=${hab}&item=${it.id}">Inspect &amp; ignite →</a>
       <a class="go" href="flame.html?fuel=${it.mat.startsWith("pmma") ? "pmma" : "fabric"}&g=${cond.gravity_g}&o2=${cond.o2}&flow=${cond.vent_cm_s}">See how this flame behaves in the Flame lab →</a>`;
   }
   p.innerHTML = html; p.querySelector(".x").onclick = () => p.style.display = "none";

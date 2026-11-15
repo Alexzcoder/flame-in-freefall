@@ -1,16 +1,97 @@
 {
- "habitat": "iss", "name": "ISS module",
- "air": {"o2": 0.21, "pressure_kpa": 101.325, "gravity_g": 0.0, "vent_cm_s": 10},
- "vent_dir": [1, 0],
+ "habitat": "iss",
+ "name": "ISS module",
+ "air": {
+  "o2": 0.21,
+  "pressure_kpa": 101.325,
+  "gravity_g": 0.0,
+  "vent_cm_s": 10
+ },
+ "vent_dir": [
+  1,
+  0
+ ],
  "note": "Positions in metres (x along the module, y up, z across), copied from station/habitat3d.js. Vent direction along the module axis: an assumption (ISS air moves along modules).",
  "objects": [
-  {"id": "crew_quarters", "material": "fabric", "pos": [-0.7, -1.0, 0.75], "load_m2": 2.0},
-  {"id": "glovebox", "material": "pmma_thick", "pos": [1.6, -1.0, -0.62], "load_m2": 0.3},
-  {"id": "stowage", "material": "nomex", "pos": [0.3, 0.62, -0.1], "load_m2": 1.5},
-  {"id": "eclss", "material": null, "pos": [-2.6, -1.0, -0.78], "source": "fans, electronics"},
-  {"id": "laptop", "material": null, "pos": [3.0, -0.4, 0.7], "source": "battery, electronics"},
-  {"id": "treadmill", "material": null, "pos": [-4.0, -1.0, 0.0], "source": "motor, belt friction"},
-  {"id": "plants", "material": null, "pos": [3.8, -1.0, -0.7], "source": "grow lights, pumps"},
-  {"id": "battery", "material": null, "pos": [-1.0, -1.0, -0.75], "source": "lithium-ion thermal runaway"}
+  {
+   "id": "crew_quarters",
+   "material": "fabric",
+   "pos": [
+    -0.7,
+    -1.0,
+    0.75
+   ],
+   "load_m2": 2.0
+  },
+  {
+   "id": "glovebox",
+   "material": "pmma_thick",
+   "pos": [
+    1.6,
+    -1.0,
+    -0.62
+   ],
+   "load_m2": 0.3
+  },
+  {
+   "id": "stowage",
+   "material": "nomex",
+   "pos": [
+    0.45,
+    -1.0,
+    -0.62
+   ],
+   "load_m2": 1.5
+  },
+  {
+   "id": "eclss",
+   "material": null,
+   "pos": [
+    -2.6,
+    -1.0,
+    -0.78
+   ],
+   "source": "fans, electronics"
+  },
+  {
+   "id": "laptop",
+   "material": null,
+   "pos": [
+    3.0,
+    -1.0,
+    0.7
+   ],
+   "source": "battery, electronics"
+  },
+  {
+   "id": "treadmill",
+   "material": null,
+   "pos": [
+    -4.0,
+    -1.0,
+    0.0
+   ],
+   "source": "motor, belt friction"
+  },
+  {
+   "id": "plants",
+   "material": null,
+   "pos": [
+    3.9,
+    -1.0,
+    0.65
+   ],
+   "source": "grow lights, pumps"
+  },
+  {
+   "id": "battery",
+   "material": null,
+   "pos": [
+    -1.0,
+    -1.0,
+    -0.75
+   ],
+   "source": "lithium-ion thermal runaway"
+  }
  ]
 }
