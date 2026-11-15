@@ -1,4 +1,3 @@
-import { Gif } from "@remotion/gif";
 import { Audio } from "@remotion/media";
 import React from "react";
 import {
@@ -335,7 +334,8 @@ const Ember: React.FC = () => {
     <div style={{ position: "absolute", left: x - SIZE / 2, top: y - SIZE / 2 - hop, width: SIZE, height: SIZE,
       transform: `rotate(${lean}deg) scale(${(flip ? -1 : 1) * squash * entry}, ${talk * entry})`, transformOrigin: "50% 85%",
       filter: "drop-shadow(0 0 30px rgba(255,122,47,0.45)) drop-shadow(0 16px 24px rgba(0,0,0,0.6))" }}>
-      <Gif src={staticFile("ember.gif")} width={SIZE} height={SIZE} fit="contain" />
+      {/* the site's Ember GIF (48 frames at 10 fps) motion-interpolated to 142 frames at 30 fps (public/ember30/) */}
+      <Img src={staticFile(`ember30/e${String(f % 142).padStart(3, "0")}.png`)} style={{ width: SIZE, height: SIZE }} />
     </div>
   );
 };
