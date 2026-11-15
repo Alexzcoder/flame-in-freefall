@@ -81,6 +81,9 @@ import { ITEMS } from "./habitat3d.js";
 import { materialVerdict, MATERIALS } from "./firemodel.js";
 
 const $ = id => document.getElementById(id);
+// frame-capture mode (?burn=…): same random numbers on every load, so consecutive captured frames match
+const CAPTURE = new URLSearchParams(location.search).has("burn");
+if (CAPTURE) { let seed = 12345; Math.random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646; }
 // same habitat air as station/inside.html and flame/insights.py
 const COND = { iss: { o2: 0.21, pressure_kpa: 101.325, gravity_g: 0, vent_cm_s: 10 }, moon: { o2: 0.30, pressure_kpa: 70.3, gravity_g: 0.166, vent_cm_s: 5 } };
 const SIMFUEL = { fabric: "fabric", pmma_thin: "fabric", pmma_thick: "pmma", nomex: "fabric", silicone: "pmma" };
@@ -114,7 +117,7 @@ scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnviron
 const camera = new THREE.PerspectiveCamera(36, 1, 0.05, 100);
 camera.position.set(2.6, 1.5, 3.2);
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true; controls.autoRotate = true; controls.autoRotateSpeed = 0.8; controls.minDistance = 1.2; controls.maxDistance = 7;
+controls.enableDamping = true; controls.autoRotate = !CAPTURE; controls.autoRotateSpeed = 0.8; controls.minDistance = 1.2; controls.maxDistance = 7;
 const key = new THREE.DirectionalLight(0xffffff, 2.2); key.position.set(3, 5, 4); key.castShadow = true; scene.add(key);
 scene.add(new THREE.HemisphereLight(0xbfd3ff, 0x1a1208, 0.6));
 const stand = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.35, 0.06, 64), new THREE.MeshStandardMaterial({ color: 0x1c212d, metalness: 0.6, roughness: 0.4 }));
@@ -209,7 +212,7 @@ const S = { burning: false, fans: true, R: 0, t: 0, tl: 1, dying: 0, maxR: 1, sp
 function showMsg(t) { $("msg").style.display = t ? "block" : "none"; $("msg").innerHTML = t || ""; }
 function reset() {
   Object.assign(S, { burning: false, R: 0, t: 0, dying: 0 }); U.uR.value = 0; U.uLive.value = 0; U.uIgn.value.set(0, -99, 0);
-  sprites.forEach(s => { s.userData.life = 0; s.material.opacity = 0; }); controls.autoRotate = true; showMsg(""); clock();
+  sprites.forEach(s => { s.userData.life = 0; s.material.opacity = 0; }); controls.autoRotate = !CAPTURE; showMsg(""); clock();
 }
 function ignite(point) {
   const f = facts(LIST[idx]);
@@ -232,7 +235,7 @@ function setFans(on) {
   if (!S.burning) return;
   const f = facts(LIST[idx]);
   S.speed = (on ? f.speedOn : f.speedOff) ?? 0;
-  U.uStretch.value = on ? 0.55 : (f.c.gravity_g > 0 ? 0.2 : 0.05);
+  // the burn shape keeps its stretch: what has already burnt doesn't change when the airflow does
   if (!on && !f.ins?.fans_off?.burns) { S.dying = 3; showMsg("Fans off: without airflow the flame starves of oxygen and goes out, as NASA's BASS-II saw."); }
   else if (!on) showMsg(hab === "moon" ? "Fans off, but lunar gravity makes hot gas rise and pulls in fresh air: the fire keeps going (physics; no lunar fire tests exist)." : "Fans off, but this flame keeps burning.");
   else { S.dying = 0; U.uLive.value = Math.max(U.uLive.value, 0.2); showMsg(""); }
@@ -333,13 +336,22 @@ function update(dt) {
     l.material.opacity += ((S.fans ? 0.35 * edge : 0) - l.material.opacity) * Math.min(1, dt * 4);
   }
 }
+let frozen = CAPTURE;  // capture mode: no clock-driven motion at all; the hook below steps time itself
 renderer.setAnimationLoop(now => {
-  update(Math.min(0.05, (now - last) / 1000)); last = now;
+  if (!frozen) update(Math.min(0.05, (now - last) / 1000)); last = now;
   controls.update(); renderer.render(scene, camera);
 });
 await go(idx);
-// test hook for screenshots: ?burn=<seconds> lights the object and fast-forwards (&fans=off to cut the fans first)
-if (q.get("burn")) { if (q.get("fans") === "off") setFans(false); ignite(); for (let i = 0; i < +q.get("burn") * 30; i++) update(1 / 30); }
+// capture hook: ?burn=<seconds> lights the object and fast-forwards; &fans=off cuts the fans first, &cut=<seconds> cuts
+// them during the burn (one continuous fire); time then stays frozen so the screenshot shows exactly that moment
+if (CAPTURE) {
+  controls.autoRotate = false;
+  if (q.get("fans") === "off") setFans(false);
+  ignite();
+  const cut = +(q.get("cut") || 0);
+  for (let i = 0; i < +q.get("burn") * 30; i++) { if (cut && i === Math.round(cut * 30)) setFans(false); update(1 / 30); }
+  frozen = true;
+}
 </script>
 </body>
 </html>
