@@ -1,0 +1,331 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flame in Freefall pitch</title>
+<link rel="icon" href="img/ember-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090f;--panel:#10141d;--line:#252b38;--fg:#e8ebf2;--mute:#8d97ab;--acc:#ff7a2f;--ok:#3ecf8e;--bad:#ff5c6c;--blue:#5aa9ff;--violet:#b07cff;--gold:#ffd25e}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font:16px/1.5 Inter,system-ui,sans-serif;overflow:hidden}
+body{background:radial-gradient(ellipse at 30% 30%,#141c31 0%,#07090f 60%)}
+.deck{display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+.top{display:flex;align-items:center;gap:14px;padding:14px 26px}
+.top a{display:flex;align-items:center;gap:10px;color:var(--fg);text-decoration:none;font-weight:700}
+.top img{width:36px;height:36px}
+.chaps{display:flex;gap:8px;margin-left:24px}.chaps span{font-size:12.5px;font-weight:800;letter-spacing:.14em;padding:5px 12px;border-radius:20px;border:1px solid var(--line);color:var(--mute)}
+.chaps span.on{background:var(--acc);border-color:var(--acc);color:#1a0d05}
+.dots{display:flex;gap:6px;margin-left:auto}.dots button{width:30px;height:6px;border-radius:3px;border:0;background:#2a3142;cursor:pointer;padding:0}
+.dots button.on{background:var(--acc)}
+.btn{font:inherit;font-size:14px;font-weight:600;background:#151a25;color:var(--fg);border:1px solid var(--line);border-radius:9px;padding:7px 13px;cursor:pointer}
+.btn:hover{border-color:var(--acc)}
+.slide{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(320px,1fr);gap:34px;padding:6px 34px 10px;min-height:0;align-items:center}
+#stage{width:100%;height:100%;max-height:calc(100vh - 150px)}
+#stage text{font-family:Inter,system-ui,sans-serif;fill:#dfe3ea}
+.txt .kick{font-size:14px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--acc);margin-bottom:10px}
+.txt h1{font-size:clamp(28px,3.2vw,48px);line-height:1.1;margin:0 0 18px;letter-spacing:-.02em}
+.txt p{font-size:clamp(16px,1.35vw,21px);color:#cdd3df;margin:0 0 16px}
+.txt p b{color:#fff}
+.know{margin-top:18px;background:linear-gradient(135deg,rgba(62,207,142,.09),rgba(90,169,255,.05));border:1px solid #3ecf8e44;border-radius:12px;padding:12px 16px;font-size:14.5px;color:#d8efe5}
+.know .tag{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ok);margin-bottom:4px}
+.txt>*{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .5s ease}
+.txt.in>*{opacity:1;transform:none}.txt.in>*:nth-child(2){transition-delay:.08s}.txt.in>*:nth-child(3){transition-delay:.16s}.txt.in>*:nth-child(4){transition-delay:.24s}.txt.in>*:nth-child(5){transition-delay:.32s}
+.bottom{display:flex;align-items:center;gap:10px;padding:10px 26px 16px;color:var(--mute);font-size:13px}
+.bottom .grow{flex:1;height:3px;background:#1d2330;border-radius:2px}.bottom .grow i{display:block;height:100%;background:var(--acc);border-radius:2px;transition:width .5s}
+#tip{position:fixed;pointer-events:none;background:#000d;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;display:none;z-index:10;max-width:300px}
+@keyframes pulse{0%{r:16;opacity:.9}100%{r:60;opacity:0}}
+.pulse{animation:pulse 1.8s ease-out infinite}.pulse.b{animation-delay:.9s}
+@keyframes dash{to{stroke-dashoffset:-40}}.flow{stroke-dasharray:8 12;animation:dash 1s linear infinite}
+@media(max-width:900px){html,body{overflow:auto}.deck{height:auto}.slide{grid-template-columns:1fr}#stage{max-height:none}}
+</style></head><body>
+<div class="deck">
+  <div class="top"><a href="/"><img src="img/ember-logo.gif" alt="">Flame in Freefall</a>
+    <div class="chaps" id="chaps"><span>PROBLEM</span><span>SOLUTION</span><span>DEMO</span><span>IMPACT</span></div>
+    <div class="dots" id="dots"></div>
+    <button class="btn" id="play">▶ Auto</button><button class="btn" id="fs" title="Fullscreen (F)">⛶ Fullscreen</button></div>
+  <div class="slide"><svg id="stage" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg><div class="txt" id="txt"></div></div>
+  <div class="bottom"><button class="btn" id="prev">←</button><span id="num"></span><div class="grow"><i id="bar"></i></div><span>← → or space · F fullscreen</span><button class="btn" id="next">→</button></div>
+</div><div id="tip"></div>
+<script>
+// Pitch deck. Every number comes from pitch/data.json, written by `python -m flame.pitch_export` from the project's
+// own outputs. Slide layout follows the /explain template: one animated SVG per slide plus plain-language text.
+const NS = 'http://www.w3.org/2000/svg';
+let M, PL = {i: 0, token: 0, timer: null};
+const svg = document.getElementById('stage'), tip = document.getElementById('tip');
+function S(tag, a, p) { const e = document.createElementNS(NS, tag); for (const k in a || {}) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; }
+function T(p, x, y, s, a) { const t = S('text', {x, y, ...(a || {})}, p); t.textContent = s; return t; }
+function later(ms, fn) { const tok = PL.token; setTimeout(() => { if (tok === PL.token) fn(); }, ms); }
+function tween(ms, f, delay = 0) { const tok = PL.token; later(delay, () => { const t0 = performance.now(); const step = now => { if (tok !== PL.token) return; const k = Math.min(1, (now - t0) / ms), e = 1 - (1 - k) ** 3; f(e); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
+function fade(n, delay = 0, dur = .7) { n.style.opacity = 0; n.style.transition = `opacity ${dur}s ease ${delay}s`; requestAnimationFrame(() => requestAnimationFrame(() => n.style.opacity = 1)); return n; }
+function draw(p, delay = 0, dur = 1) { const len = p.getTotalLength ? p.getTotalLength() : 500; p.style.strokeDasharray = len; p.style.strokeDashoffset = len; p.style.transition = `stroke-dashoffset ${dur}s ease ${delay}s`; requestAnimationFrame(() => requestAnimationFrame(() => p.style.strokeDashoffset = 0)); return p; }
+function tipOn(el, html) { el.style.cursor = 'pointer'; el.addEventListener('mousemove', e => { tip.innerHTML = html(); tip.style.display = 'block'; tip.style.left = e.clientX + 14 + 'px'; tip.style.top = e.clientY + 14 + 'px'; }); el.addEventListener('mouseleave', () => tip.style.display = 'none'); }
+const fmt = (x, d = 0) => x.toLocaleString('en-GB', {maximumFractionDigits: d, minimumFractionDigits: d});
+const C = {s: '#ff7a2f', d: '#5aa9ff', g: '#b07cff'};
+function count(t, to, d, ms, delay, pre = '', post = '') { tween(ms, e => t.textContent = pre + fmt(to * e, d) + post, delay); }
+function img(g, href, x, y, w, h, r = 14) {
+  const id = 'c' + Math.random().toString(36).slice(2);
+  const cp = S('clipPath', {id}, S('defs', {}, g)); S('rect', {x, y, width: w, height: h, rx: r}, cp);
+  S('rect', {x, y, width: w, height: h, rx: r, fill: '#000'}, g);
+  const im = S('image', {href, x, y, width: w, height: h, preserveAspectRatio: 'xMidYMid slice', 'clip-path': `url(#${id})`}, g);
+  S('rect', {x, y, width: w, height: h, rx: r, fill: 'none', stroke: '#2b3245'}, g);
+  return im;
+}
+
+// ---------- 1 · the question ----------
+function s1(g) {
+  const base = 520, H = 360, bars = [['Earth air', 21, '#5aa9ff', 160], ['Moon base (planned)', 30, '#ff7a2f', 420]];
+  bars.forEach(([name, v, col, x], i) => {
+    const r = S('rect', {x, y: base, width: 170, height: 0, rx: 12, fill: col, opacity: .9}, g);
+    const t = T(g, x + 85, base - 20, '0 %', {'text-anchor': 'middle', 'font-size': 54, 'font-weight': 900, fill: '#fff'});
+    tween(1300, e => { r.setAttribute('y', base - H * v / 32 * e); r.setAttribute('height', H * v / 32 * e); t.setAttribute('y', base - H * v / 32 * e - 20); }, 300 + i * 500);
+    count(t, v, 0, 1300, 300 + i * 500, '', ' %');
+    fade(T(g, x + 85, base + 40, name, {'text-anchor': 'middle', 'font-size': 22, fill: '#aeb6c6'}), .3 + i * .5);
+  });
+  T(g, 60, 70, 'Oxygen in the cabin air', {'font-size': 26, 'font-weight': 700, fill: '#fff'});
+  const em = S('image', {href: 'img/ember.gif', x: 680, y: 170, width: 240, height: 240}, g); fade(em, 1.6);
+  const arr = S('path', {d: 'M 600 300 Q 640 250 690 280', fill: 'none', stroke: '#ffd25e', 'stroke-width': 3}, g); draw(arr, 1.9, .6);
+  fade(T(g, 800, 460, '"Will I behave the same?"', {'text-anchor': 'middle', 'font-size': 20, 'font-style': 'italic', fill: '#ffd25e'}), 2.2);
+}
+// ---------- 2 · the gap ----------
+function s2(g) {
+  const X = 70, Y = 40, W = 880, H = 470;
+  const px = p => X + Math.log(p / 3) / Math.log(60 / 3) * W, py = o => Y + H - (o - 10) / 35 * H;
+  [15, 20, 25, 30, 35, 40].forEach(o => { S('line', {x1: X, x2: X + W, y1: py(o), y2: py(o), stroke: '#1e2533'}, g); T(g, X - 12, py(o) + 5, o + '%', {'text-anchor': 'end', 'font-size': 15, fill: '#8d97ab'}); });
+  [4, 8, 14.7, 30].forEach(p => T(g, px(p), Y + H + 26, p + ' psi', {'text-anchor': 'middle', 'font-size': 15, fill: '#8d97ab'}));
+  const zone = S('rect', {x: X, y: Y, width: W, height: py(M.solid_max) - Y, fill: '#ff5c6c', opacity: 0}, g);
+  later(2200, () => { zone.style.transition = 'opacity 1s'; zone.style.opacity = .1; });
+  fade(T(g, X + W - 10, Y + 34, 'No solid material ever tested here', {'text-anchor': 'end', 'font-size': 22, 'font-weight': 800, fill: '#ff9aa3'}), 2.4);
+  M.points.forEach(([p, o, f], i) => {
+    if (p < 3 || p > 60 || o < 10 || o > 45) return;
+    const c = S('circle', {cx: px(p) + (Math.sin(i * 12.9) * 4), cy: py(o) + Math.cos(i * 7.3) * 3, r: f === 's' ? 5.5 : 3.5, fill: C[f], opacity: 0}, g);
+    later(200 + (px(p) - X) / W * 1300 + (i % 7) * 30, () => c.setAttribute('opacity', f === 's' ? .95 : .55));
+  });
+  const ln = S('line', {x1: X, x2: X + W, y1: py(M.solid_max), y2: py(M.solid_max), stroke: '#ff7a2f', 'stroke-width': 3, 'stroke-dasharray': '10 8'}, g);
+  ln.style.clipPath = 'inset(0 100% 0 0)'; ln.style.transition = 'clip-path 1s ease 1.6s'; requestAnimationFrame(() => requestAnimationFrame(() => ln.style.clipPath = 'inset(0 0 0 0)'));
+  fade(T(g, X + 10, py(M.solid_max) - 12, `${M.solid_max} %: highest solid ever burned in microgravity`, {'font-size': 18, 'font-weight': 800, fill: '#ff9a52'}), 1.9);
+  const mx = px(10.2), my = py(30), star = S('g', {opacity: 0}, g);
+  S('circle', {cx: mx, cy: my, r: 16, fill: 'none', stroke: '#ffd25e', 'stroke-width': 3, class: 'pulse'}, star);
+  S('circle', {cx: mx, cy: my, r: 16, fill: 'none', stroke: '#ffd25e', 'stroke-width': 3, class: 'pulse b'}, star);
+  S('path', {d: `M${mx} ${my - 18} l5.3 12.4 13.4 0 -10.8 7.7 4 12.5 -11.9 -7.8 -11.9 7.8 4 -12.5 -10.8 -7.7 13.4 0z`, fill: '#ffd25e'}, star);
+  T(star, mx + 26, my - 4, 'Moon base', {'font-size': 22, 'font-weight': 800, fill: '#fff'}); T(star, mx + 26, my + 20, '30 % O₂ · 10.2 psi', {'font-size': 16, fill: '#cdd3df'});
+  later(2900, () => { star.style.transition = 'opacity .6s'; star.setAttribute('opacity', 1); });
+  [['solid materials', 's'], ['fuel droplets', 'd'], ['gas flames', 'g']].forEach(([t, f], i) => { S('circle', {cx: X + 10 + i * 200, cy: Y + H + 62, r: 7, fill: C[f]}, g); T(g, X + 24 + i * 200, Y + H + 67, t, {'font-size': 16, fill: '#aeb6c6'}); });
+}
+// ---------- 3 · what we built ----------
+function box(g, x, y, w, h, title, sub, col, delay) {
+  const b = S('g', {}, g);
+  S('rect', {x, y, width: w, height: h, rx: 14, fill: '#121722', stroke: col, 'stroke-width': 2}, b);
+  T(b, x + w / 2, y + h / 2 - 6, title, {'text-anchor': 'middle', 'font-size': 20, 'font-weight': 800, fill: '#fff'});
+  const s = T(b, x + w / 2, y + h / 2 + 20, sub, {'text-anchor': 'middle', 'font-size': 15, fill: '#aeb6c6'});
+  fade(b, delay); return s;
+}
+function s3(g) {
+  box(g, 30, 250, 230, 120, 'NASA PSI archive', `${M.investigations} investigations`, '#5aa9ff', .1);
+  const mid = box(g, 360, 150, 260, 130, 'One checked dataset', '', '#ff7a2f', .7);
+  count(mid, M.runs, 0, 1200, 900, '', ' runs');
+  const docs = box(g, 360, 340, 260, 130, 'Searchable findings', '', '#ff7a2f', 1.0);
+  count(docs, M.documents, 0, 1200, 1200, '', ' pages & papers');
+  [['Gap map & scenarios', 'what was really tested', 95], ['Flame models', `checked on ${M.videos_measured} NASA videos`, 225], ['3D habitats', 'fans on / off, safe distance', 355], ['Ember', 'answers that cite NASA', 485]]
+    .forEach(([t, s, y], i) => box(g, 720, y - 55, 250, 100, t, s, '#3ecf8e', 1.6 + i * .2));
+  const L = (d, delay) => { const p = S('path', {d, fill: 'none', stroke: '#ff7a2f', 'stroke-width': 3, opacity: 0}, g); later(delay, () => { p.setAttribute('opacity', .8); p.classList.add('flow'); }); };
+  L('M 260 300 C 310 300 310 215 360 215', 500); L('M 260 320 C 310 320 310 405 360 405', 700);
+  [95, 225, 355, 485].forEach((y, i) => L(`M 620 ${i < 2 ? 215 : 405} C 670 ${i < 2 ? 215 : 405} 670 ${y - 5} 720 ${y - 5}`, 1500 + i * 200));
+  fade(T(g, 500, 605, `${M.outcomes} runs with a measured outcome · every value traced to its NASA source row`, {'text-anchor': 'middle', 'font-size': 16, fill: '#8d97ab'}), 2.4);
+}
+// ---------- 4 · physics engine ----------
+function s4(g) {
+  fade(img(g, 'pitch/nasa_b8.jpg', 30, 30, 450, 300), .1); fade(img(g, 'pitch/sim_b8.jpg', 520, 30, 450, 300), .5);
+  fade(T(g, 50, 62, 'REAL · NASA BASS-II, ISS', {'font-size': 16, 'font-weight': 800, fill: '#9ccaff'}), .3);
+  fade(T(g, 540, 62, 'OUR SIMULATION · same conditions', {'font-size': 16, 'font-weight': 800, fill: '#ffb27a'}), .7);
+  const X = 70, Y = 380, W = 880, H = 190, c = M.curve, lo = Math.min(...c), hi = Math.max(...c);
+  T(g, X, Y - 14, 'Tuning the physics to NASA: error falls round after round', {'font-size': 18, 'font-weight': 700, fill: '#fff'});
+  S('line', {x1: X, x2: X + W, y1: Y + H, y2: Y + H, stroke: '#3a4256'}, g);
+  const pts = c.map((v, i) => `${X + i / (c.length - 1) * W},${Y + 10 + (hi - v) / (hi - lo) * (H - 20)}`);  // error falls = line goes down
+  draw(S('path', {d: 'M' + pts.join(' L'), fill: 'none', stroke: '#ff7a2f', 'stroke-width': 4}, g), 1.0, 2.2);
+  const a = T(g, X + 14, Y + 30, `${fmt(hi, 2)} at the start`, {'font-size': 18, 'font-weight': 800, fill: '#ff9a52'}); fade(a, 1.0);
+  fade(T(g, X + W - 6, Y + H - 16, `${fmt(lo, 2)} after ${c.length} rounds`, {'text-anchor': 'end', 'font-size': 18, 'font-weight': 800, fill: '#7ee8b8'}), 3.0);
+}
+// ---------- neural network: how we trained it ----------
+function sNN(g) {
+  const nn = M.nn;
+  // 1. the training data: real simulated fires
+  const mo = img(g, 'pitch/nn_mosaic.jpg', 20, 40, 400, 222, 12); mo.style.clipPath = 'inset(0 100% 0 0)';
+  mo.style.transition = 'clip-path 1.6s ease .2s'; requestAnimationFrame(() => requestAnimationFrame(() => mo.style.clipPath = 'inset(0 0 0 0)'));
+  const nt = T(g, 20, 290, '0 simulated fires', {'font-size': 18, 'font-weight': 800, fill: '#ffb27a'}); count(nt, nn.sims, 0, 1600, 200, '', ' simulated fires');
+  // 2. the network: inputs → 3 layers → outputs, signals flowing
+  const IN = ['gravity', 'oxygen', 'pressure', 'airflow', 'fuel'], OUT = ['flame image', 'goes out?', 'shape'];
+  const L = [IN.map((_, i) => [520, 60 + i * 48]), ...[0, 1, 2].map(k => Array.from({length: 6}, (_, i) => [610 + k * 85, 55 + i * 42])), OUT.map((_, i) => [890, 90 + i * 70])];
+  const net = S('g', {}, g); fade(net, 1.4);
+  for (let k = 0; k < L.length - 1; k++) L[k].forEach(a => L[k + 1].forEach(b => S('line', {x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: '#2a3348', 'stroke-width': 1}, net)));
+  L.forEach((col, k) => col.forEach(([x, y]) => S('circle', {cx: x, cy: y, r: k === 0 || k === L.length - 1 ? 9 : 7, fill: k === 0 ? '#5aa9ff' : k === L.length - 1 ? '#3ecf8e' : '#ff7a2f'}, net)));
+  IN.forEach((t, i) => T(net, 505, 65 + i * 48, t, {'text-anchor': 'end', 'font-size': 15, fill: '#9ccaff'}));
+  OUT.forEach((t, i) => T(net, 906, 95 + i * 70, t, {'font-size': 15, fill: '#7ee8b8'}));
+  T(net, 695, 318, `${nn.layers} layers × ${nn.hidden} neurons · ensemble of ${nn.members}`, {'text-anchor': 'middle', 'font-size': 14, fill: '#8d97ab'});
+  const pulse = () => { const tok = PL.token; for (let n = 0; n < 6; n++) { const path = [0, 1, 2, 3, 4].map(k => L[k][Math.floor(Math.random() * L[k].length)]);
+    const dot = S('circle', {r: 4, fill: '#ffd25e', cx: path[0][0], cy: path[0][1], opacity: 0}, net); tween(1100, e => { const seg = Math.min(3.999, e * 4), k = Math.floor(seg), f = seg - k;
+      dot.setAttribute('opacity', 1); dot.setAttribute('cx', path[k][0] + (path[k + 1][0] - path[k][0]) * f); dot.setAttribute('cy', path[k][1] + (path[k + 1][1] - path[k][1]) * f); if (e >= 1) dot.remove(); }, n * 150); }
+    later(1100, () => { if (tok === PL.token) pulse(); }); };
+  later(1800, pulse);
+  // 3. the test: fires the network never saw
+  const pr = img(g, 'pitch/nn_pairs.jpg', 40, 345, 520, 270, 10); fade(pr, 2.6);
+  fade(T(g, 30, 335, 'Simulation (top) vs. network (bottom), on fires it never saw', {'font-size': 15, 'font-weight': 700, fill: '#fff'}), 2.6);
+  const box = S('g', {}, g); fade(box, 3.2);
+  S('rect', {x: 600, y: 360, width: 380, height: 230, rx: 16, fill: '#0f1a15', stroke: '#3ecf8e88'}, box);
+  const a1 = T(box, 625, 420, '0 %', {'font-size': 46, 'font-weight': 900, fill: '#7ee8b8'}); count(a1, M.emulator.ignited * 100, 1, 1200, 3300, '', ' %');
+  T(box, 625, 448, 'right on "does it light?"', {'font-size': 16, fill: '#cdd3df'});
+  const a2 = T(box, 625, 510, '0 %', {'font-size': 46, 'font-weight': 900, fill: '#7ee8b8'}); count(a2, M.emulator.extinguished * 100, 1, 1200, 3500, '', ' %');
+  T(box, 625, 538, 'right on "does it go out?"', {'font-size': 16, fill: '#cdd3df'});
+  T(box, 625, 570, `${fmt(nn.test)} held-out simulations`, {'font-size': 14, fill: '#8d97ab'});
+}
+// ---------- demo: the flame lab ----------
+function sLab(g) {
+  const fo = S('foreignObject', {x: 20, y: 60, width: 960, height: 307}, g);
+  fo.innerHTML = '<video xmlns="http://www.w3.org/1999/xhtml" src="pitch/flamelab4.mp4" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;border-radius:14px;border:1px solid #2b3245"></video>';
+  fade(fo, .2);
+  ['Earth · 1 g', 'Moon base · 30 % O₂', 'ISS · fans on', 'ISS · fans off'].forEach((t, i) => fade(T(g, 36 + i * 240, 92, t, {'font-size': 17, 'font-weight': 800, fill: '#ffd9b8'}), .5 + i * .15));
+  fade(T(g, 500, 40, 'Flame lab: the same fire, four places', {'text-anchor': 'middle', 'font-size': 24, 'font-weight': 800, fill: '#fff'}), .1);
+  [['Earth', 'hot gas rises: a tall, flickering plume', '#ff9a52'], ['Moon', 'weak gravity: a short, squat flame', '#ffd25e'],
+   ['ISS, fans on', 'the airflow stretches it downstream', '#9ccaff'], ['ISS, fans off', 'no airflow: a dim ring, starving', '#7ee8b8']].forEach(([a, b, c], i) => {
+    const y = 420 + i * 46, gg = S('g', {}, g); fade(gg, 1.2 + i * .3);
+    S('circle', {cx: 40, cy: y - 6, r: 7, fill: c}, gg); T(gg, 58, y, a, {'font-size': 19, 'font-weight': 800, fill: c}); T(gg, 230, y, b, {'font-size': 19, fill: '#cdd3df'});
+  });
+}
+// ---------- 5 · how far to trust it ----------
+function s5(g) {
+  const rows = [
+    ['Gas flame: goes out or not', M.gas_outcomes.balanced_accuracy, M.gas_outcomes.guessing, 'balanced accuracy', true, 2],
+    ['Gas flame: seconds until it goes out', M.gas_time.median_factor_error, M.gas_time.baseline_factor_error, 'off by ×', false, 2],
+    ['Droplet burning rate', M.drop_k.median_abs_error_mm2_s, M.drop_k.baseline_mm2_s, 'mm²/s error', false, 3],
+    ['Droplet size when it goes out', M.drop_ext.median_abs_error, M.drop_ext.baseline, 'error', false, 3]];
+  T(g, 30, 40, 'Data models, scored on NASA test days they never saw', {'font-size': 20, 'font-weight': 800, fill: '#fff'});
+  rows.forEach(([name, ours, guess, unit, higher, d], i) => {
+    const y = 80 + i * 92, mx = Math.max(ours, guess) * 1.1, w = v => 420 * v / mx;
+    T(g, 30, y + 8, name, {'font-size': 17, fill: '#cdd3df'});
+    const r1 = S('rect', {x: 30, y: y + 20, width: 0, height: 22, rx: 6, fill: '#3ecf8e'}, g), r2 = S('rect', {x: 30, y: y + 48, width: 0, height: 22, rx: 6, fill: '#4a5368'}, g);
+    tween(900, e => { r1.setAttribute('width', w(ours) * e); r2.setAttribute('width', w(guess) * e); }, 300 + i * 250);
+    fade(T(g, 40 + w(ours), y + 37, `${unit === 'off by ×' ? '×' : ''}${fmt(ours, d)} ours`, {'font-size': 15, 'font-weight': 800, fill: '#7ee8b8'}), .9 + i * .25);
+    fade(T(g, 40 + w(guess), y + 65, `${unit === 'off by ×' ? '×' : ''}${fmt(guess, d)} guessing`, {'font-size': 15, fill: '#8d97ab'}), .9 + i * .25);
+  });
+  const big = S('g', {}, g); fade(big, 1.8);
+  S('rect', {x: 590, y: 70, width: 380, height: 210, rx: 18, fill: '#10141d', stroke: '#3ecf8e88'}, big);
+  const n = T(big, 780, 175, '0 / 31', {'text-anchor': 'middle', 'font-size': 84, 'font-weight': 900, fill: '#7ee8b8'});
+  tween(1200, e => n.textContent = `${Math.round(M.fate_loo[0] * e)} / ${M.fate_loo[1]}`, 2000);
+  T(big, 780, 220, 'solid fires: burns or goes out,', {'text-anchor': 'middle', 'font-size': 18, fill: '#cdd3df'});
+  T(big, 780, 246, 'predicted without seeing the case', {'text-anchor': 'middle', 'font-size': 18, fill: '#cdd3df'});
+  const w2 = S('g', {}, g); fade(w2, 2.6);
+  S('rect', {x: 590, y: 310, width: 380, height: 150, rx: 18, fill: '#1a1013', stroke: '#ff5c6c88'}, w2);
+  T(w2, 610, 350, 'Where it falls short', {'font-size': 18, 'font-weight': 800, fill: '#ff9aa3'});
+  T(w2, 610, 382, `Gas flames via simulation: ${fmt(M.sim_test.balanced_accuracy, 2)}`, {'font-size': 16, fill: '#cdd3df'});
+  T(w2, 610, 406, '(= guessing), so the data models answer', {'font-size': 16, fill: '#cdd3df'});
+  T(w2, 610, 430, `Spread: ${M.spread_fit[0]}/${M.spread_fit[1]} fitted, ${M.spread_loo[0]}/${M.spread_loo[1]} unseen`, {'font-size': 16, fill: '#cdd3df'});
+}
+// ---------- 6 · fire in the habitat ----------
+function s6(g) {
+  const H = M.habitats;
+  [['pitch/burn_iss_out.jpg', H.iss, 30], ['pitch/burn_moon.jpg', H.moon, 520]].forEach(([src, h, x], i) => {
+    fade(img(g, src, x, 40, 450, 320), .2 + i * .5);
+    const out = !h.fans_off;
+    const b = S('g', {}, g); fade(b, 1.0 + i * .6);
+    S('rect', {x, y: 380, width: 450, height: 150, rx: 16, fill: out ? '#0f1a15' : '#1d1012', stroke: out ? '#3ecf8e99' : '#ff5c6c99'}, b);
+    T(b, x + 20, 418, `${h.name} · ${Math.round(h.o2 * 100)} % O₂ · ${h.g ? h.g + ' g' : '0 g'}`, {'font-size': 19, 'font-weight': 800, fill: '#fff'});
+    T(b, x + 20, 452, `Fans on: ${h.fans_on ? 'keeps burning' : 'goes out'}`, {'font-size': 18, fill: '#cdd3df'});
+    T(b, x + 20, 482, `Fans off: ${out ? 'starved, goes out' : 'STILL BURNING'}`, {'font-size': 18, 'font-weight': 800, fill: out ? '#7ee8b8' : '#ff9aa3'});
+    T(b, x + 20, 512, `Keep other fabric ≥ ${h.safe_m} m away`, {'font-size': 16, fill: '#aeb6c6'});
+  });
+}
+// ---------- 7 · Ember ----------
+function s7(g) {
+  fade(S('image', {href: 'img/ember.gif', x: 40, y: 300, width: 150, height: 150}, g), .1);
+  const q = S('g', {}, g); fade(q, .3);
+  S('rect', {x: 470, y: 40, width: 490, height: 80, rx: 18, fill: '#1f2638'}, q);
+  T(q, 490, 88, 'What happens if the airflow stops?', {'font-size': 21, fill: '#fff'});
+  const a = S('g', {}, g); fade(a, 1.0);
+  S('rect', {x: 200, y: 160, width: 760, height: 330, rx: 20, fill: '#141a28', stroke: '#ff7a2f66'}, a);
+  const words = ('NASA saw it on the ISS: “' + M.citation.quote + '”').split(' ');
+  const lines = []; let cur = '';
+  words.forEach(w => { if ((cur + ' ' + w).length > 58) { lines.push(cur); cur = w; } else cur = (cur ? cur + ' ' : '') + w; }); lines.push(cur);
+  const ts = lines.map((l, i) => T(a, 228, 210 + i * 34, '', {'font-size': 21, fill: '#e8ebf2'}));
+  let k = 0; const total = lines.join(' ').length;
+  tween(2600, e => { let n = Math.round(total * e); ts.forEach((t, i) => { const s = lines[i].slice(0, Math.max(0, n)); t.textContent = s; n -= lines[i].length + 1; }); }, 1300);
+  const chip = S('g', {}, g); fade(chip, 4.0);
+  S('rect', {x: 228, y: 420, width: 600, height: 44, rx: 22, fill: '#3ecf8e1f', stroke: '#3ecf8e88'}, chip);
+  T(chip, 250, 448, '📄 ' + M.citation.cite.replace(/_/g, ' '), {'font-size': 16, 'font-weight': 700, fill: '#7ee8b8'});
+}
+// ---------- 8 · impact ----------
+function s8(g) {
+  [['Habitat designers', 'see where the evidence', 'ends, not just a guess', '#ff7a2f'],
+   ['NASA', `next test: solids above`, `${M.solid_max} % O₂, Moon pressure`, '#ffd25e'],
+   ['Earth', 'aircraft cabins, hyperbaric', 'chambers, submarines', '#5aa9ff']].forEach(([t, a, b, col], i) => {
+    const x = 30 + i * 325, gg = S('g', {}, g); fade(gg, .2 + i * .35);
+    S('rect', {x, y: 60, width: 300, height: 250, rx: 20, fill: '#10141d', stroke: col}, gg);
+    T(gg, x + 24, 110, t, {'font-size': 24, 'font-weight': 900, fill: col});
+    T(gg, x + 24, 160, a, {'font-size': 18, fill: '#cdd3df'}); T(gg, x + 24, 188, b, {'font-size': 18, fill: '#cdd3df'});
+  });
+  fade(S('image', {href: 'img/ember.gif', x: 430, y: 330, width: 140, height: 140}, g), 1.4);
+  fade(T(g, 500, 520, 'flame-in-freefall-ivory.vercel.app', {'text-anchor': 'middle', 'font-size': 30, 'font-weight': 800, fill: '#ff9a52'}), 1.7);
+  fade(T(g, 500, 560, 'NASA Space Apps 2026 · Flame in Freefall', {'text-anchor': 'middle', 'font-size': 18, fill: '#8d97ab'}), 1.9);
+}
+
+const SLIDES = [
+  {chap: 'PROBLEM', kick: 'The question', title: 'Will a fire in your habitat behave the way you expect?', draw: s1,
+   text: () => `Moon bases are planned at <b>30 % oxygen</b> and 10.2 psi, to save weight and make spacewalks easier. With more oxygen, materials <b>light easier and burn faster</b>. And in low gravity, flames don't rise: they behave differently from anything we know on Earth.`,
+   know: () => 'Challenge brief and NASA Exploration Atmospheres Working Group (30–34 % O₂ at 8.2–10.2 psi).'},
+  {chap: 'PROBLEM', kick: 'The gap', title: `Nobody has burned a solid above ${'{solid}'} % oxygen in microgravity`, draw: s2,
+   text: () => `Every dot is one of NASA's real microgravity fire tests. <b>Orange = solid materials</b>, the things a cabin is made of. They all sit at or below <b>${M.solid_max} %</b>. The Moon base is in the empty zone above.`,
+   know: () => `${fmt(M.points.length)} runs plotted from NASA's PSI archive; inverse flames left out (their oxygen is not the cabin's).`},
+  {chap: 'SOLUTION', kick: 'What we built', title: "NASA's scattered fire data, made answerable", draw: s3,
+   text: () => `We pulled <b>${M.investigations} NASA investigations</b> into one checked dataset of <b>${fmt(M.runs)} runs</b>, indexed <b>${fmt(M.documents)} report pages and papers</b>, and built a website on top: the gap map, a scenario explorer, 3D habitats and Ember, an assistant that cites its sources.`,
+   know: () => `Every value is traced to its source file and row in NASA's archive; assumed values (like unrecorded cabin pressure) are flagged on every run.`},
+  {chap: 'SOLUTION', kick: 'The physics engine', title: 'A flame simulation tuned to real NASA fires', draw: s4,
+   text: () => `A 2D fluid and combustion simulation runs live in the browser. We measured flame shapes in <b>${M.videos_measured} NASA videos</b> and fitted its physics to <b>331 gas-flame outcomes</b>, BASS-II videos and solid burn-or-out cases, on the GPU.`,
+   know: () => `Whole NASA test days were held out from tuning; a neural network copies the tuned simulation (${fmt(M.emulator.extinguished * 100, 1)} % agreement on whether a flame goes out) so the site answers instantly.`},
+  {chap: 'SOLUTION', kick: 'The neural network', title: 'Then we taught a neural network to copy it, instantly', draw: sNN,
+   text: () => `We ran the tuned simulation <b>${fmt(M.nn.sims)} times</b> across gravity, oxygen, pressure, airflow and fuel, then trained a small neural network on the results. Now the site predicts a flame's image, shape and whether it goes out <b>in milliseconds</b>, right in your browser.`,
+   know: () => `Tested on ${fmt(M.nn.test)} simulations it never saw. It copies the simulation, errors included: it is only as right as the physics behind it.`},
+  {chap: 'SOLUTION', kick: 'How far to trust it', title: 'Every number says how it was tested', draw: s5,
+   text: () => `Where NASA measured outcomes, our models clearly beat guessing, scored on <b>test days they never saw</b>. Where they don't, we say so, and switch to whatever is more accurate.`,
+   know: () => 'Cross-validated by NASA test day, leave-one-out for the small sets; full reports on the site (“How we checked”).'},
+  {chap: 'DEMO', kick: 'Flame lab', title: 'Change the gravity, watch the flame change', draw: sLab,
+   text: () => `The flame lab runs the physics live in your browser. Set gravity, oxygen and airflow, and the flame takes its shape <b>from the physics</b>: tall on Earth, squat on the Moon, stretched by the ISS fans, starving without them.`,
+   know: () => 'Real NASA footage of the closest experiment plays next to it on the site, so you can compare.'},
+  {chap: 'DEMO', kick: 'Fire in the habitat', title: 'Cut the fans on the ISS and a small fire starves. Not on the Moon.', draw: s6,
+   text: () => `In microgravity, oxygen only reaches a flame through the airflow. NASA's BASS-II saw thin samples in ISS air <b>go out below 1–5 cm/s</b>, and within 2 s when the flow was cut. At lunar gravity, rising hot gas alone brings roughly 8 cm/s, so <b>the same small fire keeps burning</b>.`,
+   know: () => 'BASS-II Summary Report pp. 31, 97, 109. With more oxygen, flames survive lower airflow, so in a 30 % O₂ cabin cutting the fans may not be enough. The Moon result is physics only: no fire has been tested at lunar gravity.'},
+  {chap: 'DEMO', kick: 'Ember', title: 'Ask in plain words. Get NASA, with the page number.', draw: s7,
+   text: () => `Ember answers only from NASA's run tables, final reports and papers, and <b>cites the file and page</b> for every claim, so an engineer can check it in seconds.`,
+   know: () => `Retrieval over ${fmt(M.documents)} documents, including ${fmt(M.report_pages)} NASA report pages; answers must quote their source.`},
+  {chap: 'IMPACT', kick: 'What it changes', title: 'See where the evidence ends before something burns', draw: s8,
+   text: () => `Designers stop extrapolating silently. NASA sees exactly <b>where the next experiment is needed</b>. And the same physics applies to <b>oxygen-rich places on Earth</b>.`,
+   know: () => 'Open dataset, open models, every limitation stated.'},
+];
+
+function go(i) {
+  PL.i = i; PL.token++; svg.innerHTML = ''; tip.style.display = 'none';
+  const sl = SLIDES[i]; sl.draw(S('g', {}, svg));
+  const t = document.getElementById('txt'); t.classList.remove('in');
+  t.innerHTML = `<div class="kick">${sl.kick}</div><h1>${sl.title.replace('{solid}', M.solid_max)}</h1><p>${sl.text()}</p><div class="know"><div class="tag">How we know</div>${sl.know()}</div>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('in')));
+  document.querySelectorAll('#dots button').forEach((b, j) => b.classList.toggle('on', j === i));
+  document.querySelectorAll('#chaps span').forEach(c => c.classList.toggle('on', c.textContent === sl.chap));
+  document.getElementById('bar').style.width = (100 * (i + 1) / SLIDES.length) + '%';
+  document.getElementById('num').textContent = `${i + 1} / ${SLIDES.length}`;
+  history.replaceState(null, '', '#' + (i + 1));
+}
+const next = () => go(Math.min(SLIDES.length - 1, PL.i + 1)), prev = () => go(Math.max(0, PL.i - 1));
+function stop() { clearInterval(PL.timer); PL.timer = null; document.getElementById('play').textContent = '▶ Auto'; }
+document.getElementById('play').onclick = () => { if (PL.timer) return stop(); document.getElementById('play').textContent = '❚❚ Pause';
+  PL.timer = setInterval(() => PL.i < SLIDES.length - 1 ? next() : stop(), 12000); };
+const fs = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.();
+document.getElementById('fs').onclick = fs;
+document.getElementById('next').onclick = () => { stop(); next(); }; document.getElementById('prev').onclick = () => { stop(); prev(); };
+document.addEventListener('keydown', e => {
+  if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); stop(); next(); }
+  if (['ArrowLeft', 'PageUp'].includes(e.key)) { stop(); prev(); }
+  if (e.key === 'f' || e.key === 'F') fs();
+});
+fetch('pitch/data.json').then(r => r.json()).then(d => {
+  M = d;
+  document.getElementById('dots').innerHTML = SLIDES.map((s, i) => `<button title="${s.kick}" aria-label="Slide ${i + 1}"></button>`).join('');
+  document.querySelectorAll('#dots button').forEach((b, i) => b.onclick = () => { stop(); go(i); });
+  const m = location.hash.match(/^#(\d+)/); go(m ? Math.min(SLIDES.length, +m[1]) - 1 : 0);
+});
+</script></body></html>
