@@ -1,0 +1,49 @@
+{
+ "gas_outcome": {
+  "runs": 333,
+  "balanced_accuracy": 0.5821762041354849,
+  "recall": {
+   "extinction": 0.7923497267759563,
+   "no_ignition": 0.3064516129032258,
+   "terminated": 0.6477272727272727
+  },
+  "guessing": 0.3333333333333333,
+  "counts": {
+   "extinction": 183,
+   "no_ignition": 62,
+   "terminated": 88
+  }
+ },
+ "gas_extinction_time": {
+  "runs": 183,
+  "median_factor_error": 1.4211777693362022,
+  "baseline_factor_error": 2.6666666666666665,
+  "coverage_80": 0.7978142076502732
+ },
+ "droplet_outcome": {
+  "runs": 213,
+  "balanced_accuracy": 0.6209677419354839,
+  "recall": {
+   "extinction": 0.9086021505376344,
+   "burnout": 0.3333333333333333
+  },
+  "guessing": 0.5,
+  "counts": {
+   "extinction": 186,
+   "burnout": 27
+  }
+ },
+ "droplet_burning_rate": {
+  "runs": 258,
+  "median_abs_error_mm2_s": 0.03977045313164848,
+  "baseline_mm2_s": 0.09499999999999997,
+  "coverage_80": 0.7984496124031008,
+  "typical_K": 0.5
+ },
+ "droplet_extinction_size": {
+  "runs": 159,
+  "median_abs_error": 0.06696087830202524,
+  "baseline": 0.20982283849427763,
+  "coverage_80": 0.7987421383647799
+ }
+}

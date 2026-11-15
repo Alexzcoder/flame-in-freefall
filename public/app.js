@@ -142,7 +142,21 @@ function scenarioUI() {
 }
 // Live fluid flame (station/flamelab.js) that follows the scenario settings; a fuel change relights it.
 let simLab = null, simFuel = null;
+// Instant prediction from the neural-network emulator of the calibrated simulation (public/models/flame_emulator.json)
+let emu = null;
+async function scenEmu(p) {
+  emu ??= import('./station/emulator.js').then(async m => (await m.loadEmulator(), m)).catch(() => false);
+  const m = await emu, el = $('emunote');
+  if (!m || !el) return;
+  const r = m.predictFlame(p), pct = v => Math.round(v * 100);
+  const fate = r.ignited < 0.5 ? 'probably does not stay lit' : r.extinguished > 0.5 ? `likely goes out by itself (${pct(r.extinguished)} %)` : `likely keeps burning (${pct(1 - r.extinguished)} %)`;
+  const look = [r.aspect > 2.5 ? 'stretched downstream by the airflow' : r.aspect < 1.4 ? 'round' : '', r.blue > 0.4 ? 'blue and dim (little soot)' : ''].filter(Boolean).join(', ');
+  el.hidden = false;
+  el.innerHTML = `<b style="color:var(--fg)">Model prediction:</b> a small flame here ${fate}${look ? `; ${look}` : ''}.` +
+    (r.unsure ? ' <b>The model is unsure here.</b>' : '');
+}
 async function scenSim(p) {
+  scenEmu(p);
   if (!simLab) { simLab = (await import('./station/flamelab.js')).createFlameLab($('scensim'), { ...p, warmup: 120 }) || 'none'; simFuel = p.fuel; return; }
   if (simLab === 'none') return;
   p.fuel !== simFuel ? simLab.reset({ ...p, warmup: 120 }) : simLab.set(p); simFuel = p.fuel;
@@ -172,7 +186,9 @@ async function updateScenario() {
     <td class="hide-sm">${fmtFlow(m.flow_cm_s)}</td><td>${outcomeText(m.outcome)}</td></tr>`).join('')}</table></div>
     ${more > 0 ? `<p class="mute" style="font-size:12.5px;margin:8px 0 0">+ ${more} more similar runs not shown.</p>` : ''}`;
   $('scenrank').innerHTML = `<p class="mute" style="margin:0 0 6px;font-size:12.5px">Ranked for: <b style="color:var(--fg)">${esc(scenarioName)}</b> (${(o2 * 100).toFixed(0)} % O₂, ${psi.toFixed(1)} psi). Scores combine closeness of conditions, recorded outcomes, fuel type and fire-safety focus.</p>` + rankHTML(rk.results.slice(0, 8), false);
-  import('./footage.js').then(f => f.realFootage($('footage'), { o2, pressure: (psi * PSI_KPA).toFixed(2), flow, gravity: g, phase }));
+  $('footage').dataset.cap = 'footcap';
+  import('./footage.js').then(f => f.realFootage($('footage'), { o2, pressure: (psi * PSI_KPA).toFixed(2), flow, gravity: g, phase },
+    'No NASA video near these settings.'));
   // Close experiments per fuel type, so "solids were only tested at ISS conditions" is visible whatever the filter
   const fams = await Promise.all(['solid', 'liquid', 'gas'].map(f => api(`/api/nearest?${q}&phase=${f}&k=1`)));
   if ($('famcov')) $('famcov').innerHTML = '<span class="mute" style="border:0;background:none;padding-left:0">Close experiments by fuel:</span>' +

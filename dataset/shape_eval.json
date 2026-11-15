@@ -1,0 +1,156 @@
+{
+ "theta": {
+  "k": 45.43455,
+  "heat": 1.88389,
+  "cool": 1.64899,
+  "ign": 0.49593,
+  "buoy": 26.0,
+  "dif_o2": 0.0697,
+  "dif_fuel": 0.23989,
+  "cond": 0.12992,
+  "flow_scale": 1.19958,
+  "eps0": 4.0,
+  "eps_g": 10.0,
+  "emit_scale": 2.44111,
+  "inv_fuel": 2.88265,
+  "inv_o2": 0.67721,
+  "cam_blue": 1.0,
+  "cam_soot": 0.7,
+  "tad_exp": 1.1911,
+  "anchor": 0.37192,
+  "emit0": 0.66613,
+  "pyro": 0.25,
+  "c_thin": 2.84,
+  "c_thick": 33.2,
+  "burn_thin": 0.113,
+  "burn_thick": 0.004,
+  "k_strip": 4.4
+ },
+ "skipped": {
+  "airflow not recorded": 16
+ },
+ "shape": {
+  "solid": {
+   "runs": 91,
+   "lit_scene_excluded": 4,
+   "both_have_flame": 36,
+   "measures": {
+    "aspect": {
+     "n": 36,
+     "spearman": 0.48339768339768346,
+     "median_sim": 2.415137123375375,
+     "median_real": 1.7019244066947266,
+     "mae": 1.5225312758736553
+    },
+    "fill": {
+     "n": 36,
+     "spearman": 0.07824967824967825,
+     "median_sim": 1.0,
+     "median_real": 0.8649741917799747,
+     "mae": 0.16838337821205934
+    },
+    "hollow": {
+     "n": 36,
+     "spearman": null,
+     "median_sim": 0.0,
+     "median_real": 0.0,
+     "mae": 0.0
+    },
+    "blue": {
+     "n": 36,
+     "spearman": 0.023938223938223938,
+     "median_sim": 0.4529811945044655,
+     "median_real": 0.2711587642516232,
+     "mae": 0.1764599492236204
+    },
+    "flicker": {
+     "n": 35,
+     "spearman": -0.23389355742296922,
+     "median_sim": 0.16249616030930472,
+     "median_real": 0.443896030182422,
+     "mae": 0.4225901359106097
+    }
+   }
+  },
+  "droplet": {
+   "runs": 46,
+   "lit_scene_excluded": 6,
+   "both_have_flame": 0,
+   "measures": {}
+  },
+  "gas": {
+   "runs": 320,
+   "lit_scene_excluded": 16,
+   "both_have_flame": 186,
+   "measures": {
+    "aspect": {
+     "n": 186,
+     "spearman": 0.13339705066460283,
+     "median_sim": 2.224007704336623,
+     "median_real": 1.3234597819341076,
+     "mae": 0.9910557649948685
+    },
+    "fill": {
+     "n": 186,
+     "spearman": -0.06338506869816168,
+     "median_sim": 1.0,
+     "median_real": 0.7981257267991814,
+     "mae": 0.2204343663542387
+    },
+    "hollow": {
+     "n": 186,
+     "spearman": 0.931435178494002,
+     "median_sim": 0.0,
+     "median_real": 0.0,
+     "mae": 0.0016886297661605873
+    },
+    "blue": {
+     "n": 186,
+     "spearman": -0.03129950720083547,
+     "median_sim": 0.4909152645920891,
+     "median_real": 0.3617623302084085,
+     "mae": 0.14197487705668208
+    },
+    "flicker": {
+     "n": 111,
+     "spearman": -0.013706563706563707,
+     "median_sim": 0.6119864460982283,
+     "median_real": 0.40823946192233107,
+     "mae": 0.40795088588529743
+    }
+   }
+  }
+ },
+ "outcome": {
+  "runs": 331,
+  "counts": {
+   "extinction": 183,
+   "no_ignition": 60,
+   "terminated": 88
+  },
+  "recall": {
+   "extinction": 0.5191256830601093,
+   "no_ignition": 0.48333333333333334,
+   "terminated": 0.0
+  },
+  "balanced_accuracy": 0.33415300546448085,
+  "majority_baseline": 0.3333333333333333,
+  "confusion": {
+   "extinction": {
+    "extinction": 95,
+    "no_ignition": 88,
+    "terminated": 0
+   },
+   "no_ignition": {
+    "extinction": 31,
+    "no_ignition": 29,
+    "terminated": 0
+   },
+   "terminated": {
+    "extinction": 74,
+    "no_ignition": 14,
+    "terminated": 0
+   }
+  }
+ }
+}

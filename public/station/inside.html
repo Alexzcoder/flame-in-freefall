@@ -58,7 +58,9 @@ const q = new URLSearchParams(location.search), hab = q.get("hab") === "iss" ? "
 document.querySelectorAll("#hab button").forEach(b => { b.classList.toggle("on", b.dataset.h === hab); b.onclick = () => location.search = "?hab=" + b.dataset.h; });
 const CATNAME = { burn: ["Burns", "#ff7a2f"], safety: ["Fire safety", "#3ecf8e"], system: ["System", "#5aa9ff"] };
 const STATE = { spreads: "🔥 A flame would spread", quench: "✓ A flame would go out by itself", no_spread: "✓ Doesn't spread", blowoff: "✓ Blown out", untested: "? Never tested at this oxygen level" };
-let media = null;
+let media = null, insights;
+const insightsP = fetch("insights.json").then(r => r.ok ? r.json() : null).catch(() => null);
+const riskP = fetch("risk.json").then(r => r.ok ? r.json() : null).catch(() => null);
 
 const world = createHabitat($("view"), hab, {
   onHover(it, e) {
@@ -81,10 +83,26 @@ async function show(it) {
       <span class="st s-${v.state}">${STATE[v.state] || v.state}</span>${v.extrapolated ? ' <span class="tag t-assumption">EXTRAPOLATED</span>' : ""}
       <div class="src" style="margin-top:6px">${v.note}</div>
       ${s ? `<div class="src" style="margin-top:6px"><span class="tag t-${s.kind}">${s.kind === "data" ? "DATA" : "ASSUMPTION"}</span>${s.text}</div>` : ""}</div>
+      <div id="sim"></div>
       <div id="real"></div>
       <a class="go" href="flame.html?fuel=${it.mat.startsWith("pmma") ? "pmma" : "fabric"}&g=${cond.gravity_g}&o2=${cond.o2}&flow=${cond.vent_cm_s}">See how this flame behaves in the Flame lab →</a>`;
   }
   p.innerHTML = html; p.querySelector(".x").onclick = () => p.style.display = "none";
+  insights ??= await insightsP;
+  const risk = (await riskP)?.habitats?.[hab]?.fans?.on?.objects?.[it.id];
+  const ins = insights?.habitats?.[hab]?.items?.[it.id];
+  if (ins && $("sim")) {   // flame/insights.py: calibrated simulation of a small fire of this material, fans on vs off
+    const st = x => x.burns ? '<span class="st s-spreads">keeps burning</span>' : '<span class="st s-quench">goes out</span>';
+    $("sim").innerHTML = `<div class="verdict"><div class="src" style="margin-bottom:6px"><b style="color:var(--fg)">Simulated small fire</b> ·
+      ${insights.model.calibrated ? "physics fitted to NASA runs" : "physics not yet fitted to NASA runs"}</div>
+      <div class="src">Fans on: ${st(ins.fans_on)} &nbsp; Fans off: ${st(ins.fans_off)}</div>
+      ${ins.notes.map(n => `<div class="src" style="margin-top:6px">${n}</div>`).join("")}
+      ${ins.caveat ? `<div class="src" style="margin-top:6px"><span class="tag t-assumption">NOTE</span>${ins.caveat}</div>` : ""}
+      ${risk?.safe_distance_m ? `<div class="src" style="margin-top:8px"><b style="color:var(--fg)">Keep other flammables at least ${risk.safe_distance_m.p90} m away</b>
+        (typical ${risk.safe_distance_m.median} m${risk.nearest_flammable_m ? `; nearest one here is ${risk.nearest_flammable_m} m` : ""}).
+        ${risk.spread_mm_s ? `Spreads about ${risk.spread_mm_s.toFixed(1)} mm/s over the material with the fans on.` : ""}
+        <span class="tag t-assumption">ESTIMATE</span>radiated heat vs. ignition thresholds, typical lab values</div>` : ""}</div>`;
+  }
   if (it.mat) {   // nearest real NASA burn of a solid material at these conditions that has footage
     media ??= await fetch("/media/index.json").then(r => r.ok ? r.json() : { runs: {} }).catch(() => ({ runs: {} }));
     const near = await fetch(`/api/nearest?o2=${cond.o2}&pressure=${cond.pressure_kpa}&flow=${cond.vent_cm_s}&gravity=${cond.gravity_g}&phase=solid&k=50`).then(r => r.json()).catch(() => null);

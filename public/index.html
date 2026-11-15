@@ -48,7 +48,7 @@
     <div class="foldbar">
       <details class="quiet"><summary>How we checked the data</summary>
         <p class="lead">We know how long it takes to answer "has anyone tested this?" by digging through reports. So we collected NASA's Physical Sciences Informatics combustion archive into one consistent dataset, traced every value back to its source row, and flagged what is assumed rather than measured.</p>
-        <p class="mute" style="font-size:12.5px">5,123 values re-checked against NASA's raw files · every run linked to its source file and row · assumed and censored values flagged everywhere</p>
+        <p class="mute" style="font-size:12.5px">5,123 values re-checked against NASA's raw files · every run linked to its source file and row · assumed and censored values flagged everywhere · <a href="checked.html">How we checked the models →</a></p>
       </details>
       <button class="linkbtn" id="expandall" type="button">expand all</button>
     </div>
@@ -146,8 +146,14 @@
         </div>
       </div>
       <div><div class="card" id="verdict"></div>
-        <div class="card scensim"><div class="labcv"><canvas id="scensim" width="300" height="400"></canvas><span class="cap">Simulated flame at these settings</span></div><p class="simnote" id="simnote"></p></div>
-        <div class="card footage" id="footage" hidden></div></div>
+        <div class="card compare2">
+          <h3>Simulation vs. closest real NASA run</h3>
+          <div class="panes">
+            <figure><div class="pane"><canvas id="scensim" width="480" height="360"></canvas></div><figcaption>Simulated flame at your settings <span class="mute">(illustrative)</span></figcaption></figure>
+            <figure><div class="pane" id="footage"></div><figcaption id="footcap">Real NASA footage, brightened</figcaption></figure>
+          </div>
+          <p class="simnote" id="simnote"></p><p class="simnote" id="emunote" hidden></p>
+        </div></div>
     </div>
     <div class="card"><h3>Closest real experiments</h3><div id="nearest"></div></div>
     <div class="card"><h3>Most relevant investigations for this atmosphere</h3><div id="scenrank"></div></div>
@@ -198,5 +204,6 @@
 </footer>
 <script src="app.js"></script>
 <script type="module" src="labtab.js"></script>
+<script type="module" src="egg.js"></script>
 </body>
 </html>
