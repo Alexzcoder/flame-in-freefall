@@ -1,6 +1,6 @@
 # Flame in Freefall 🔥🧑‍🚀
 
-**NASA Space Apps Challenge 2026 · "Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity Combustion Data"**
+**NASA Space Apps Challenge 2026 · "Flame in Freefall: SI-Powered Fire Safety Insights from Microgravity Combustion Data"** · team **Applied Mafia**
 
 ![Flame in Freefall](public/demo/poster.jpg)
 
@@ -99,7 +99,7 @@ public/         the website (static, Vercel CDN): index, pitch, demo, checked, s
 app/            FastAPI backend (/api/*) and Ember, the cited assistant
 ranking/        investigation ranking per habitat and fire-safety pillar
 demo/           Remotion project that renders the 30-second demo video
-docs/           models.md (how the models work), media.md (NASA video), submission.md
+docs/           models.md (how the models work), media.md (NASA video)
 AGENTS.md       how to load and use the dataset (for people and AI agents)
 ```
 
@@ -117,7 +117,7 @@ python3 -m flame.emulator --n 20000                        # train the neural ne
 ```
 Details: [`AGENTS.md`](AGENTS.md) (dataset) and [`docs/models.md`](docs/models.md) (models).
 
-## Team
+## Team: Applied Mafia
 
 Alex (dataset, models, website), Kai (investigation ranking), Mario (3D station), Sophia (NASA video dataset).
 
@@ -129,4 +129,7 @@ Alex (dataset, models, website), Kai (investigation ranking), Mario (3D station)
   The demo's background music was generated in code (`demo/tools/music.py`).
 - The flame neural network is our own, trained on our own simulation output.
 
-All NASA data, reports and footage are NASA's (public domain); every number on the site links back to its NASA source.
+## License
+
+Code: [MIT](LICENSE), © 2026 Applied Mafia. NASA data, reports and footage are NASA's (public domain); every number on
+the site links back to its NASA source. Generated art, 3D models and voice are used under their providers' terms.
