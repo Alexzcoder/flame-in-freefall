@@ -83,7 +83,7 @@
           ${a.risk ? `risk ${a.risk}` : "no reliable estimate"} <small>${a.reason}</small></li>`; }).join("");
       panel.innerHTML = `<button class="x" aria-label="Close">×</button><h3>${s.name}</h3>
         <p class="atm">${(s.o2_frac * 100).toFixed(0)} % O₂ · ${(s.pressure_kpa / 6.895).toFixed(1)} psi · ${s.gravity_g ? s.gravity_g + " g" : "microgravity"}</p>
-        <ul>${rows}</ul><div class="btns"><a class="inside" href="inside.html?hab=${id}">🔥 Go inside: start a fire</a><button class="more">See the nearest tests ↓</button><button class="back">Back to Earth view</button></div>`;
+        <ul>${rows}</ul><div class="btns"><a class="inside" href="inside.html?hab=${id}">Go inside</a><a class="inside" href="inspect.html?hab=${id}">🔥 Inspect &amp; ignite objects</a><button class="more">See the nearest tests ↓</button><button class="back">Back to Earth view</button></div>`;
       panel.hidden = false;
       panel.querySelector(".x").onclick = panel.querySelector(".back").onclick = () => { panel.hidden = true; shown = null; orbit?.overview(); };
       panel.querySelector(".more").onclick = () => document.getElementById("hab-" + id)?.scrollIntoView({ behavior: "smooth" });

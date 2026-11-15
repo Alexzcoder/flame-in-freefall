@@ -9,7 +9,7 @@ const CAT = { burn: { color: "#ff7a2f", icon: "🔥" }, safety: { color: "#3ecf8
 
 // ---------- the furniture: one entry per object, info written for a curious non-expert ----------
 // mat: key into firemodel.MATERIALS for things that burn (the page adds NASA's verdict live)
-const ITEMS = {
+export const ITEMS = {
   crew_quarters: { name: "Crew quarters", cat: "burn", mat: "fabric", model: "crew_quarters", h: 2.0,
     text: "A private sleeping booth with a fabric curtain and a sleeping bag: the biggest pile of fabric in the habitat, and where people are least alert." },
   galley: { name: "Galley table", cat: "burn", mat: "fabric", model: "galley", h: 0.85,
@@ -49,10 +49,12 @@ const LAYOUTS = {
     ["mask", -1.6, 0.7, 3.55, "center"], ["eclss", -0.4, 0, 3.95, "center"], ["battery", 1.4, 0, 3.6, "center"],
     ["plants", 3.0, 0, 2.6, "center"], ["glovebox", 3.8, 0, 0.2, "center"], ["laptop", 3.2, 0, -2.0, "center"],
     ["treadmill", 1.2, 0, -3.5, "center"], ["suit", -1.4, 0, -3.7, "center"], ["galley", -0.3, 0, -0.2, 0.4]] },
+  // ISS: the walls and ceiling nearest the camera are hidden (dollhouse view), so everything sits on the floor or hangs
+  // on the back wall; nothing is placed on surfaces you can't see (it would look like it floats)
   iss: { cam: [2.5, 3.4, 7.8], target: [0, -0.1, 0], items: [
     ["eclss", -2.6, -1.0, -0.78, 0], ["glovebox", 1.6, -1.0, -0.62, Math.PI / 2], ["crew_quarters", -0.7, -1.0, 0.75, -Math.PI / 2],
-    ["laptop", 3.0, -0.4, 0.7, -Math.PI / 2], ["stowage", 0.3, 0.62, -0.1, 0], ["treadmill", -4.0, -1.0, 0.0, 0],
-    ["extinguisher", 4.3, -0.6, 0.85, -Math.PI / 2], ["mask", 4.3, 0.15, 0.95, -Math.PI / 2], ["plants", 3.8, -1.0, -0.7, Math.PI / 2],
+    ["laptop", 3.0, -1.0, 0.7, -Math.PI / 2], ["stowage", 0.45, -1.0, -0.62, Math.PI / 2], ["treadmill", -4.0, -1.0, 0.0, 0],
+    ["extinguisher", 2.75, -0.75, -0.97, Math.PI / 2], ["mask", 3.95, 0.05, -1.0, Math.PI / 2], ["plants", 3.9, -1.0, 0.65, -Math.PI / 2],
     ["battery", -1.0, -1.0, -0.75, Math.PI / 2]] },
 };
 
@@ -145,13 +147,17 @@ export function createHabitat(container, hab, { onHover, onSelect } = {}) {
     new THREE.TextureLoader().load("https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/earth_atmos_2048.jpg", t => {
       t.colorSpace = THREE.SRGBColorSpace; earthBelow.material.map = t; earthBelow.material.color.set(0xffffff); earthBelow.material.needsUpdate = true; });
     earthBelow.position.set(0, -75, -20); earthBelow.rotation.z = 0.4; scene.add(earthBelow);   // Earth ~400 km below (not to scale)
-    const det = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.04, 20), std({ color: 0xf2f2f2 })); det.position.set(-1.8, W / 2 - 0.03, 0.3); scene.add(det);
-    addMarker("detector", new THREE.Vector3(-1.8, W / 2 + 0.2, 0.3)); pickables.push([det, "detector"]);
+    // smoke detector on the back wall, high up in the airflow path (a ceiling one would sit on the hidden ceiling)
+    const det = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 0.04, 20), std({ color: 0xf2f2f2 }));
+    det.rotation.x = Math.PI / 2; det.position.set(-1.8, 0.75, -W / 2 + 0.03); scene.add(det);
+    addMarker("detector", new THREE.Vector3(-1.8, 1.0, -W / 2 + 0.2)); pickables.push([det, "detector"]);
     const fp = new THREE.Mesh(new THREE.CircleGeometry(0.06, 20), std({ color: 0xd23b2b })); fp.position.set(-2.0, 0.15, -W / 2 + 0.02); scene.add(fp);
     addMarker("fireport", new THREE.Vector3(-2.0, 0.45, -W / 2 + 0.3)); pickables.push([fp, "fireport"]);
-    for (const [y, z] of [[W / 2 - 0.08, W / 2 - 0.08], [-W / 2 + 0.08, -W / 2 + 0.08]]) {
-      const cab = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, Lx * 0.9, 12), std({ color: 0xdedede })); cab.rotation.z = Math.PI / 2; cab.position.set(0, y, z); scene.add(cab);
-      if (y > 0) { addMarker("cables", new THREE.Vector3(2.4, y + 0.18, z)); pickables.push([cab, "cables"]); }
+    // cable runs along the back wall (top and bottom), bundled in a tray
+    for (const y of [W / 2 - 0.12, -W / 2 + 0.1]) {
+      const cab = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, Lx * 0.9, 12), std({ color: 0xdedede }));
+      cab.rotation.z = Math.PI / 2; cab.position.set(0, y, -W / 2 + 0.06); scene.add(cab);
+      if (y > 0) { addMarker("cables", new THREE.Vector3(2.4, y - 0.05, -W / 2 + 0.3)); pickables.push([cab, "cables"]); }
     }
   }
 
